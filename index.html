@@ -613,11 +613,11 @@ details.dev-note pre{background:var(--bg-dark);color:var(--ink-on-dark);border-r
         <p>Tifl Little Wear, MM Alam Road area, Gulberg III, Lahore, Pakistan.<br>Open Tue–Sun, 11am – 8pm.</p>
       </div>
       <div class="side-card">
-        <h4>Connecting to your local DuckDB</h4>
-        <p>Browsers can't open a DuckDB file directly for security reasons, so this form sends each booking as JSON to a small local API, which is what actually writes the row into DuckDB.</p>
+        <h4>Connecting to DuckDB</h4>
+        <p>This form sends each booking as JSON to a serverless API at <code>/api/bookings</code>, which writes the row into MotherDuck (DuckDB hosted in the cloud) — so it works for every visitor, not just on your own machine.</p>
         <details class="dev-note">
           <summary>Show the request &amp; setup notes</summary>
-          <pre id="devNotePre">POST http://localhost:8787/api/bookings
+          <pre id="devNotePre">POST /api/bookings
 Content-Type: application/json
 
 {
@@ -633,11 +633,11 @@ Content-Type: application/json
   "measurements": { "chest": .., "waist": .., "height": .. }
 }
 
-Run a local FastAPI + DuckDB service that listens on
-:8787 and INSERTs into a bookings table — ask Claude to
-generate that companion script (server.py) if you don't
-have one yet. Until that service is running, bookings are
-kept in this tab's memory and shown as "offline" below.</pre>
+Handled by api/index.py, a Vercel serverless function
+that connects to MotherDuck with MOTHERDUCK_TOKEN (set
+in Vercel -> Project -> Settings -> Environment Variables).
+Until that's deployed, bookings stay in this tab's memory
+and show as "offline" below.</pre>
         </details>
       </div>
     </div>
@@ -950,7 +950,7 @@ document.getElementById('bookingForm').addEventListener('submit', async (e)=>{
   let ref, wasOnline = false;
   try{
     // Locally hosted DuckDB service — see the "dev note" panel for setup.
-    const res = await fetch('http://localhost:8787/api/bookings', {
+    const res = await fetch('/api/bookings', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify(payload),
