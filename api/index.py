@@ -51,6 +51,15 @@ app.add_middleware(
 
 
 def get_conn():
+    # Connect at the account level first (no database name) so we can
+    # create tifl_bookings if it doesn't exist yet, then attach to it.
+    root = duckdb.connect(
+        f"md:?motherduck_token={MOTHERDUCK_TOKEN}",
+        config={"home_directory": "/tmp"},
+    )
+    root.execute(f"CREATE DATABASE IF NOT EXISTS {DB_NAME}")
+    root.close()
+
     conn = duckdb.connect(
         f"md:{DB_NAME}?motherduck_token={MOTHERDUCK_TOKEN}",
         config={"home_directory": "/tmp"},
