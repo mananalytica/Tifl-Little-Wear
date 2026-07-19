@@ -44,8 +44,13 @@ app.add_middleware(
 
 
 def get_conn():
-    # "md:" tells DuckDB to connect to MotherDuck instead of a local file.
-    conn = duckdb.connect(f"md:{DB_NAME}?motherduck_token={MOTHERDUCK_TOKEN}")
+    # Vercel's serverless filesystem is read-only except /tmp — DuckDB needs
+    # a writable home directory to install the MotherDuck extension on first
+    # connect, so we point it at /tmp instead of the default (~/.duckdb).
+    conn = duckdb.connect(
+        f"md:{DB_NAME}?motherduck_token={MOTHERDUCK_TOKEN}",
+        config={"home_directory": "/tmp"},
+    )
     conn.execute(
         """
         CREATE TABLE IF NOT EXISTS bookings (
