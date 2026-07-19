@@ -25,6 +25,13 @@ import os
 import uuid
 from datetime import datetime
 
+# Vercel's serverless filesystem is read-only except /tmp. DuckDB looks up
+# the OS-level HOME environment variable to decide where to install the
+# MotherDuck extension on first connect, so it must be set before any
+# duckdb.connect() call — the "home_directory" connect option alone isn't
+# enough in this environment.
+os.environ["HOME"] = "/tmp"
+
 import duckdb
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -44,9 +51,6 @@ app.add_middleware(
 
 
 def get_conn():
-    # Vercel's serverless filesystem is read-only except /tmp — DuckDB needs
-    # a writable home directory to install the MotherDuck extension on first
-    # connect, so we point it at /tmp instead of the default (~/.duckdb).
     conn = duckdb.connect(
         f"md:{DB_NAME}?motherduck_token={MOTHERDUCK_TOKEN}",
         config={"home_directory": "/tmp"},
