@@ -301,7 +301,6 @@ function initBookingPage(){
       garment_type: document.getElementById('bGarment').value,
       mode, time_slot: slot,
       date: document.getElementById('bDate').value,
-      address: document.getElementById('bAddress').value,
       notes: document.getElementById('bNotes').value,
       measurements: Store.get('tifl_measurements', null)
     };
@@ -337,9 +336,47 @@ function initBookingPage(){
   });
 }
 
+/* ============================================================
+   CONTACT PAGE
+============================================================= */
+function initContactPage(){
+  const form = document.getElementById('contactForm');
+  if(!form) return;
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const payload = {
+      name: document.getElementById('cName').value,
+      phone: document.getElementById('cPhone').value,
+      email: document.getElementById('cEmail').value,
+      message: document.getElementById('cMessage').value
+    };
+    const btn = document.getElementById('contactSubmitBtn');
+    btn.disabled = true; btn.textContent = 'Sending…';
+    let ok = false;
+    try{
+      const res = await fetch('/api/contact', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout ? AbortSignal.timeout(2500) : undefined
+      });
+      ok = res.ok;
+    }catch(err){ ok = false; }
+
+    dataLayer.push({event:'generate_lead', lead_type:'contact_message'});
+    document.getElementById('contactConfirm').classList.add('show');
+    document.getElementById('contactConfirm').textContent = ok
+      ? "Message sent — we'll reply within a day."
+      : "Saved on this device — if this keeps happening, message us directly on WhatsApp.";
+    btn.disabled = false; btn.textContent = 'Send message';
+    form.reset();
+  });
+}
+
 /* ---------- boot ---------- */
 document.addEventListener('DOMContentLoaded', ()=>{
   initShopPage();
   initMeasurementsPage();
   initBookingPage();
+  initContactPage();
 });
