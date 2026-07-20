@@ -129,7 +129,7 @@ def health():
     return {"status": "ok", "service": "tifl-booking-api"}
 
 
-@app.post("/api/bookings")
+@app.post("/bookings")
 def create_booking(booking: Booking):
     booking_id = "TLW-" + uuid.uuid4().hex[:8].upper()
     conn = get_conn()
@@ -158,7 +158,7 @@ def create_booking(booking: Booking):
     return {"booking_id": booking_id, "status": "confirmed"}
 
 
-@app.get("/api/bookings")
+@app.get("/bookings")
 def list_bookings():
     conn = get_conn()
     rows = conn.execute("SELECT * FROM bookings ORDER BY created_at DESC").fetchall()
@@ -167,7 +167,7 @@ def list_bookings():
     return [dict(zip(cols, row)) for row in rows]
 
 
-@app.post("/api/contact")
+@app.post("/contact")
 def create_contact_message(msg: ContactMessage):
     message_id = "MSG-" + uuid.uuid4().hex[:8].upper()
     conn = get_conn()
@@ -179,7 +179,7 @@ def create_contact_message(msg: ContactMessage):
     return {"message_id": message_id, "status": "received"}
 
 
-@app.get("/api/contact")
+@app.get("/contact")
 def list_contact_messages():
     conn = get_conn()
     rows = conn.execute("SELECT * FROM contact_messages ORDER BY created_at DESC").fetchall()
