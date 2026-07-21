@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Boutique Sizing Studio — Measurement Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+  :root{
+    --emerald:#0f4c3a;
+    --emerald-deep:#0a3528;
+    --gold:#c9a961;
+    --gold-soft:#e4cf9a;
+    --cream:#faf6ef;
+    --ivory:#fffdf7;
+    --ink:#1f2a26;
+    --muted:#6b7570;
+    --line:#e6ddc9;
+    --danger:#b34a4a;
+    --shadow:0 10px 30px rgba(15,76,58,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--cream);color:var(--ink);font-family:'Inter',sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1100px;margin:0 auto;padding:32px 20px 80px}
+  header.hero{
+    text-align:center;padding:40px 20px 28px;
+    border-bottom:1px solid var(--line);
+    background:
+      radial-gradient(1200px 300px at 50% -100px, rgba(201,169,97,.12), transparent 60%),
+      linear-gradient(180deg, var(--ivory), var(--cream));
+    border-radius:18px 18px 0 0;
+    position:relative;
+  }
+  header.hero::before, header.hero::after{
+    content:"";position:absolute;width:60px;height:1px;background:var(--gold);top:18px;
+  }
+  header.hero::before{left:30px}
+  header.hero::after{right:30px}
+  .brand{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:14px;letter-spacing:6px;color:var(--gold);text-transform:uppercase}
+  h1{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:clamp(30px,4.2vw,44px);color:var(--emerald-deep);margin-top:8px;letter-spacing:.5px}
+  .tagline{color:var(--muted);margin-top:8px;font-size:14px;letter-spacing:.5px}
+  .ornament{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:14px;color:var(--gold)}
+  .ornament span{height:1px;width:50px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+  .ornament svg{width:14px;height:14px;fill:var(--gold)}
+
+  .tabs{display:flex;gap:6px;margin:28px 0 18px;flex-wrap:wrap;justify-content:center}
+  .tab{
+    padding:12px 22px;border:1px solid var(--line);background:var(--ivory);
+    font-family:'Cormorant Garamond',serif;font-size:17px;letter-spacing:.5px;
+    color:var(--emerald-deep);cursor:pointer;border-radius:999px;transition:all .25s ease;
+  }
+  .tab:hover{border-color:var(--gold-soft)}
+  .tab.active{background:var(--emerald);color:var(--ivory);border-color:var(--emerald);box-shadow:var(--shadow)}
+
+  .panel{
+    background:var(--ivory);border:1px solid var(--line);border-radius:16px;
+    padding:28px;box-shadow:var(--shadow);display:none;
+  }
+  .panel.active{display:block;animation:fade .35s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  .panel h2{font-family:'Cormorant Garamond',serif;color:var(--emerald-deep);font-weight:600;font-size:26px;margin-bottom:6px}
+  .panel .sub{color:var(--muted);font-size:13.5px;margin-bottom:22px}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+  label{display:block;font-size:12.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  select,input[type=number],input[type=text],textarea{
+    width:100%;padding:12px 14px;border:1px solid var(--line);background:#fff;
+    border-radius:10px;font-family:inherit;font-size:14.5px;color:var(--ink);
+    transition:border-color .2s, box-shadow .2s;
+  }
+  select:focus,input:focus,textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,169,97,.18)}
+  textarea{min-height:80px;resize:vertical}
+
+  .chart-select{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+  .chip{
+    padding:8px 16px;border:1px solid var(--line);border-radius:999px;
+    background:#fff;font-size:13px;cursor:pointer;color:var(--emerald-deep);
+    transition:all .2s;
+  }
+  .chip:hover{border-color:var(--gold-soft)}
+  .chip.active{background:var(--emerald-deep);color:var(--ivory);border-color:var(--emerald-deep)}
+
+  .btn{
+    display:inline-flex;align-items:center;gap:8px;padding:12px 22px;border:none;
+    border-radius:999px;cursor:pointer;font-family:inherit;font-size:14px;
+    letter-spacing:.5px;transition:all .2s;
+  }
+  .btn-primary{background:var(--emerald);color:var(--ivory)}
+  .btn-primary:hover{background:var(--emerald-deep);transform:translateY(-1px);box-shadow:var(--shadow)}
+  .btn-gold{background:var(--gold);color:var(--emerald-deep)}
+  .btn-gold:hover{background:#b8964d;color:#fff}
+  .btn-ghost{background:transparent;color:var(--emerald-deep);border:1px solid var(--line)}
+  .btn-ghost:hover{border-color:var(--emerald)}
+  .btn-danger{background:transparent;color:var(--danger);border:1px solid var(--line)}
+  .btn-danger:hover{border-color:var(--danger)}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
+
+  .results{
+    margin-top:26px;padding:24px;border:1px solid var(--line);border-radius:14px;
+    background:linear-gradient(180deg,#fff, var(--ivory));display:none;
+  }
+  .results.show{display:block;animation:fade .35s ease}
+  .results h3{font-family:'Cormorant Garamond',serif;color:var(--emerald-deep);font-size:22px;margin-bottom:4px}
+  .results .meta{color:var(--muted);font-size:13px;margin-bottom:16px}
+  table.measure{width:100%;border-collapse:collapse;font-size:14px}
+  table.measure th, table.measure td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line)}
+  table.measure th{font-weight:500;color:var(--muted);font-size:12px;letter-spacing:.6px;text-transform:uppercase;background:#fbf7ee}
+  table.measure td.val{font-weight:500;color:var(--emerald-deep);text-align:right}
+  table.measure tr:last-child td{border-bottom:none}
+  .note{margin-top:14px;font-size:12.5px;color:var(--muted);font-style:italic;border-left:2px solid var(--gold);padding-left:12px}
+
+  .saved-list{display:grid;gap:12px;margin-top:18px}
+  .saved-item{
+    padding:16px;border:1px solid var(--line);border-radius:12px;background:#fff;
+    display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;
+  }
+  .saved-item .info{flex:1;min-width:200px}
+  .saved-item .info strong{color:var(--emerald-deep);font-family:'Cormorant Garamond',serif;font-size:19px}
+  .saved-item .info small{color:var(--muted);display:block;margin-top:2px}
+  .saved-item .tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .saved-item .tag{font-size:11.5px;padding:3px 10px;border-radius:999px;background:var(--cream);color:var(--emerald-deep);border:1px solid var(--line)}
+  .saved-item .ctrl{display:flex;gap:6px;flex-wrap:wrap}
+  .empty{text-align:center;padding:40px 20px;color:var(--muted);font-style:italic}
+
+  footer{text-align:center;margin-top:40px;color:var(--muted);font-size:12.5px;letter-spacing:.5px}
+  footer .line{display:block;width:80px;height:1px;background:var(--gold);margin:10px auto}
+
+  @media print{
+    body{background:#fff}
+    .tabs,.actions,.saved-item .ctrl,header.hero::before,header.hero::after{display:none}
+    .panel{box-shadow:none;border:none}
+  }
+  @media (max-width:600px){
+    .wrap{padding:16px 12px 60px}
+    .panel{padding:20px}
+    .tab{padding:10px 16px;font-size:15px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="brand">Atelier · Studio</div>
+    <h1>Boutique Sizing Calculator</h1>
+    <div class="tagline">Precise measurements · Crafted by our designers</div>
+    <div class="ornament">
+      <span></span>
+      <svg viewBox="0 0 24 24"><path d="M12 2l2.39 7.36H22l-6.2 4.5 2.39 7.36L12 16.72 5.81 21.22l2.39-7.36L2 9.36h7.61z"/></svg>
+      <span></span>
+    </div>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button class="tab active" data-tab="age">By Age</button>
+    <button class="tab" data-tab="calc">By Height & Weight</button>
+    <button class="tab" data-tab="match">Find Size from Measurements</button>
+    <button class="tab" data-tab="saved">Saved Records</button>
+  </div>
+
+  <!-- PANEL: BY AGE -->
+  <section class="panel active" id="panel-age">
+    <h2>Browse by Age</h2>
+    <p class="sub">Select an age range to view standard cutting, frock, or pant measurements from our atelier charts.</p>
+
+    <div class="chart-select" id="ageChartChips">
+      <div class="chip active" data-chart="cutting">Cutting Chart</div>
+      <div class="chip" data-chart="frock">Lawn Frock</div>
+      <div class="chip" data-chart="pant">Girls Pant</div>
+    </div>
+
+    <div class="grid">
+      <div>
+        <label for="ageSelect">Age Range</label>
+        <select id="ageSelect"></select>
+      </div>
+    </div>
+
+    <div class="results" id="ageResults">
+      <h3 id="ageTitle">—</h3>
+      <div class="meta" id="ageMeta"></div>
+      <table class="measure" id="ageTable"><tbody></tbody></table>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" onclick="downloadPDF('age')">⬇ Download PDF</button>
+      <button class="btn btn-gold" onclick="openSaveModal('age')">✦ Save Record</button>
+      <button class="btn btn-ghost" onclick="window.print()">🖨 Print</button>
+    </div>
+  </section>
+
+  <!-- PANEL: BY HEIGHT/WEIGHT -->
+  <section class="panel" id="panel-calc">
+    <h2>Calculate by Height & Weight</h2>
+    <p class="sub">Enter the child's height and weight — our algorithm estimates the closest size across all three charts.</p>
+
+    <div class="grid">
+      <div>
+        <label for="calcHeight">Height</label>
+        <div style="display:flex;gap:8px">
+          <input type="number" id="calcHeight" placeholder="e.g. 38" step="0.1" min="20" max="72" />
+          <select id="calcHeightUnit" style="max-width:90px">
+            <option value="in">inches</option>
+            <option value="cm">cm</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label for="calcWeight">Weight (optional)</label>
+        <div style="display:flex;gap:8px">
+          <input type="number" id="calcWeight" placeholder="e.g. 28" step="0.1" min="5" max="80" />
+          <select id="calcWeightUnit" style="max-width:90px">
+            <option value="lb">lb</option>
+            <option value="kg">kg</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" onclick="calculateByHW()">Calculate Sizes</button>
+      <button class="btn btn-ghost" onclick="clearCalc()">Clear</button>
+    </div>
+
+    <div class="results" id="calcResults">
+      <h3 id="calcTitle">Estimated Sizes</h3>
+      <div class="meta" id="calcMeta"></div>
+      <div id="calcTables"></div>
+      <div class="note">Estimates are based on standard pediatric growth ratios. For a perfect fit, our designers recommend a final fitting session.</div>
+    </div>
+
+    <div class="actions" id="calcActions" style="display:none">
+      <button class="btn btn-primary" onclick="downloadPDF('calc')">⬇ Download PDF</button>
+      <button class="btn btn-gold" onclick="openSaveModal('calc')">✦ Save Record</button>
+    </div>
+  </section>
+
+  <!-- PANEL: FIND FROM MEASUREMENTS -->
+  <section class="panel" id="panel-match">
+    <h2>Find Size from Body Measurements</h2>
+    <p class="sub">Enter the child's actual body measurements — we'll match the closest size in each chart.</p>
+
+    <div class="grid">
+      <div><label>Chest (in)</label><input type="number" id="mChest" step="0.1" placeholder="e.g. 22"></div>
+      <div><label>Waist (in)</label><input type="number" id="mWaist" step="0.1" placeholder="e.g. 21"></div>
+      <div><label>Height (in)</label><input type="number" id="mHeight" step="0.1" placeholder="e.g. 38"></div>
+      <div><label>Hip (in, optional)</label><input type="number" id="mHip" step="0.1" placeholder="e.g. 25"></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" onclick="matchMeasurements()">Find Best Size</button>
+      <button class="btn btn-ghost" onclick="clearMatch()">Clear</button>
+    </div>
+
+    <div class="results" id="matchResults">
+      <h3>Best Match</h3>
+      <div class="meta" id="matchMeta"></div>
+      <div id="matchTables"></div>
+    </div>
+
+    <div class="actions" id="matchActions" style="display:none">
+      <button class="btn btn-primary" onclick="downloadPDF('match')">⬇ Download PDF</button>
+      <button class="btn btn-gold" onclick="openSaveModal('match')">✦ Save Record</button>
+    </div>
+  </section>
+
+  <!-- PANEL: SAVED -->
+  <section class="panel" id="panel-saved">
+    <h2>Saved Records</h2>
+    <p class="sub">Your saved measurement records are stored locally in this browser.</p>
+    <div class="saved-list" id="savedList"></div>
+    <div class="actions">
+      <button class="btn btn-ghost" onclick="exportAllSaved()">⬇ Export All (JSON)</button>
+      <button class="btn btn-danger" onclick="clearAllSaved()">Clear All</button>
+    </div>
+  </section>
+
+  <footer>
+    <div class="line"></div>
+    Crafted with care · For our boutique designers & stitchers
+  </footer>
+</div>
+
+<!-- SAVE MODAL -->
+<div id="modal" style="display:none;position:fixed;inset:0;background:rgba(10,53,40,.5);z-index:99;align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--ivory);border-radius:16px;padding:28px;max-width:440px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25)">
+    <h3 style="font-family:'Cormorant Garamond',serif;color:var(--emerald-deep);font-size:24px;margin-bottom:6px">Save Record</h3>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:18px">Add a customer name and notes for your records.</p>
+    <label>Customer Name</label>
+    <input type="text" id="saveName" placeholder="e.g. Ayesha Khan" style="margin-bottom:12px">
+    <label>Notes</label>
+    <textarea id="saveNotes" placeholder="Fabric choice, design notes, etc."></textarea>
+    <div class="actions" style="margin-top:18px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeSaveModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmSave()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   DATA — All three charts
+   ============================================================ */
+const cuttingChart = [
+  { age:'6–9M',    length:16.5, shoulder:4.375, armhole:5.75, chest:5.75, waist:5.75, neckW:1.875, neckD:2.5,  sleeve:10, sleeveOpen:3.5,   heightMid:26, weightMid:15 },
+  { age:'9–1Y',    length:18.5, shoulder:4.5,   armhole:5.5,  chest:6,    waist:6,    neckW:2,     neckD:2.75, sleeve:11, sleeveOpen:3.625, heightMid:29, weightMid:20 },
+  { age:'1–1.5Y',  length:20.5, shoulder:4.625, armhole:4.625,chest:6.25, waist:6.25, neckW:2.05,  neckD:3,    sleeve:12, sleeveOpen:3.75,  heightMid:31, weightMid:22 },
+  { age:'1.5–2Y',  length:22.5, shoulder:4.75,  armhole:5.7,  chest:6.5,  waist:6.5,  neckW:2.1,   neckD:3.25, sleeve:13, sleeveOpen:3.875, heightMid:34, weightMid:25 },
+  { age:'2–3Y',    length:23.5, shoulder:4.875, armhole:5.8,  chest:6.75, waist:6.63, neckW:2.2,   neckD:3.5,  sleeve:14, sleeveOpen:4,     heightMid:36, weightMid:28 },
+  { age:'3–4Y',    length:25.5, shoulder:5,     armhole:6,    chest:7,    waist:6.9,  neckW:2.25,  neckD:3.75, sleeve:15, sleeveOpen:4.125, heightMid:38, weightMid:31 },
+  { age:'4–5Y',    length:27.5, shoulder:5.125, armhole:6.2,  chest:7.25, waist:7.1,  neckW:2.3,   neckD:4,    sleeve:16, sleeveOpen:4.25,  heightMid:41, weightMid:35 },
+  { age:'5–6Y',    length:29.5, shoulder:5.25,  armhole:6.4,  chest:7.5,  waist:7.4,  neckW:2.4,   neckD:4.25, sleeve:17, sleeveOpen:4.375, heightMid:44, weightMid:39 },
+  { age:'6–7Y',    length:31.5, shoulder:5.375, armhole:6.5,  chest:7.75, waist:7.6,  neckW:2.45,  neckD:4.5,  sleeve:18, sleeveOpen:4.5,   heightMid:46, weightMid:43 },
+  { age:'7–8Y',    length:33.5, shoulder:5.5,   armhole:6.8,  chest:8,    waist:7.9,  neckW:2.5,   neckD:4.75, sleeve:19, sleeveOpen:4.625, heightMid:49, weightMid:48 },
+  { age:'8–9Y',    length:35.5, shoulder:5.625, armhole:6.8,  chest:8.25, waist:8.1,  neckW:2.55,  neckD:5,    sleeve:20, sleeveOpen:4.75,  heightMid:51, weightMid:54 },
+  { age:'9–10Y',   length:37.5, shoulder:5.75,  armhole:7,    chest:8.5,  waist:8.4,  neckW:2.6,   neckD:5.25, sleeve:21, sleeveOpen:4.875, heightMid:54, weightMid:60 }
+];
+
+const frockChart = [
+  { age:'2 Years',   waistCirc:'23–24',    dressLen:'19–20½',   backWaist:'8–8½',     bodyWaist:'18–19½',   napeKnee:'18–19½',  heightMid:34 },
+  { age:'3 Years',   waistCirc:'24–24½',   dressLen:'20½–22',   backWaist:'8½–9',     bodyWaist:'19½–20½',  napeKnee:'19½–21',  heightMid:37 },
+  { age:'4 Years',   waistCirc:'24½–25',   dressLen:'22–23½',   backWaist:'9–9½',     bodyWaist:'20½–21½',  napeKnee:'21–23',   heightMid:40 },
+  { age:'5 Years',   waistCirc:'25–26',    dressLen:'23½–25½',  backWaist:'9½–10',    bodyWaist:'21½–22½',  napeKnee:'23–25',   heightMid:43 },
+  { age:'4–5 Years', waistCirc:'—',        dressLen:'—',        backWaist:'9½–10½',   bodyWaist:'21½–22½',  napeKnee:'22–24½',  heightMid:41 },
+  { age:'6–7 Years', waistCirc:'—',        dressLen:'—',        backWaist:'10½–11½',  bodyWaist:'22½–23',   napeKnee:'25–27',   heightMid:46 },
+  { age:'8–10 Years',waistCirc:'—',        dressLen:'—',        backWaist:'12–13½',   bodyWaist:'23½–25',   napeKnee:'28–31',   heightMid:52 }
+];
+
+const pantChart = [
+  { age:'2 Years',     waist:21,   hip:23,     crotch:6.625, inseam:12.5,  outseam:18.5,  heightMid:34 },
+  { age:'3 Years',     waist:21.5, hip:24,     crotch:7.125, inseam:14.5,  outseam:21.0,  heightMid:37 },
+  { age:'4 Years',     waist:22,   hip:25,     crotch:7.625, inseam:16.5,  outseam:23.5,  heightMid:40 },
+  { age:'5 Years',     waist:22.5, hip:26,     crotch:7.875, inseam:18.5,  outseam:25.5,  heightMid:43 },
+  { age:'6/6X Years',  waist:23,   hip:27,     crotch:8.125, inseam:20.0,  outseam:27.5,  heightMid:45 },
+  { age:'7–8 Years',   waist:24,   hip:28.75,  crotch:8.75,  inseam:22.25, outseam:30.25, heightMid:49 },
+  { age:'9–10 Years',  waist:25,   hip:31.25,  crotch:9.25,  inseam:24.75, outseam:33.25, heightMid:54 },
+  { age:'11–12 Years', waist:26.5, hip:33.75,  crotch:9.75,  inseam:27.25, outseam:36.25, heightMid:57 },
+  { age:'13–14 Years', waist:28,   hip:36.25,  crotch:10.25, inseam:29.25, outseam:38.75, heightMid:61 }
+];
+
+/* ============================================================
+   TABS
+   ============================================================ */
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('panel-'+t.dataset.tab).classList.add('active');
+    if(t.dataset.tab==='saved') renderSaved();
+  });
+});
+
+/* ============================================================
+   AGE PANEL
+   ============================================================ */
+let currentAgeChart = 'cutting';
+const ageSelect = document.getElementById('ageSelect');
+
+function populateAgeSelect(){
+  ageSelect.innerHTML = '';
+  let data;
+  if(currentAgeChart==='cutting') data = cuttingChart;
+  else if(currentAgeChart==='frock') data = frockChart;
+  else data = pantChart;
+  data.forEach((r,i)=>{
+    const o=document.createElement('option');
+    o.value=i; o.textContent=r.age;
+    ageSelect.appendChild(o);
+  });
+  renderAgeResult();
+}
+document.querySelectorAll('#ageChartChips .chip').forEach(c=>{
+  c.addEventListener('click',()=>{
+    document.querySelectorAll('#ageChartChips .chip').forEach(x=>x.classList.remove('active'));
+    c.classList.add('active');
+    currentAgeChart = c.dataset.chart;
+    populateAgeSelect();
+  });
+});
+ageSelect.addEventListener('change', renderAgeResult);
+
+function renderAgeResult(){
+  const i = +ageSelect.value;
+  const res = document.getElementById('ageResults');
+  const tbody = document.querySelector('#ageTable tbody');
+  tbody.innerHTML = '';
+  let rows = [];
+  let title = '';
+  if(currentAgeChart==='cutting'){
+    const r = cuttingChart[i];
+    title = 'Cutting Measurements — ' + r.age;
+    rows = [
+      ['Length', r.length+' in'],
+      ['Shoulder', r.shoulder+' in'],
+      ['Armhole', r.armhole+' in'],
+      ['Chest', r.chest+' in'],
+      ['Waist', r.waist+' in'],
+      ['Neck Width', r.neckW+' in'],
+      ['Neck Depth', r.neckD+' in'],
+      ['Sleeve', r.sleeve+' in'],
+      ['Sleeve Opening', r.sleeveOpen+' in']
+    ];
+  } else if(currentAgeChart==='frock'){
+    const r = frockChart[i];
+    title = 'Lawn Frock — ' + r.age;
+    rows = [
+      ['Finished Waist Circumference', r.waistCirc+' in'],
+      ['Finished Dress Length', r.dressLen+' in'],
+      ['Back Waist Length', r.backWaist+' in'],
+      ['Body Waist Circumference', r.bodyWaist+' in'],
+      ['Nape to Below-Knee', r.napeKnee+' in']
+    ];
+  } else {
+    const r = pantChart[i];
+    title = 'Girls Pant — ' + r.age;
+    rows = [
+      ['Waist (finished)', r.waist+' in'],
+      ['Hip (finished)', r.hip+' in'],
+      ['Crotch Depth', r.crotch+' in'],
+      ['Inseam Length', r.inseam+' in'],
+      ['Outseam (Side)', r.outseam+' in']
+    ];
+  }
+  document.getElementById('ageTitle').textContent = title;
+  document.getElementById('ageMeta').textContent = 'All measurements in inches · Ease included where noted';
+  rows.forEach(([k,v])=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML = `<td>${k}</td><td class="val">${v}</td>`;
+    tbody.appendChild(tr);
+  });
+  res.classList.add('show');
+}
+populateAgeSelect();
+
+/* ============================================================
+   HEIGHT/WEIGHT CALCULATOR
+   ============================================================ */
+function toInches(v,u){ return u==='cm' ? v/2.54 : v; }
+function toLb(v,u){ return u==='kg' ? v*2.205 : v; }
+
+function estimateAgeFromHeight(hIn){
+  // Find two closest entries in cuttingChart by heightMid and interpolate
+  if(hIn <= cuttingChart[0].heightMid) return { idx:0, frac:0 };
+  if(hIn >= cuttingChart[cuttingChart.length-1].heightMid) return { idx:cuttingChart.length-2, frac:1 };
+  for(let i=0;i<cuttingChart.length-1;i++){
+    const a=cuttingChart[i].heightMid, b=cuttingChart[i+1].heightMid;
+    if(hIn>=a && hIn<=b){
+      return { idx:i, frac:(hIn-a)/(b-a) };
+    }
+  }
+  return { idx:0, frac:0 };
+}
+function lerp(a,b,t){ return a+(b-a)*t; }
+
+function interpolateCutting(hIn){
+  const {idx,frac} = estimateAgeFromHeight(hIn);
+  const a=cuttingChart[idx], b=cuttingChart[idx+1];
+  return {
+    age: `~${frac<0.5?a.age:b.age}`,
+    length: lerp(a.length,b.length,frac).toFixed(2),
+    shoulder: lerp(a.shoulder,b.shoulder,frac).toFixed(2),
+    armhole: lerp(a.armhole,b.armhole,frac).toFixed(2),
+    chest: lerp(a.chest,b.chest,frac).toFixed(2),
+    waist: lerp(a.waist,b.waist,frac).toFixed(2),
+    neckW: lerp(a.neckW,b.neckW,frac).toFixed(2),
+    neckD: lerp(a.neckD,b.neckD,frac).toFixed(2),
+    sleeve: lerp(a.sleeve,b.sleeve,frac).toFixed(2),
+    sleeveOpen: lerp(a.sleeveOpen,b.sleeveOpen,frac).toFixed(2)
+  };
+}
+
+function closestFrock(hIn){
+  let best=frockChart[0], diff=Infinity;
+  frockChart.forEach(r=>{
+    const d=Math.abs(r.heightMid-hIn);
+    if(d<diff){diff=d;best=r;}
+  });
+  return best;
+}
+function closestPant(hIn){
+  let best=pantChart[0], diff=Infinity;
+  pantChart.forEach(r=>{
+    const d=Math.abs(r.heightMid-hIn);
+    if(d<diff){diff=d;best=r;}
+  });
+  return best;
+}
+
+let lastCalc = null;
+function calculateByHW(){
+  const hRaw = parseFloat(document.getElementById('calcHeight').value);
+  const wRaw = parseFloat(document.getElementById('calcWeight').value);
+  if(!hRaw){ alert('Please enter height.'); return; }
+  const hIn = toInches(hRaw, document.getElementById('calcHeightUnit').value);
+  let wLb = null;
+  if(wRaw) wLb = toLb(wRaw, document.getElementById('calcWeightUnit').value);
+
+  const cut = interpolateCutting(hIn);
+  const frock = closestFrock(hIn);
+  const pant = closestPant(hIn);
+
+  lastCalc = { hIn, wLb, cut, frock, pant };
+
+  const container = document.getElementById('calcTables');
+  container.innerHTML = '';
+
+  // Cutting
+  container.appendChild(buildTable('Cutting Measurements (interpolated)', [
+    ['Length', cut.length+' in'],['Shoulder', cut.shoulder+' in'],
+    ['Armhole', cut.armhole+' in'],['Chest', cut.chest+' in'],
+    ['Waist', cut.waist+' in'],['Neck Width', cut.neckW+' in'],
+    ['Neck Depth', cut.neckD+' in'],['Sleeve', cut.sleeve+' in'],
+    ['Sleeve Opening', cut.sleeveOpen+' in']
+  ]));
+  // Frock
+  container.appendChild(buildTable('Lawn Frock — closest size: '+frock.age, [
+    ['Finished Waist Circumference', frock.waistCirc+' in'],
+    ['Finished Dress Length', frock.dressLen+' in'],
+    ['Back Waist Length', frock.backWaist+' in'],
+    ['Body Waist Circumference', frock.bodyWaist+' in'],
+    ['Nape to Below-Knee', frock.napeKnee+' in']
+  ]));
+  // Pant
+  container.appendChild(buildTable('Girls Pant — closest size: '+pant.age, [
+    ['Waist (finished)', pant.waist+' in'],
+    ['Hip (finished)', pant.hip+' in'],
+    ['Crotch Depth', pant.crotch+' in'],
+    ['Inseam Length', pant.inseam+' in'],
+    ['Outseam (Side)', pant.outseam+' in']
+  ]));
+
+  document.getElementById('calcMeta').textContent =
+    `Height: ${hIn.toFixed(1)} in` + (wLb?` · Weight: ${wLb.toFixed(1)} lb`:'') +
+    ` · Estimated age group: ${cut.age}`;
+  document.getElementById('calcResults').classList.add('show');
+  document.getElementById('calcActions').style.display = 'flex';
+}
+function clearCalc(){
+  document.getElementById('calcHeight').value='';
+  document.getElementById('calcWeight').value='';
+  document.getElementById('calcResults').classList.remove('show');
+  document.getElementById('calcActions').style.display='none';
+  lastCalc=null;
+}
+
+function buildTable(title, rows){
+  const wrap = document.createElement('div');
+  wrap.style.marginTop = '18px';
+  wrap.innerHTML = `<h4 style="font-family:'Cormorant Garamond',serif;color:var(--emerald-deep);font-size:18px;margin-bottom:8px">${title}</h4>`;
+  const t = document.createElement('table');
+  t.className = 'measure';
+  let html = '<tbody>';
+  rows.forEach(([k,v])=> html += `<tr><td>${k}</td><td class="val">${v}</td></tr>`);
+  html += '</tbody>';
+  t.innerHTML = html;
+  wrap.appendChild(t);
+  return wrap;
+}
+
+/* ============================================================
+   MATCH FROM MEASUREMENTS
+   ============================================================ */
+let lastMatch = null;
+function matchMeasurements(){
+  const chest = parseFloat(document.getElementById('mChest').value);
+  const waist = parseFloat(document.getElementById('mWaist').value);
+  const height = parseFloat(document.getElementById('mHeight').value);
+  const hip = parseFloat(document.getElementById('mHip').value);
+  if(!waist && !chest && !height){ alert('Please enter at least one measurement.'); return; }
+
+  // Score each cutting entry
+  let bestCut=null, bestScore=Infinity;
+  cuttingChart.forEach(r=>{
+    let s=0, n=0;
+    if(chest){ s+=Math.pow(chest-r.chest,2); n++; }
+    if(waist){ s+=Math.pow(waist-r.waist,2); n++; }
+    if(height){ s+=Math.pow(height-r.heightMid,2)*0.3; n++; }
+    const avg = n? s/n : Infinity;
+    if(avg<bestScore){ bestScore=avg; bestCut=r; }
+  });
+
+  // Frock — match by body waist
+  let bestFrock=null, bestFS=Infinity;
+  frockChart.forEach(r=>{
+    if(!waist) return;
+    const [lo,hi] = r.bodyWaist.split('–').map(x=>parseFloat(x.trim().replace('½','.5')));
+    if(isNaN(lo)) return;
+    const mid = (lo+hi)/2;
+    const d = Math.abs(waist-mid);
+    if(d<bestFS){ bestFS=d; bestFrock=r; }
+  });
+
+  // Pant — match by waist or hip
+  let bestPant=null, bestPS=Infinity;
+  pantChart.forEach(r=>{
+    let s=0,n=0;
+    if(waist){ s+=Math.pow(waist-r.waist,2); n++; }
+    if(hip){ s+=Math.pow(hip-r.hip,2); n++; }
+    const avg = n? s/n : Infinity;
+    if(avg<bestPS){ bestPS=avg; bestPant=r; }
+  });
+
+  lastMatch = { chest, waist, height, hip, bestCut, bestFrock, bestPant };
+
+  const container = document.getElementById('matchTables');
+  container.innerHTML = '';
+  if(bestCut){
+    container.appendChild(buildTable('Cutting — Best Match: '+bestCut.age, [
+      ['Length', bestCut.length+' in'],['Shoulder', bestCut.shoulder+' in'],
+      ['Armhole', bestCut.armhole+' in'],['Chest', bestCut.chest+' in'],
+      ['Waist', bestCut.waist+' in'],['Neck Width', bestCut.neckW+' in'],
+      ['Neck Depth', bestCut.neckD+' in'],['Sleeve', bestCut.sleeve+' in'],
+      ['Sleeve Opening', bestCut.sleeveOpen+' in']
+    ]));
+  }
+  if(bestFrock){
+    container.appendChild(buildTable('Lawn Frock — Best Match: '+bestFrock.age, [
+      ['Finished Waist Circumference', bestFrock.waistCirc+' in'],
+      ['Finished Dress Length', bestFrock.dressLen+' in'],
+      ['Back Waist Length', bestFrock.backWaist+' in'],
+      ['Body Waist Circumference', bestFrock.bodyWaist+' in'],
+      ['Nape to Below-Knee', bestFrock.napeKnee+' in']
+    ]));
+  }
+  if(bestPant){
+    container.appendChild(buildTable('Girls Pant — Best Match: '+bestPant.age, [
+      ['Waist (finished)', bestPant.waist+' in'],
+      ['Hip (finished)', bestPant.hip+' in'],
+      ['Crotch Depth', bestPant.crotch+' in'],
+      ['Inseam Length', bestPant.inseam+' in'],
+      ['Outseam (Side)', bestPant.outseam+' in']
+    ]));
+  }
+
+  const parts=[];
+  if(chest) parts.push('Chest '+chest+' in');
+  if(waist) parts.push('Waist '+waist+' in');
+  if(height) parts.push('Height '+height+' in');
+  if(hip) parts.push('Hip '+hip+' in');
+  document.getElementById('matchMeta').textContent = 'Input: ' + parts.join(' · ');
+  document.getElementById('matchResults').classList.add('show');
+  document.getElementById('matchActions').style.display = 'flex';
+}
+function clearMatch(){
+  ['mChest','mWaist','mHeight','mHip'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('matchResults').classList.remove('show');
+  document.getElementById('matchActions').style.display='none';
+  lastMatch=null;
+}
+
+/* ============================================================
+   PDF DOWNLOAD
+   ============================================================ */
+function downloadPDF(mode){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit:'pt', format:'a4' });
+  const pageW = doc.internal.pageSize.getWidth();
+
+  // Header
+  doc.setFillColor(15,76,58);
+  doc.rect(0,0,pageW,70,'F');
+  doc.setTextColor(250,246,239);
+  doc.setFont('times','bold');
+  doc.setFontSize(22);
+  doc.text('Boutique Sizing Report', pageW/2, 32, { align:'center' });
+  doc.setFont('times','italic');
+  doc.setFontSize(11);
+  doc.text('Measurement Record · Atelier Studio', pageW/2, 52, { align:'center' });
+
+  doc.setTextColor(30,40,35);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(10);
+  doc.text('Date: ' + new Date().toLocaleDateString(), 40, 95);
+
+  let y = 115;
+
+  if(mode==='age'){
+    const i = +ageSelect.value;
+    doc.setFont('times','bold'); doc.setFontSize(14);
+    doc.setTextColor(15,76,58);
+    doc.text(currentAgeChart==='cutting'?'Cutting Measurements':currentAgeChart==='frock'?'Lawn Frock':'Girls Pant', 40, y);
+    y+=18;
+    const rows = getAgeRows(i);
+    doc.autoTable({
+      startY:y, head:[['Measurement','Value']], body:rows,
+      theme:'plain', headStyles:{ fillColor:[15,76,58], textColor:[250,246,239], fontStyle:'bold' },
+      styles:{ fontSize:10, cellPadding:6 },
+      columnStyles:{ 1:{ halign:'right', fontStyle:'bold' } }
+    });
+  }
+  else if(mode==='calc' && lastCalc){
+    doc.setFont('times','bold'); doc.setFontSize(13); doc.setTextColor(15,76,58);
+    doc.text('Input: Height '+lastCalc.hIn.toFixed(1)+' in' + (lastCalc.wLb?(' · Weight '+lastCalc.wLb.toFixed(1)+' lb'):''), 40, y);
+    y+=18;
+    doc.autoTable({
+      startY:y, head:[['Cutting (interpolated)','Value']],
+      body:[
+        ['Length',lastCalc.cut.length+' in'],['Shoulder',lastCalc.cut.shoulder+' in'],
+        ['Armhole',lastCalc.cut.armhole+' in'],['Chest',lastCalc.cut.chest+' in'],
+        ['Waist',lastCalc.cut.waist+' in'],['Neck Width',lastCalc.cut.neckW+' in'],
+        ['Neck Depth',lastCalc.cut.neckD+' in'],['Sleeve',lastCalc.cut.sleeve+' in'],
+        ['Sleeve Opening',lastCalc.cut.sleeveOpen+' in']
+      ],
+      theme:'plain', headStyles:{ fillColor:[15,76,58], textColor:[250,246,239] },
+      styles:{ fontSize:10, cellPadding:5 }, columnStyles:{ 1:{ halign:'right' } }
+    });
+    y = doc.lastAutoTable.finalY + 16;
+    doc.autoTable({
+      startY:y, head:[['Lawn Frock — '+lastCalc.frock.age,'Value']],
+      body:[
+        ['Finished Waist Circ.',lastCalc.frock.waistCirc+' in'],
+        ['Dress Length',lastCalc.frock.dressLen+' in'],
+        ['Back Waist Length',lastCalc.frock.backWaist+' in'],
+        ['Body Waist Circ.',lastCalc.frock.bodyWaist+' in'],
+        ['Nape to Below-Knee',lastCalc.frock.napeKnee+' in']
+      ],
+      theme:'plain', headStyles:{ fillColor:[15,76,58], textColor:[250,246,239] },
+      styles:{ fontSize:10, cellPadding:5 }, columnStyles:{ 1:{ halign:'right' } }
+    });
+    y = doc.lastAutoTable.finalY + 16;
+    doc.autoTable({
+      startY:y, head:[['Girls Pant — '+lastCalc.pant.age,'Value']],
+      body:[
+        ['Waist',lastCalc.pant.waist+' in'],['Hip',lastCalc.pant.hip+' in'],
+        ['Crotch Depth',lastCalc.pant.crotch+' in'],
+        ['Inseam',lastCalc.pant.inseam+' in'],['Outseam',lastCalc.pant.outseam+' in']
+      ],
+      theme:'plain', headStyles:{ fillColor:[15,76,58], textColor:[250,246,239] },
+      styles:{ fontSize:10, cellPadding:5 }, columnStyles:{ 1:{ halign:'right' } }
+    });
+  }
+  else if(mode==='match' && lastMatch){
+    doc.setFont('times','bold'); doc.setFontSize(12); doc.setTextColor(15,76,58);
+    const parts=[];
+    if(lastMatch.chest) parts.push('Chest '+lastMatch.chest);
+    if(lastMatch.waist) parts.push('Waist '+lastMatch.waist);
+    if(lastMatch.height) parts.push('Height '+lastMatch.height);
+    if(lastMatch.hip) parts.push('Hip '+lastMatch.hip);
+    doc.text('Input: '+parts.join(' · ')+' (inches)', 40, y);
+    y+=18;
+    if(lastMatch.bestCut){
+      doc.autoTable({
+        startY:y, head:[['Cutting — '+lastMatch.bestCut.age,'Value']],
+        body:[
+          ['Length',lastMatch.bestCut.length+' in'],['Shoulder',lastMatch.bestCut.shoulder+' in'],
+          ['Armhole',lastMatch.bestCut.armhole+' in'],['Chest',lastMatch.bestCut.chest+' in'],
+          ['Waist',lastMatch.bestCut.waist+' in'],['Neck Width',lastMatch.bestCut.neckW+' in'],
+          ['Neck Depth',lastMatch.bestCut.neckD+' in'],['Sleeve',lastMatch.bestCut.sleeve+' in'],
+          ['Sleeve Opening',lastMatch.bestCut.sleeveOpen+' in']
+        ],
+        theme:'plain', headStyles:{ fillColor:[15,76,58], textColor:[250,246,239] },
+        styles:{ fontSize:10, cellPadding:5 }, columnStyles:{ 1:{ halign:'right' } }
+      });
+      y = doc.lastAutoTable.finalY + 12;
+    }
+    if(lastMatch.bestFrock){
+      doc.autoTable({
+        startY:y, head:[['Frock — '+lastMatch.bestFrock.age,'Value']],
+        body:[
+          ['Waist Circ.',lastMatch.bestFrock.waistCirc+' in'],
+          ['Dress Length',lastMatch.bestFrock.dressLen+' in'],
+          ['Back Waist',lastMatch.bestFrock.backWaist+' in'],
+          ['Body Waist',lastMatch.bestFrock.bodyWaist+' in'],
+          ['Nape-Knee',lastMatch.bestFrock.napeKnee+' in']
+        ],
+        theme:'plain', headStyles:{ fillColor:[15,76,58], textColor:[250,246,239] },
+        styles:{ fontSize:10, cellPadding:5 }, columnStyles:{ 1:{ halign:'right' } }
+      });
+      y = doc.lastAutoTable.finalY + 12;
+    }
+    if(lastMatch.bestPant){
+      doc.autoTable({
+        startY:y, head:[['Pant — '+lastMatch.bestPant.age,'Value']],
+        body:[
+          ['Waist',lastMatch.bestPant.waist+' in'],['Hip',lastMatch.bestPant.hip+' in'],
+          ['Crotch',lastMatch.bestPant.crotch+' in'],
+          ['Inseam',lastMatch.bestPant.inseam+' in'],['Outseam',lastMatch.bestPant.outseam+' in']
+        ],
+        theme:'plain', headStyles:{ fillColor:[15,76,58], textColor:[250,246,239] },
+        styles:{ fontSize:10, cellPadding:5 }, columnStyles:{ 1:{ halign:'right' } }
+      });
+    }
+  }
+
+  // Footer
+  const pageH = doc.internal.pageSize.getHeight();
+  doc.setFont('helvetica','italic'); doc.setFontSize(9); doc.setTextColor(120,130,125);
+  doc.text('Generated by Boutique Sizing Studio · For internal atelier use', pageW/2, pageH-25, { align:'center' });
+
+  doc.save('sizing-report-'+Date.now()+'.pdf');
+}
+
+function getAgeRows(i){
+  if(currentAgeChart==='cutting'){
+    const r=cuttingChart[i];
+    return [
+      ['Length',r.length+' in'],['Shoulder',r.shoulder+' in'],
+      ['Armhole',r.armhole+' in'],['Chest',r.chest+' in'],
+      ['Waist',r.waist+' in'],['Neck Width',r.neckW+' in'],
+      ['Neck Depth',r.neckD+' in'],['Sleeve',r.sleeve+' in'],
+      ['Sleeve Opening',r.sleeveOpen+' in']
+    ];
+  }
+  if(currentAgeChart==='frock'){
+    const r=frockChart[i];
+    return [
+      ['Finished Waist Circ.',r.waistCirc+' in'],
+      ['Dress Length',r.dressLen+' in'],
+      ['Back Waist Length',r.backWaist+' in'],
+      ['Body Waist Circ.',r.bodyWaist+' in'],
+      ['Nape to Below-Knee',r.napeKnee+' in']
+    ];
+  }
+  const r=pantChart[i];
+  return [
+    ['Waist',r.waist+' in'],['Hip',r.hip+' in'],
+    ['Crotch Depth',r.crotch+' in'],
+    ['Inseam',r.inseam+' in'],['Outseam',r.outseam+' in']
+  ];
+}
+
+/* ============================================================
+   SAVE / LOAD (localStorage)
+   ============================================================ */
+const STORAGE_KEY = 'boutique_sizing_records_v1';
+function getRecords(){
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+  catch(e){ return []; }
+}
+function setRecords(arr){ localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }
+
+let saveContext = null;
+function openSaveModal(mode){
+  saveContext = { mode };
+  if(mode==='age'){
+    saveContext.data = { chart: currentAgeChart, age: cuttingChart[+ageSelect.value]?.age || frockChart[+ageSelect.value]?.age || pantChart[+ageSelect.value]?.age, rows: getAgeRows(+ageSelect.value) };
+    saveContext.title = document.getElementById('ageTitle').textContent;
+  } else if(mode==='calc' && lastCalc){
+    saveContext.data = lastCalc;
+    saveContext.title = 'Height/Weight Calculation';
+  } else if(mode==='match' && lastMatch){
+    saveContext.data = lastMatch;
+    saveContext.title = 'Measurement Match';
+  } else {
+    alert('Please generate results before saving.');
+    return;
+  }
+  document.getElementById('saveName').value='';
+  document.getElementById('saveNotes').value='';
+  document.getElementById('modal').style.display='flex';
+}
+function closeSaveModal(){ document.getElementById('modal').style.display='none'; }
+function confirmSave(){
+  const name = document.getElementById('saveName').value.trim() || 'Unnamed';
+  const notes = document.getElementById('saveNotes').value.trim();
+  const rec = {
+    id: Date.now(),
+    date: new Date().toISOString(),
+    name, notes,
+    mode: saveContext.mode,
+    title: saveContext.title,
+    data: saveContext.data
+  };
+  const arr = getRecords();
+  arr.unshift(rec);
+  setRecords(arr);
+  closeSaveModal();
+  alert('Record saved ✓');
+}
+
+function renderSaved(){
+  const list = document.getElementById('savedList');
+  const arr = getRecords();
+  if(!arr.length){ list.innerHTML = '<div class="empty">No saved records yet.</div>'; return; }
+  list.innerHTML = '';
+  arr.forEach(r=>{
+    const div = document.createElement('div');
+    div.className = 'saved-item';
+    const d = new Date(r.date);
+    div.innerHTML = `
+      <div class="info">
+        <strong>${escapeHtml(r.name)}</strong>
+        <small>${d.toLocaleDateString()} · ${d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})} · ${r.title}</small>
+        <div class="tags">
+          <span class="tag">${r.mode==='age'?'By Age':r.mode==='calc'?'By Height/Weight':'By Measurements'}</span>
+          ${r.notes?`<span class="tag">📝 ${escapeHtml(r.notes).slice(0,40)}</span>`:''}
+        </div>
+      </div>
+      <div class="ctrl">
+        <button class="btn btn-ghost" onclick="viewSaved(${r.id})">View</button>
+        <button class="btn btn-primary" onclick="pdfSaved(${r.id})">PDF</button>
+        <button class="btn btn-danger" onclick="deleteSaved(${r.id})">Delete</button>
+      </div>`;
+    list.appendChild(div);
+  });
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function viewSaved(id){
+  const r = getRecords().find(x=>x.id===id);
+  if(!r) return;
+  alert(`${r.name}\n${new Date(r.date).toLocaleString()}\n\n${r.title}\n\nNotes: ${r.notes||'—'}\n\n(Use PDF button to download full report)`);
+}
+function pdfSaved(id){
+  const r = getRecords().find(x=>x.id===id);
+  if(!r) return;
+  // Rebuild context and generate
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit:'pt', format:'a4' });
+  const pageW = doc.internal.pageSize.getWidth();
+  doc.setFillColor(15,76,58); doc.rect(0,0,pageW,70,'F');
+  doc.setTextColor(250,246,239);
+  doc.setFont('times','bold'); doc.setFontSize(20);
+  doc.text('Sizing Report — '+r.name, pageW/2, 32, { align:'center' });
+  doc.setFont('times','italic'); doc.setFontSize(11);
+  doc.text(new Date(r.date).toLocaleString(), pageW/2, 52, { align:'center' });
+  doc.setTextColor(30,40,35); doc.setFont('helvetica','normal'); doc.setFontSize(10);
+  let y = 100;
+  if(r.notes){ doc.text('Notes: '+r.notes, 40, y); y+=18; }
+  doc.setFont('times','bold'); doc.setFontSize(14); doc.setTextColor(15,76,58);
+  doc.text(r.title, 40, y); y+=14;
+
+  // Serialize data to rows
+  let rows = [];
+  if(r.mode==='age'){
+    rows = r.data.rows;
+  } else if(r.mode==='calc'){
+    const c = r.data.cut;
+    rows = [
+      ['[Cutting] Length',c.length+' in'],['Shoulder',c.shoulder+' in'],['Armhole',c.armhole+' in'],
+      ['Chest',c.chest+' in'],['Waist',c.waist+' in'],['Neck Width',c.neckW+' in'],
+      ['Neck Depth',c.neckD+' in'],['Sleeve',c.sleeve+' in'],['Sleeve Opening',c.sleeveOpen+' in'],
+      ['[Frock '+r.data.frock.age+'] Waist Circ.',r.data.frock.waistCirc+' in'],
+      ['Dress Length',r.data.frock.dressLen+' in'],['Back Waist',r.data.frock.backWaist+' in'],
+      ['[Pant '+r.data.pant.age+'] Waist',r.data.pant.waist+' in'],
+      ['Hip',r.data.pant.hip+' in'],['Crotch',r.data.pant.crotch+' in'],
+      ['Inseam',r.data.pant.inseam+' in'],['Outseam',r.data.pant.outseam+' in']
+    ];
+  } else if(r.mode==='match'){
+    if(r.data.bestCut){
+      const c=r.data.bestCut;
+      rows.push(['[Cutting '+c.age+'] Length',c.length+' in'],['Shoulder',c.shoulder+' in'],
+        ['Chest',c.chest+' in'],['Waist',c.waist+' in']);
+    }
+    if(r.data.bestFrock){
+      const f=r.data.bestFrock;
+      rows.push(['[Frock '+f.age+'] Waist Circ.',f.waistCirc+' in'],['Dress Length',f.dressLen+' in']);
+    }
+    if(r.data.bestPant){
+      const p=r.data.bestPant;
+      rows.push(['[Pant '+p.age+'] Waist',p.waist+' in'],['Hip',p.hip+' in'],['Inseam',p.inseam+' in']);
+    }
+  }
+  doc.autoTable({
+    startY:y, head:[['Measurement','Value']], body:rows,
+    theme:'plain', headStyles:{ fillColor:[15,76,58], textColor:[250,246,239] },
+    styles:{ fontSize:10, cellPadding:5 }, columnStyles:{ 1:{ halign:'right' } }
+  });
+  doc.save('sizing-'+r.name.replace(/\s+/g,'-')+'-'+r.id+'.pdf');
+}
+function deleteSaved(id){
+  if(!confirm('Delete this record?')) return;
+  setRecords(getRecords().filter(r=>r.id!==id));
+  renderSaved();
+}
+function clearAllSaved(){
+  if(!confirm('Delete ALL saved records?')) return;
+  setRecords([]);
+  renderSaved();
+}
+function exportAllSaved(){
+  const arr = getRecords();
+  if(!arr.length){ alert('No records to export.'); return; }
+  const blob = new Blob([JSON.stringify(arr,null,2)], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'boutique-sizing-records-'+Date.now()+'.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>

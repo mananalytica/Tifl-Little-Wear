@@ -583,8 +583,16 @@ function initAdminPage(){
 
   async function refreshList(){
     const listRoot = document.getElementById('adminProductList');
-    const res = await fetch('/api/products');
-    const products = (await res.json()).map(normalizeProduct);
+    listRoot.innerHTML = '<p style="color:var(--ink-soft);">Loading…</p>';
+    let products;
+    try{
+      const res = await fetch('/api/products');
+      if(!res.ok) throw new Error('status '+res.status);
+      products = (await res.json()).map(normalizeProduct);
+    }catch(e){
+      listRoot.innerHTML = '<p style="color:var(--primary-dark);">Could not load products from the server ('+e.message+'). Check that MOTHERDUCK_TOKEN is set in Vercel and try refreshing.</p>';
+      return;
+    }
     listRoot.innerHTML = products.map(p=>`
       <div class="admin-row" data-id="${p.id}">
         <div class="admin-row-thumb">${productThumbHTML(p,'70%')}</div>
