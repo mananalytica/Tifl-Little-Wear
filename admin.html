@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Product Admin — Tifl Little Wear</title>
+<meta name="robots" content="noindex, nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="site">
+  <div class="nav-inner">
+    <a class="brand" href="index.html">
+      <span class="name">Tifl</span>
+      <span class="sub">Admin</span>
+    </a>
+    <div class="nav-right">
+      <a class="btn btn-ghost btn-sm" href="shop.html">View shop →</a>
+    </div>
+  </div>
+</header>
+
+<main class="wrap" id="adminRoot" style="padding:50px 0 90px;">
+  <div class="eyebrow">Studio admin</div>
+  <h1 style="font-size:28px;margin-bottom:8px;">Add and manage products</h1>
+  <p style="color:var(--ink-soft);font-size:14.5px;max-width:560px;">
+    Anything you add or edit here appears on the Shop page immediately — no
+    code changes needed. This page is not linked from the site menu and isn't
+    indexed by search engines, but it's not hidden by a real login — don't
+    share this URL publicly.
+  </p>
+
+  <div id="adminGate" style="max-width:420px;margin-top:34px;background:var(--bg-alt);border-radius:var(--radius);padding:28px;">
+    <h3 style="font-size:16px;margin-bottom:6px;">Enter your admin key</h3>
+    <p style="color:var(--ink-soft);font-size:13px;margin-bottom:16px;">This is the value you set as <code>ADMIN_KEY</code> in Vercel → Settings → Environment Variables.</p>
+    <input type="password" id="adminKeyInput" placeholder="Admin key" style="width:100%;border:1px solid var(--line);border-radius:var(--radius-sm);padding:11px 12px;font-size:14px;margin-bottom:12px;">
+    <button class="btn btn-primary btn-block" id="adminUnlockBtn">Unlock</button>
+  </div>
+
+  <div id="adminPanel" style="display:none;margin-top:34px;">
+    <div class="contact-grid">
+      <div class="contact-form" style="background:var(--bg-alt);">
+        <h2 id="apFormTitle" style="font-size:18px;margin-bottom:16px;">Add a new product</h2>
+        <form id="productForm">
+          <input type="hidden" id="apEditingId">
+          <div class="form-grid">
+            <div class="field full"><label for="apName">Product name</label><input id="apName" required type="text" placeholder="e.g. Block-print Kurta Set"></div>
+            <div class="field"><label for="apBrand">Brand</label><input id="apBrand" required type="text" placeholder="Partner brand name"></div>
+            <div class="field"><label for="apCategory">Category</label>
+              <select id="apCategory">
+                <option>Boys</option><option>Girls</option><option>Newborn</option><option>Occasion</option><option>Accessories</option>
+              </select>
+            </div>
+            <div class="field"><label for="apPrice">Price (PKR)</label><input id="apPrice" required type="number" min="0" placeholder="3200"></div>
+            <div class="field"><label for="apColor">Placeholder colour</label><input id="apColor" type="color" value="#108A00" style="height:42px;padding:4px;"></div>
+            <div class="field full"><label for="apImage">Photo URL (optional — leave blank to use the colour swatch above)</label><input id="apImage" type="text" placeholder="https://..."></div>
+            <div class="field full"><label for="apDescription">Description</label><textarea id="apDescription" rows="3" placeholder="A short, honest description of the piece."></textarea></div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:18px;">
+            <button type="button" class="btn btn-ghost" id="apCancelEdit">Clear</button>
+            <button type="submit" class="btn btn-primary btn-block">Save product</button>
+          </div>
+        </form>
+      </div>
+
+      <div>
+        <h2 style="font-size:18px;margin-bottom:16px;">Current products</h2>
+        <div id="adminProductList" class="admin-list"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+<script src="script.js"></script>
+</body>
+</html>

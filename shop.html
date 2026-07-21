@@ -29,6 +29,7 @@
       <a href="measurements.html">Measurements</a>
       <a href="booking.html">Booking</a>
       <a href="shop.html" aria-current="page">Shop</a>
+      <a href="blog.html">Blog</a>
       <a href="contact.html">Contact</a>
     </nav>
     <div class="nav-right">
@@ -78,6 +79,7 @@
       <div>
         <h5>Shop</h5>
         <a href="shop.html">Ready pieces</a>
+        <a href="blog.html">Blog</a>
       </div>
       <div>
         <h5>Contact</h5>
@@ -114,8 +116,17 @@
     <form id="checkoutForm">
       <div class="form-grid">
         <div class="field full"><label for="coName">Full name</label><input required type="text" id="coName"></div>
-        <div class="field full"><label for="coPhone">Phone</label><input required type="tel" id="coPhone"></div>
-        <div class="field full"><label for="coAddress">Delivery address, Lahore</label><input required type="text" id="coAddress"></div>
+        <div class="field"><label for="coPhone">Phone</label><input required type="tel" id="coPhone"></div>
+        <div class="field"><label for="coEmail">Email (optional)</label><input type="email" id="coEmail"></div>
+        <div class="field full"><label for="coAddress">Delivery address</label><input required type="text" id="coAddress"></div>
+        <div class="field"><label for="coCity">City</label><input type="text" id="coCity" value="Lahore"></div>
+        <div class="field"><label for="coPayment">Payment method</label>
+          <select id="coPayment">
+            <option>Cash on delivery</option>
+            <option>Bank transfer</option>
+          </select>
+        </div>
+        <div class="field full"><label for="coNotes">Order notes (optional)</label><textarea id="coNotes" rows="2" placeholder="Delivery instructions, gift note, etc."></textarea></div>
       </div>
       <div style="display:flex;justify-content:space-between;margin-top:18px;font-family:'IBM Plex Mono',monospace;font-size:14px;">
         <span>Total due</span><span id="coTotal">PKR 0</span>

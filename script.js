@@ -5,6 +5,39 @@
    single-page app) — safe to swap for a server-side cart later
    if you add user accounts.
 ============================================================= */
+
+/* ============================================================
+   ⚙️  EDIT ME — site-wide settings
+   Change a phone number, address, or WhatsApp number ONCE here
+   and it updates everywhere on the site automatically. Any
+   element in the HTML with data-config="phone" (etc) gets its
+   text filled in from here on page load — you don't need to
+   hunt through every HTML file.
+============================================================= */
+const CONFIG = {
+  phone: '+92 42 1234 5678',
+  phoneHref: 'tel:+924212345678',
+  whatsappNumber: '924212345678',        // country code + number, no + or spaces
+  email: 'studio@tiflwear.pk',
+  address: 'Tifl Little Wear, MM Alam Road area, Gulberg III, Lahore, Pakistan.',
+  hours: 'Open Tue–Sun, 11am – 8pm.',
+  currency: 'PKR'
+};
+
+function applyConfig(){
+  document.querySelectorAll('[data-config]').forEach(el=>{
+    const key = el.dataset.config;
+    if(CONFIG[key] !== undefined) el.textContent = CONFIG[key];
+  });
+  document.querySelectorAll('[data-config-href]').forEach(el=>{
+    const key = el.dataset.configHref;
+    if(CONFIG[key] !== undefined) el.setAttribute('href', CONFIG[key]);
+  });
+  document.querySelectorAll('.whatsapp-float').forEach(el=>{
+    el.setAttribute('href', 'https://wa.me/'+CONFIG.whatsappNumber);
+  });
+}
+
 window.dataLayer = window.dataLayer || [];
 
 const Store = {
@@ -48,22 +81,41 @@ function refreshCartBadge(){
 refreshCartBadge();
 
 /* ============================================================
-   PRODUCT CATALOGUE (used on shop.html)
+   PRODUCT CATALOGUE — now served from the backend (MotherDuck),
+   so products can be added/edited from admin.html without
+   touching code. Falls back to a small offline set only if the
+   API can't be reached, so the shop never renders empty.
 ============================================================= */
-const PRODUCTS = [
-  {id:'p1', name:'Block-print Kurta Set', brand:'Chinar Kids', category:'Boys', price:3200, color:'#108A00'},
-  {id:'p2', name:'Layered Cotton Frock', brand:'Bunain', category:'Girls', price:3800, color:'#0C6B00'},
-  {id:'p3', name:'Newborn Gown, 0-3m', brand:'Rui & Co', category:'Newborn', price:2100, color:'#5C6B61'},
-  {id:'p4', name:'Silk Waistcoat Set', brand:'Chinar Kids', category:'Occasion', price:6200, color:'#0F2B1B'},
-  {id:'p5', name:'Everyday Dungaree', brand:'Bunain', category:'Boys', price:2600, color:'#108A00'},
-  {id:'p6', name:'Embroidered Lehnga, Mini', brand:'Zainab Kids', category:'Occasion', price:8400, color:'#0C6B00'},
-  {id:'p7', name:'Soft Muslin Romper', brand:'Rui & Co', category:'Newborn', price:1900, color:'#5C6B61'},
-  {id:'p8', name:'Cotton Gharara Set', brand:'Zainab Kids', category:'Girls', price:4600, color:'#108A00'},
-  {id:'p9', name:'Hand-tied Rakhi Kurta', brand:'Chinar Kids', category:'Boys', price:2900, color:'#0F2B1B'},
-  {id:'p10', name:'Beaded Hairband Set', brand:'Zainab Kids', category:'Accessories', price:850, color:'#0C6B00'},
-  {id:'p11', name:'Embroidered Juti, Kids', brand:'Bunain', category:'Accessories', price:1600, color:'#5C6B61'},
-  {id:'p12', name:'Quilted Winter Sherwani', brand:'Chinar Kids', category:'Occasion', price:7300, color:'#108A00'}
+const FALLBACK_PRODUCTS = [
+  {product_id:'p1', name:'Block-print Kurta Set', brand:'Chinar Kids', category:'Boys', price:3200, currency:'PKR', image_url:'#108A00'},
+  {product_id:'p2', name:'Layered Cotton Frock', brand:'Bunain', category:'Girls', price:3800, currency:'PKR', image_url:'#0C6B00'}
 ];
+let PRODUCTS = [];
+
+async function loadProducts(){
+  try{
+    const res = await fetch('/api/products');
+    if(!res.ok) throw new Error('bad status');
+    const data = await res.json();
+    PRODUCTS = data.map(normalizeProduct);
+  }catch(e){
+    PRODUCTS = FALLBACK_PRODUCTS.map(normalizeProduct);
+  }
+  return PRODUCTS;
+}
+// Normalizes a product row (from API or fallback) to the shape the UI uses.
+function normalizeProduct(p){
+  return {
+    id: p.product_id || p.id,
+    name: p.name,
+    brand: p.brand || '',
+    category: p.category || 'Other',
+    price: p.price,
+    currency: p.currency || 'PKR',
+    image_url: p.image_url || '#108A00',
+    description: p.description || ''
+  };
+}
 
 /* ============================================================
    ECOMMERCE (GA4 / Google Ads enhanced ecommerce dataLayer)
@@ -107,10 +159,22 @@ function firePurchase(cart, transactionId){
 }
 
 /* ============================================================
-   SHOP PAGE
+   SHOP + PRODUCT DETAIL
 ============================================================= */
+function isColor(value){ return typeof value === 'string' && value.startsWith('#'); }
 function garmentIllustration(color){
   return `<svg viewBox="0 0 100 100" width="46%" height="46%"><path d="M50 10 L35 22 L20 18 L10 34 L22 42 L22 90 L78 90 L78 42 L90 34 L80 18 L65 22 Z" fill="${color}" opacity="0.85"/></svg>`;
+}
+// Returns thumbnail HTML for a product: a real photo if image_url is a URL,
+// otherwise a simple colour illustration (useful for products added before
+// photography exists).
+function productThumbHTML(p, size){
+  size = size || '46%';
+  if(p.image_url && !isColor(p.image_url)){
+    return `<img src="${p.image_url}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;">`;
+  }
+  const color = isColor(p.image_url) ? p.image_url : '#108A00';
+  return `<div style="background:${color}1A;width:100%;height:100%;display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 100 100" width="${size}" height="${size}"><path d="M50 10 L35 22 L20 18 L10 34 L22 42 L22 90 L78 90 L78 42 L90 34 L80 18 L65 22 Z" fill="${color}" opacity="0.85"/></svg></div>`;
 }
 function addToCart(p, qty=1){
   const cart = Store.get('tifl_cart', []);
@@ -142,7 +206,7 @@ function updateCartUI(){
   } else {
     itemsEl.innerHTML = cart.map(c=>`
       <div class="cart-line">
-        <div class="cart-thumb" style="background:${c.color}33;"></div>
+        <div class="cart-thumb" style="overflow:hidden;">${productThumbHTML(c,'70%')}</div>
         <div style="flex:1;">
           <div class="ci-name">${c.name}</div>
           <div class="ci-meta">${c.brand} · PKR ${c.price.toLocaleString()}</div>
@@ -166,13 +230,17 @@ function renderProducts(cat){
   if(!grid) return;
   grid.innerHTML = '';
   const list = (cat==='All') ? PRODUCTS : PRODUCTS.filter(p=>p.category===cat);
+  if(list.length===0){
+    grid.innerHTML = '<p style="color:var(--ink-soft);grid-column:1/-1;">No products in this category yet.</p>';
+    return;
+  }
   list.forEach(p=>{
     const card = document.createElement('div');
     card.className = 'p-card';
     card.innerHTML = `
-      <div class="p-thumb" style="background:${p.color}1A;">
+      <div class="p-thumb">
         <span class="brand-tag">${p.brand}</span>
-        ${garmentIllustration(p.color)}
+        ${productThumbHTML(p)}
       </div>
       <div class="p-info">
         <div class="pname">${p.name}</div>
@@ -184,14 +252,20 @@ function renderProducts(cat){
           </button>
         </div>
       </div>`;
-    card.querySelector('.p-thumb').addEventListener('click', ()=>{ fireSelectItem(p); fireViewItem(p); showToast(p.name+' — viewed'); });
+    // Clicking the product (not the add button) opens its detail page —
+    // view_item fires there, not here, so it matches one real "view" per page load.
+    card.addEventListener('click', ()=>{
+      fireSelectItem(p);
+      window.location.href = 'product.html?id='+encodeURIComponent(p.id);
+    });
     card.querySelector('[data-add]').addEventListener('click', (e)=>{ e.stopPropagation(); addToCart(p); });
     grid.appendChild(card);
   });
 }
 
-function initShopPage(){
+async function initShopPage(){
   if(!document.getElementById('productGrid')) return;
+  await loadProducts();
   renderProducts('All');
   fireViewItemList(PRODUCTS, 'Shop — All products');
   document.querySelectorAll('#chipRow .chip').forEach(chip=>{
@@ -223,16 +297,47 @@ function initShopPage(){
     checkoutModal.classList.add('show');
   });
   document.getElementById('coCancelBtn')?.addEventListener('click', closeCheckout);
-  document.getElementById('checkoutForm')?.addEventListener('submit', (e)=>{
+  document.getElementById('checkoutForm')?.addEventListener('submit', async (e)=>{
     e.preventDefault();
     const cart = Store.get('tifl_cart', []);
     fireAddShippingInfo(cart);
-    const txId = 'TLW-ORD-'+Math.floor(100000+Math.random()*900000);
+
+    const subtotal = cart.reduce((s,c)=>s+c.price*c.qty,0);
+    const shippingFee = 0;
+    const payload = {
+      customer_name: document.getElementById('coName').value,
+      phone: document.getElementById('coPhone').value,
+      email: document.getElementById('coEmail')?.value || null,
+      address: document.getElementById('coAddress').value,
+      city: document.getElementById('coCity')?.value || 'Lahore',
+      payment_method: document.getElementById('coPayment')?.value || 'Cash on delivery',
+      notes: document.getElementById('coNotes')?.value || null,
+      items: cart.map(c=>({id:c.id, name:c.name, brand:c.brand, price:c.price, qty:c.qty})),
+      subtotal, shipping_fee: shippingFee, total: subtotal+shippingFee, currency:'PKR'
+    };
+
+    const submitBtn = e.target.querySelector('button[type=submit]');
+    submitBtn.disabled = true; submitBtn.textContent = 'Placing order…';
+
+    let txId, placed = false;
+    try{
+      const res = await fetch('/api/orders', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout ? AbortSignal.timeout(2500) : undefined
+      });
+      if(res.ok){ const data = await res.json(); txId = data.order_id; placed = true; }
+      else throw new Error('non-200');
+    }catch(err){
+      txId = 'TLW-ORD-'+Math.floor(100000+Math.random()*900000)+'-OFFLINE';
+    }
+
     firePurchase(cart, txId);
     closeCheckout(); closeDrawer();
     Store.set('tifl_cart', []);
     refreshCartBadge(); updateCartUI();
-    showToast('Order '+txId+' placed — thank you!');
+    submitBtn.disabled = false; submitBtn.textContent = 'Place order';
+    showToast(placed ? 'Order '+txId+' placed — thank you!' : 'Order saved on this device — we will confirm by phone');
   });
 }
 
@@ -373,10 +478,199 @@ function initContactPage(){
   });
 }
 
+/* ============================================================
+   PRODUCT DETAIL PAGE (product.html?id=...)
+============================================================= */
+async function initProductPage(){
+  const root = document.getElementById('productDetail');
+  if(!root) return;
+  const id = new URLSearchParams(window.location.search).get('id');
+  const empty = document.getElementById('productEmpty');
+  if(!id){ root.style.display='none'; empty.style.display='block'; return; }
+
+  let p;
+  try{
+    const res = await fetch('/api/products/'+encodeURIComponent(id));
+    if(!res.ok) throw new Error('not found');
+    p = normalizeProduct(await res.json());
+  }catch(e){
+    root.style.display='none'; empty.style.display='block'; return;
+  }
+
+  // Fill in the page
+  document.getElementById('pdMedia').innerHTML = productThumbHTML(p, '55%');
+  document.getElementById('pdBrand').textContent = p.brand;
+  document.getElementById('pdName').textContent = p.name;
+  document.getElementById('pdCategory').textContent = p.category;
+  document.getElementById('pdPrice').textContent = p.currency+' '+p.price.toLocaleString();
+  document.getElementById('pdDescription').textContent = p.description || 'A ready-to-wear piece from our partner brands, checked for fit and finish before it reaches the shop.';
+  document.getElementById('pdAddBtn').addEventListener('click', ()=>{
+    const qty = parseInt(document.getElementById('pdQty').value, 10) || 1;
+    addToCart(p, qty);
+  });
+
+  // SEO/AEO: update title, meta description and inject Product JSON-LD now
+  // that we know which product this is — useful for search and, once you
+  // have real photos + GTINs, this schema is also what feeds Google Shopping.
+  document.title = p.name + ' — Tifl Little Wear';
+  const metaDesc = document.querySelector('meta[name="description"]');
+  if(metaDesc) metaDesc.setAttribute('content', p.name+' by '+p.brand+' — '+p.currency+' '+p.price+'. Ready-to-wear kidswear from Tifl Little Wear, Lahore.');
+
+  const ld = document.createElement('script');
+  ld.type = 'application/ld+json';
+  ld.textContent = JSON.stringify({
+    "@context":"https://schema.org",
+    "@type":"Product",
+    "name": p.name,
+    "brand": {"@type":"Brand","name": p.brand},
+    "category": p.category,
+    "description": p.description || p.name,
+    "offers": {
+      "@type":"Offer",
+      "priceCurrency": p.currency,
+      "price": p.price,
+      "availability": "https://schema.org/InStock",
+      "url": window.location.href
+    }
+  });
+  document.head.appendChild(ld);
+
+  fireViewItem(p);
+
+  // simple related products rail
+  await loadProducts();
+  const related = PRODUCTS.filter(x=>x.id!==p.id && x.category===p.category).slice(0,4);
+  const relatedRoot = document.getElementById('pdRelated');
+  if(relatedRoot && related.length){
+    relatedRoot.innerHTML = related.map(r=>`
+      <div class="p-card" data-id="${r.id}">
+        <div class="p-thumb"><span class="brand-tag">${r.brand}</span>${productThumbHTML(r)}</div>
+        <div class="p-info">
+          <div class="pname">${r.name}</div>
+          <div class="pcat">${r.category}</div>
+          <div class="prow"><span class="price">PKR ${r.price.toLocaleString()}</span></div>
+        </div>
+      </div>`).join('');
+    relatedRoot.querySelectorAll('.p-card').forEach(card=>{
+      card.addEventListener('click', ()=>{ window.location.href = 'product.html?id='+card.dataset.id; });
+    });
+  }
+}
+
+/* ============================================================
+   ADMIN PAGE (admin.html) — add/edit/remove products
+   Protected by a shared admin key (set ADMIN_KEY in Vercel env
+   vars, then enter the same value here when prompted). This is
+   simple shared-secret protection, fine for a small studio team
+   — not full user accounts.
+============================================================= */
+function initAdminPage(){
+  const root = document.getElementById('adminRoot');
+  if(!root) return;
+
+  function getKey(){ return sessionStorage.getItem('tifl_admin_key') || ''; }
+  function setKey(k){ try{ sessionStorage.setItem('tifl_admin_key', k); }catch(e){} }
+
+  async function apiCall(path, method, body){
+    const res = await fetch(path, {
+      method,
+      headers:{'Content-Type':'application/json', 'X-Admin-Key': getKey()},
+      body: body ? JSON.stringify(body) : undefined
+    });
+    if(res.status===401){ showToast('Admin key rejected — check it and try again'); throw new Error('unauthorized'); }
+    return res.json();
+  }
+
+  async function refreshList(){
+    const listRoot = document.getElementById('adminProductList');
+    const res = await fetch('/api/products');
+    const products = (await res.json()).map(normalizeProduct);
+    listRoot.innerHTML = products.map(p=>`
+      <div class="admin-row" data-id="${p.id}">
+        <div class="admin-row-thumb">${productThumbHTML(p,'70%')}</div>
+        <div class="admin-row-info">
+          <div class="admin-row-name">${p.name}</div>
+          <div class="admin-row-meta">${p.brand} · ${p.category} · ${p.currency} ${p.price.toLocaleString()}</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" data-edit="${p.id}">Edit</button>
+        <button class="btn btn-ghost btn-sm" data-del="${p.id}">Delete</button>
+      </div>`).join('') || '<p style="color:var(--ink-soft);">No products yet — add your first one above.</p>';
+
+    listRoot.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click', ()=>{
+      const p = products.find(x=>x.id===b.dataset.edit);
+      fillForm(p);
+    }));
+    listRoot.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click', async ()=>{
+      if(!confirm('Delete this product?')) return;
+      try{ await apiCall('/api/products/'+b.dataset.del, 'DELETE'); showToast('Deleted'); refreshList(); }
+      catch(e){}
+    }));
+  }
+
+  function fillForm(p){
+    document.getElementById('apEditingId').value = p.id;
+    document.getElementById('apName').value = p.name;
+    document.getElementById('apBrand').value = p.brand;
+    document.getElementById('apCategory').value = p.category;
+    document.getElementById('apPrice').value = p.price;
+    document.getElementById('apImage').value = isColor(p.image_url) ? '' : p.image_url;
+    document.getElementById('apColor').value = isColor(p.image_url) ? p.image_url : '#108A00';
+    document.getElementById('apDescription').value = p.description;
+    document.getElementById('apFormTitle').textContent = 'Editing: '+p.name;
+  }
+  function resetForm(){
+    document.getElementById('productForm').reset();
+    document.getElementById('apEditingId').value = '';
+    document.getElementById('apFormTitle').textContent = 'Add a new product';
+  }
+
+  document.getElementById('adminUnlockBtn')?.addEventListener('click', ()=>{
+    const key = document.getElementById('adminKeyInput').value.trim();
+    if(!key){ showToast('Enter your admin key'); return; }
+    setKey(key);
+    document.getElementById('adminGate').style.display = 'none';
+    document.getElementById('adminPanel').style.display = 'block';
+    refreshList();
+  });
+
+  document.getElementById('productForm')?.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const editingId = document.getElementById('apEditingId').value;
+    const imageUrl = document.getElementById('apImage').value.trim() || document.getElementById('apColor').value;
+    const payload = {
+      name: document.getElementById('apName').value,
+      brand: document.getElementById('apBrand').value,
+      category: document.getElementById('apCategory').value,
+      price: parseFloat(document.getElementById('apPrice').value),
+      currency: 'PKR',
+      image_url: imageUrl,
+      description: document.getElementById('apDescription').value,
+      active: true
+    };
+    try{
+      if(editingId) await apiCall('/api/products/'+editingId, 'PUT', payload);
+      else await apiCall('/api/products', 'POST', payload);
+      showToast('Saved');
+      resetForm();
+      refreshList();
+    }catch(e){ /* apiCall already toasts on 401 */ }
+  });
+  document.getElementById('apCancelEdit')?.addEventListener('click', resetForm);
+
+  if(getKey()){
+    document.getElementById('adminGate').style.display = 'none';
+    document.getElementById('adminPanel').style.display = 'block';
+    refreshList();
+  }
+}
+
 /* ---------- boot ---------- */
 document.addEventListener('DOMContentLoaded', ()=>{
+  applyConfig();
   initShopPage();
   initMeasurementsPage();
   initBookingPage();
   initContactPage();
+  initProductPage();
+  initAdminPage();
 });
