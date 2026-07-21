@@ -81,7 +81,7 @@ function refreshCartBadge(){
 refreshCartBadge();
 
 /* ============================================================
-   PRODUCT CATALOGUE — now served from the backend (MotherDuck),
+   PRODUCT CATALOGUE — served from the backend (MotherDuck),
    so products can be added/edited from admin.html without
    touching code. Falls back to a small offline set only if the
    API can't be reached, so the shop never renders empty.
@@ -103,7 +103,6 @@ async function loadProducts(){
   }
   return PRODUCTS;
 }
-// Normalizes a product row (from API or fallback) to the shape the UI uses.
 function normalizeProduct(p){
   return {
     id: p.product_id || p.id,
@@ -165,9 +164,6 @@ function isColor(value){ return typeof value === 'string' && value.startsWith('#
 function garmentIllustration(color){
   return `<svg viewBox="0 0 100 100" width="46%" height="46%"><path d="M50 10 L35 22 L20 18 L10 34 L22 42 L22 90 L78 90 L78 42 L90 34 L80 18 L65 22 Z" fill="${color}" opacity="0.85"/></svg>`;
 }
-// Returns thumbnail HTML for a product: a real photo if image_url is a URL,
-// otherwise a simple colour illustration (useful for products added before
-// photography exists).
 function productThumbHTML(p, size){
   size = size || '46%';
   if(p.image_url && !isColor(p.image_url)){
@@ -252,8 +248,6 @@ function renderProducts(cat){
           </button>
         </div>
       </div>`;
-    // Clicking the product (not the add button) opens its detail page —
-    // view_item fires there, not here, so it matches one real "view" per page load.
     card.addEventListener('click', ()=>{
       fireSelectItem(p);
       window.location.href = 'product.html?id='+encodeURIComponent(p.id);
@@ -333,11 +327,16 @@ async function initShopPage(){
     }
 
     firePurchase(cart, txId);
+
+    // Save order details for the thank-you page, then go there.
+    try{
+      sessionStorage.setItem('tifl_last_order', JSON.stringify(Object.assign({order_id: txId}, payload)));
+    }catch(e){ /* storage unavailable, thank-you page will show a fallback */ }
+
     closeCheckout(); closeDrawer();
     Store.set('tifl_cart', []);
     refreshCartBadge(); updateCartUI();
-    submitBtn.disabled = false; submitBtn.textContent = 'Place order';
-    showToast(placed ? 'Order '+txId+' placed — thank you!' : 'Order saved on this device — we will confirm by phone');
+    window.location.href = 'thank-you.html';
   });
 }
 
@@ -497,7 +496,6 @@ async function initProductPage(){
     root.style.display='none'; empty.style.display='block'; return;
   }
 
-  // Fill in the page
   document.getElementById('pdMedia').innerHTML = productThumbHTML(p, '55%');
   document.getElementById('pdBrand').textContent = p.brand;
   document.getElementById('pdName').textContent = p.name;
@@ -509,9 +507,6 @@ async function initProductPage(){
     addToCart(p, qty);
   });
 
-  // SEO/AEO: update title, meta description and inject Product JSON-LD now
-  // that we know which product this is — useful for search and, once you
-  // have real photos + GTINs, this schema is also what feeds Google Shopping.
   document.title = p.name + ' — Tifl Little Wear';
   const metaDesc = document.querySelector('meta[name="description"]');
   if(metaDesc) metaDesc.setAttribute('content', p.name+' by '+p.brand+' — '+p.currency+' '+p.price+'. Ready-to-wear kidswear from Tifl Little Wear, Lahore.');
@@ -537,7 +532,6 @@ async function initProductPage(){
 
   fireViewItem(p);
 
-  // simple related products rail
   await loadProducts();
   const related = PRODUCTS.filter(x=>x.id!==p.id && x.category===p.category).slice(0,4);
   const relatedRoot = document.getElementById('pdRelated');
