@@ -50,7 +50,10 @@ app.add_middleware(
 )
 
 
+_schema_ready = False
+
 def get_conn():
+    global _schema_ready
     # Connect at the account level first (no database name) so we can
     # create tifl_bookings if it doesn't exist yet, then attach to it.
     root = duckdb.connect(
@@ -64,6 +67,19 @@ def get_conn():
         f"md:{DB_NAME}?motherduck_token={MOTHERDUCK_TOKEN}",
         config={"home_directory": "/tmp"},
     )
+
+    # Only set up tables once per warm instance instead of on every single
+    # request — running 4 CREATE TABLE statements plus a seed check on every
+    # call was slow enough to risk timing out, which is what caused products
+    # to intermittently disappear.
+    if not _schema_ready:
+        ensure_schema(conn)
+        _schema_ready = True
+
+    return conn
+
+
+def ensure_schema(conn):
     conn.execute(
         """
         CREATE TABLE IF NOT EXISTS bookings (
@@ -133,7 +149,6 @@ def get_conn():
         """
     )
     seed_products_if_empty(conn)
-    return conn
 
 
 def seed_products_if_empty(conn):
@@ -243,7 +258,7 @@ def health():
     return {"status": "ok", "service": "tifl-booking-api"}
 
 
-@app.post("/bookings")
+@app.post("/api/bookings")
 def create_booking(booking: Booking):
     booking_id = "TLW-" + uuid.uuid4().hex[:8].upper()
     conn = get_conn()
@@ -272,7 +287,7 @@ def create_booking(booking: Booking):
     return {"booking_id": booking_id, "status": "confirmed"}
 
 
-@app.get("/bookings")
+@app.get("/api/bookings")
 def list_bookings():
     conn = get_conn()
     rows = conn.execute("SELECT * FROM bookings ORDER BY created_at DESC").fetchall()
@@ -281,7 +296,7 @@ def list_bookings():
     return [dict(zip(cols, row)) for row in rows]
 
 
-@app.post("/contact")
+@app.post("/api/contact")
 def create_contact_message(msg: ContactMessage):
     message_id = "MSG-" + uuid.uuid4().hex[:8].upper()
     conn = get_conn()
@@ -293,7 +308,7 @@ def create_contact_message(msg: ContactMessage):
     return {"message_id": message_id, "status": "received"}
 
 
-@app.get("/contact")
+@app.get("/api/contact")
 def list_contact_messages():
     conn = get_conn()
     rows = conn.execute("SELECT * FROM contact_messages ORDER BY created_at DESC").fetchall()
@@ -308,7 +323,7 @@ def list_contact_messages():
 # Set ADMIN_KEY in Vercel -> Settings -> Environment Variables, then enter
 # the same value into admin.html when prompted.
 
-@app.get("/products")
+@app.get("/api/products")
 def list_products():
     conn = get_conn()
     rows = conn.execute(
@@ -319,7 +334,7 @@ def list_products():
     return [dict(zip(cols, row)) for row in rows]
 
 
-@app.get("/products/{product_id}")
+@app.get("/api/products/{product_id}")
 def get_product(product_id: str):
     conn = get_conn()
     row = conn.execute(
@@ -332,7 +347,7 @@ def get_product(product_id: str):
     return dict(zip(cols, row))
 
 
-@app.post("/products")
+@app.post("/api/products")
 def create_product(product: Product, x_admin_key: str | None = Header(default=None)):
     require_admin(x_admin_key)
     product_id = "p-" + uuid.uuid4().hex[:8]
@@ -350,7 +365,7 @@ def create_product(product: Product, x_admin_key: str | None = Header(default=No
     return {"product_id": product_id, "status": "created"}
 
 
-@app.put("/products/{product_id}")
+@app.put("/api/products/{product_id}")
 def update_product(product_id: str, product: Product, x_admin_key: str | None = Header(default=None)):
     require_admin(x_admin_key)
     conn = get_conn()
@@ -366,7 +381,7 @@ def update_product(product_id: str, product: Product, x_admin_key: str | None = 
     return {"product_id": product_id, "status": "updated"}
 
 
-@app.delete("/products/{product_id}")
+@app.delete("/api/products/{product_id}")
 def delete_product(product_id: str, x_admin_key: str | None = Header(default=None)):
     require_admin(x_admin_key)
     conn = get_conn()
@@ -376,7 +391,7 @@ def delete_product(product_id: str, x_admin_key: str | None = Header(default=Non
 
 
 # ================= ORDERS =================
-@app.post("/orders")
+@app.post("/api/orders")
 def create_order(order: Order):
     order_id = "TLW-ORD-" + uuid.uuid4().hex[:8].upper()
     conn = get_conn()
@@ -394,7 +409,7 @@ def create_order(order: Order):
     return {"order_id": order_id, "status": "received"}
 
 
-@app.get("/orders")
+@app.get("/api/orders")
 def list_orders(x_admin_key: str | None = Header(default=None)):
     require_admin(x_admin_key)
     conn = get_conn()
