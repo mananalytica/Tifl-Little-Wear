@@ -57,7 +57,7 @@ p{margin:0;}
 .eyebrow.on-dark{color:#8FDC7E;}
 .eyebrow.on-dark::before{background:#8FDC7E;}
 
-/* stitch-line divider â€” signature motif, a dashed running seam */
+/* stitch-line divider — signature motif, a dashed running seam */
 .seam{height:1px;background-image:repeating-linear-gradient(90deg, var(--line) 0 10px, transparent 10px 18px);border:none;margin:0;}
 .seam.dark{background-image:repeating-linear-gradient(90deg, var(--line-dark) 0 10px, transparent 10px 18px);}
 
