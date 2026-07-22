@@ -140,39 +140,201 @@ main{min-height:60vh;}
 .craft-card h3{font-size:18px;margin-bottom:8px;}
 .craft-card p{color:var(--ink-soft);font-size:14.5px;}
 
-/* =============== REVIEWS (intriguing version) =============== */
-.reviews-block{background:var(--bg-alt);border-radius:var(--radius);padding:56px 8px;margin:80px 0;}
-.reviews-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;padding:0 28px 34px;}
-.rating-summary{display:flex;align-items:center;gap:18px;}
-.rating-summary .score{font-family:'Sora',sans-serif;font-size:44px;font-weight:700;line-height:1;}
-.rating-summary .stars{display:flex;gap:2px;margin-bottom:6px;}
-.rating-summary .stars svg{width:15px;height:15px;color:var(--star);}
-.rating-summary .count{font-size:12.6px;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;}
+/* =============== REVIEWS (Fabric Swatch Cards) =============== */
+.reviews-section {
+  padding: 80px 0;
+}
 
-.review-grid{display:grid;grid-template-columns:1.3fr 1fr 1fr;grid-auto-rows:auto;gap:16px;padding:0 28px;}
-.review-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:26px;display:flex;flex-direction:column;gap:14px;position:relative;}
-.review-card.featured{grid-row:span 2;background:var(--bg-dark);border-color:var(--bg-dark);color:var(--ink-on-dark);}
-.review-card .stars{display:flex;gap:2px;}
-.review-card .stars svg{width:14px;height:14px;color:var(--star);}
-.review-card .quote{font-size:15px;line-height:1.5;flex:1;}
-.review-card.featured .quote{font-family:'Sora',sans-serif;font-size:19px;font-weight:600;line-height:1.4;}
-.review-who{display:flex;align-items:center;gap:12px;}
-.avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-weight:700;font-size:14px;color:#fff;flex:none;}
-.review-who .meta{line-height:1.3;}
-.review-who .wname{font-size:13.5px;font-weight:600;}
-.review-who .wloc{font-size:11.8px;color:var(--ink-soft);}
-.review-card.featured .wloc{color:var(--ink-on-dark-soft);}
-.verified-badge{position:absolute;top:22px;right:22px;background:var(--primary-light);color:var(--primary-dark);font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;padding:4px 8px;border-radius:999px;}
-.review-card.featured .verified-badge{background:rgba(255,255,255,.12);color:#8FDC7E;}
-.garment-tag{font-family:'IBM Plex Mono',monospace;font-size:10.8px;color:var(--primary-dark);background:var(--primary-light);padding:3px 8px;border-radius:999px;display:inline-block;width:fit-content;}
-.review-card.featured .garment-tag{background:rgba(255,255,255,.1);color:#8FDC7E;}
+.rating-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin: 1rem 0 2rem;
+}
 
-footer.site{border-top:1px solid var(--line);padding:52px 0 40px;margin-top:60px;}
-.foot-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:32px;}
-.foot-grid h5{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:14px;}
-.foot-grid a{display:block;font-size:14px;color:var(--ink);text-decoration:none;padding:4px 0;}
-.foot-grid a:hover{color:var(--primary);}
-.foot-bottom{display:flex;justify-content:space-between;align-items:center;margin-top:44px;padding-top:22px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink-soft);flex-wrap:wrap;gap:10px;}
+.rating-score {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 700;
+  font-size: 2rem;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.rating-count {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.swatch-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2rem;
+}
+
+.swatch-card {
+  position: relative;
+  background-color: var(--bg-alt);
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 3px,
+      rgba(16, 138, 0, 0.04) 3px,
+      rgba(16, 138, 0, 0.04) 4px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 3px,
+      rgba(16, 138, 0, 0.04) 3px,
+      rgba(16, 138, 0, 0.04) 4px
+    );
+  padding: 2rem 1.5rem 1.5rem;
+  clip-path: polygon(
+    0% 3%, 5% 0%, 10% 3%, 15% 0%, 20% 3%, 25% 0%, 30% 3%, 35% 0%,
+    40% 3%, 45% 0%, 50% 3%, 55% 0%, 60% 3%, 65% 0%, 70% 3%, 75% 0%,
+    80% 3%, 85% 0%, 90% 3%, 95% 0%, 100% 3%,
+    97% 7%, 100% 11%, 97% 15%, 100% 19%, 97% 23%, 100% 27%,
+    97% 31%, 100% 35%, 97% 39%, 100% 43%, 97% 47%, 100% 51%,
+    97% 55%, 100% 59%, 97% 63%, 100% 67%, 97% 71%, 100% 75%,
+    97% 79%, 100% 83%, 97% 87%, 100% 91%, 97% 95%,
+    95% 100%, 90% 97%, 85% 100%, 80% 97%, 75% 100%, 70% 97%,
+    65% 100%, 60% 97%, 55% 100%, 50% 97%, 45% 100%, 40% 97%,
+    35% 100%, 30% 97%, 25% 100%, 20% 97%, 15% 100%, 10% 97%,
+    5% 100%, 0% 97%,
+    3% 93%, 0% 89%, 3% 85%, 0% 81%, 3% 77%, 0% 73%,
+    3% 69%, 0% 65%, 3% 61%, 0% 57%, 3% 53%, 0% 49%,
+    3% 45%, 0% 41%, 3% 37%, 0% 33%, 3% 29%, 0% 25%,
+    3% 21%, 0% 17%, 3% 13%, 0% 9%, 3% 5%
+  );
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.swatch-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow);
+}
+
+.swatch-inner {
+  position: relative;
+  border: 2px dashed var(--primary);
+  border-radius: 4px;
+  padding: 1.5rem 1.25rem 1.25rem;
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.swatch-quote p {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: var(--ink);
+  font-style: italic;
+  margin: 0;
+}
+
+.swatch-quote p::before {
+  content: '\201C';
+  font-family: 'Sora', sans-serif;
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--primary);
+  line-height: 0;
+  vertical-align: -0.5rem;
+  margin-right: 0.15rem;
+  opacity: 0.5;
+}
+
+.care-label {
+  position: relative;
+  background: #FFFFFF;
+  border: 1px solid var(--line);
+  padding: 0.6rem 0.85rem 0.5rem;
+  max-width: 180px;
+  margin-top: auto;
+  align-self: flex-start;
+}
+
+.care-label::before {
+  content: '';
+  position: absolute;
+  top: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 18px;
+  height: 7px;
+  background: var(--bg-alt);
+  border: 1px solid var(--line);
+  border-bottom: none;
+  border-radius: 3px 3px 0 0;
+}
+
+.care-label::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border: 1px dashed var(--line);
+  pointer-events: none;
+}
+
+.care-label-content {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.7rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  position: relative;
+  z-index: 1;
+}
+
+.care-label-name {
+  font-weight: 600;
+  font-size: 0.75rem;
+  color: var(--ink);
+  letter-spacing: 0.02em;
+}
+
+.care-label-location {
+  font-size: 0.65rem;
+  margin-top: 0.1rem;
+}
+
+.care-label-booking {
+  font-size: 0.6rem;
+  color: var(--primary);
+  margin-top: 0.25rem;
+  letter-spacing: 0.01em;
+}
+
+@media (max-width: 980px) {
+  .swatch-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 560px) {
+  .swatch-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .swatch-card {
+    padding: 1.5rem 1.25rem 1.25rem;
+  }
+
+  .swatch-inner {
+    min-height: 220px;
+    padding: 1.25rem 1rem 1rem;
+  }
+
+  .care-label {
+    max-width: 160px;
+  }
+}
 
 /* =============== MEASUREMENTS =============== */
 .process-rail{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin:10px 0 64px;}
