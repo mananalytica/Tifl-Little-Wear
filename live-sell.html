@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Sale — Tifl Little Wear</title>
+  <meta name="description" content="Join our live sale event. Shop featured items in real-time.">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+  
+  <!-- Live Sale Specific Styles -->
+  <style>
+    .live-sale-container {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 28px;
+      padding: 28px 0;
+    }
+    
+    .video-section {
+      position: sticky;
+      top: 88px;
+      align-self: start;
+    }
+    
+    .video-wrapper {
+      position: relative;
+      background: var(--bg-dark);
+      border-radius: var(--radius);
+      overflow: hidden;
+      aspect-ratio: 16/9;
+    }
+    
+    .video-wrapper video,
+    .video-wrapper iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    
+    .live-badge {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      background: #ff3b30;
+      color: #fff;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      z-index: 10;
+      animation: live-pulse 2s infinite;
+    }
+    
+    .live-badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: #fff;
+      border-radius: 50%;
+    }
+    
+    @keyframes live-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.8; }
+    }
+    
+    .viewer-count {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: rgba(0,0,0,0.6);
+      color: #fff;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      z-index: 10;
+    }
+    
+    .video-controls {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+    
+    .current-item-banner {
+      background: var(--primary-light);
+      border: 1px solid var(--primary);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      margin-top: 16px;
+      display: none;
+    }
+    
+    .current-item-banner.show {
+      display: block;
+    }
+    
+    .current-item-banner .label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--primary-dark);
+      margin-bottom: 8px;
+    }
+    
+    .current-item-banner .item-name {
+      font-family: 'Sora', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 6px;
+    }
+    
+    .current-item-banner .item-price {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--primary);
+    }
+    
+    .products-sidebar {
+      position: sticky;
+      top: 88px;
+      align-self: start;
+    }
+    
+    .sidebar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    
+    .sidebar-header h2 {
+      font-size: 18px;
+    }
+    
+    .product-timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: calc(100vh - 200px);
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    
+    .timeline-item {
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+    
+    .timeline-item:hover {
+      border-color: var(--primary);
+      transform: translateX(3px);
+    }
+    
+    .timeline-item.active {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+    
+    .timeline-item.sold-out {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+    
+    .timeline-item-grid {
+      display: grid;
+      grid-template-columns: 50px 1fr auto;
+      gap: 12px;
+      align-items: center;
+    }
+    
+    .timeline-thumb {
+      width: 50px;
+      height: 50px;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      background: var(--bg-alt);
+    }
+    
+    .timeline-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .timeline-info {
+      min-width: 0;
+    }
+    
+    .timeline-info .name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .timeline-info .time {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      color: var(--ink-soft);
+      margin-top: 2px;
+    }
+    
+    .timeline-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+    }
+    
+    .timeline-price {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--primary);
+    }
+    
+    .add-to-cart-sm {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+    }
+    
+    .add-to-cart-sm:hover {
+      background: var(--primary-dark);
+    }
+    
+    .sold-badge {
+      background: var(--ink);
+      color: #fff;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      text-transform: uppercase;
+    }
+    
+    .stream-platforms {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+    
+    .stream-platforms .label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--ink-soft);
+      margin-bottom: 10px;
+    }
+    
+    .platform-links {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    .platform-link {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      background: var(--bg-alt);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      font-size: 12px;
+      text-decoration: none;
+      color: var(--ink);
+      transition: all 0.2s;
+    }
+    
+    .platform-link:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+    
+    .platform-link svg {
+      width: 16px;
+      height: 16px;
+    }
+    
+    .chat-section {
+      margin-top: 28px;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    
+    .chat-header {
+      padding: 14px 18px;
+      background: var(--bg-alt);
+      border-bottom: 1px solid var(--line);
+      font-family: 'Sora', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    
+    .chat-messages {
+      height: 300px;
+      overflow-y: auto;
+      padding: 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .chat-message {
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    
+    .chat-message .username {
+      font-weight: 600;
+      color: var(--primary);
+    }
+    
+    .chat-message .time {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      color: var(--ink-soft);
+      margin-left: 8px;
+    }
+    
+    .chat-input-wrapper {
+      padding: 12px 18px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      gap: 8px;
+    }
+    
+    .chat-input-wrapper input {
+      flex: 1;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-family: 'Inter', sans-serif;
+    }
+    
+    .chat-input-wrapper button {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+    }
+    
+    @media (max-width: 980px) {
+      .live-sale-container {
+        grid-template-columns: 1fr;
+      }
+      
+      .video-section,
+      .products-sidebar {
+        position: relative;
+        top: 0;
+      }
+      
+      .products-sidebar {
+        order: 2;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- =============== HEADER / NAV =============== -->
+  <header class="site">
+    <div class="nav-inner">
+      <a href="index.html" class="brand">
+        <span class="name">Tifl</span>
+        <span class="sub">Little Wear · Lahore</span>
+      </a>
+      <nav class="tabs">
+        <a href="index.html">Home</a>
+        <a href="measurements.html">Measurements</a>
+        <a href="booking.html">Booking</a>
+        <a href="shop.html">Shop</a>
+        <a href="live-sell.html" aria-current="page">Live Sale</a>
+        <a href="blog.html">Blog</a>
+        <a href="contact.html">Contact</a>
+      </nav>
+      <div class="nav-right">
+        <a href="shop.html" class="cart-btn">
+          <span id="cartCount">0</span>
+        </a>
+        <button class="menu-toggle" aria-label="Toggle menu">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- =============== MAIN CONTENT =============== -->
+  <main>
+    <div class="wrap">
+      <div class="section-head" style="padding: 40px 0 20px;">
+        <div class="eyebrow">Live Event</div>
+        <h1>Live Sale — Shop in Real-Time</h1>
+        <p class="lede">Watch our live presentation and shop featured items instantly. Click any product to add to cart while you watch.</p>
+      </div>
+
+      <div class="live-sale-container">
+        <!-- Video Section -->
+        <div class="video-section">
+          <div class="video-wrapper">
+            <div class="live-badge">LIVE</div>
+            <div class="viewer-count">👁️ <span id="viewerCount">234</span> watching</div>
+            
+            <!-- Option 1: HTML5 Video (for looped/pre-recorded content) -->
+            <video id="liveVideo" controls autoplay loop muted playsinline>
+              <source src="assets/live-sale-video.mp4" type="video/mp4">
+              <!-- Fallback for YouTube embed -->
+            </video>
+            
+            <!-- Option 2: YouTube Live Embed (uncomment to use) -->
+            <!-- <iframe 
+              id="youtubeLive"
+              src="https://www.youtube.com/embed/YOUR_VIDEO_ID?autoplay=1&mute=1" 
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+              allowfullscreen>
+            </iframe> -->
+            
+            <!-- Option 3: Facebook Live Embed (uncomment to use) -->
+            <!-- <iframe 
+              src="https://www.facebook.com/plugins/video.php?href=YOUR_FACEBOOK_VIDEO_URL&show_text=0&width=560" 
+              allowfullscreen>
+            </iframe> -->
+          </div>
+
+          <div class="video-controls">
+            <button class="btn btn-sm btn-primary" onclick="toggleMute()">🔊 Toggle Sound</button>
+            <button class="btn btn-sm btn-ghost" onclick="toggleFullscreen()">⛶ Fullscreen</button>
+            <button class="btn btn-sm btn-ghost" onclick="shareStream()">📤 Share</button>
+          </div>
+
+          <!-- Current Item Banner -->
+          <div class="current-item-banner" id="currentItemBanner">
+            <div class="label">Now Featuring</div>
+            <div class="item-name" id="currentItemName">Product Name</div>
+            <div class="item-price" id="currentItemPrice">PKR 0</div>
+          </div>
+
+          <!-- Chat Section -->
+          <div class="chat-section">
+            <div class="chat-header">Live Chat</div>
+            <div class="chat-messages" id="chatMessages">
+              <div class="chat-message">
+                <span class="username">Sana K.</span>
+                <span class="time">2m ago</span>
+                <div>Love the embroidery on that kurta!</div>
+              </div>
+              <div class="chat-message">
+                <span class="username">Bilal A.</span>
+                <span class="time">1m ago</span>
+                <div>What's the price for the blue set?</div>
+              </div>
+            </div>
+            <div class="chat-input-wrapper">
+              <input type="text" id="chatInput" placeholder="Type your message...">
+              <button onclick="sendMessage()">Send</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Products Sidebar -->
+        <div class="products-sidebar">
+          <div class="sidebar-header">
+            <h2>Featured Products</h2>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--ink-soft);">
+              <span id="productCount">6</span> items
+            </span>
+          </div>
+
+          <div class="product-timeline" id="productTimeline">
+            <!-- Products will be dynamically inserted here -->
+          </div>
+
+          <!-- Multi-Platform Streaming Links -->
+          <div class="stream-platforms">
+            <div class="label">Watch on other platforms</div>
+            <div class="platform-links">
+              <a href="https://youtube.com" target="_blank" class="platform-link">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                YouTube
+              </a>
+              <a href="https://facebook.com" target="_blank" class="platform-link">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                Facebook
+              </a>
+              <a href="https://tiktok.com" target="_blank" class="platform-link">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.525.75c.34-.007.68.01 1.02.048 3.042.351 5.152 3.288 4.797 6.334-.18 1.54-.96 2.95-2.14 3.95-.99.84-2.23 1.36-3.54 1.49-.36.04-.72.05-1.08.04V19.5c0 3.04-2.46 5.5-5.5 5.5s-5.5-2.46-5.5-5.5c0-2.69 1.93-4.93 4.48-5.41.35-.07.71-.1 1.07-.09v6.93c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V.75z"/></svg>
+                TikTok
+              </a>
+              <a href="https://instagram.com" target="_blank" class="platform-link">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                Instagram
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- =============== FOOTER =============== -->
+  <footer class="site">
+    <div class="wrap">
+      <div class="foot-grid">
+        <div>
+          <h5>Tifl</h5>
+          <p style="font-size:14px;color:var(--ink-soft);margin-top:10px;max-width:280px;">A made-to-measure kidswear studio working out of Gulberg, Lahore. Measured by hand, stitched by hand.</p>
+        </div>
+        <div>
+          <h5>Studio</h5>
+          <a href="index.html">Home</a>
+          <a href="measurements.html">Our process</a>
+          <a href="booking.html">Book a fitting</a>
+        </div>
+        <div>
+          <h5>Shop</h5>
+          <a href="shop.html">Ready pieces</a>
+          <a href="blog.html">Blog</a>
+        </div>
+        <div>
+          <h5>Contact</h5>
+          <a href="tel:+924212345678">+92 42 1234 5678</a>
+          <a href="mailto:studio@tiflwear.pk">studio@tiflwear.pk</a>
+          <p style="font-size:14px;color:var(--ink-soft);margin-top:4px;">Gulberg III, Lahore</p>
+        </div>
+      </div>
+      <div class="foot-bottom">
+        <span>© 2026 Tifl Little Wear, Lahore.</span>
+        <span>Made-to-measure kidswear, stitched in Lahore</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- =============== WHATSAPP FLOAT BUTTON =============== -->
+  <a href="https://wa.me/924212345678" class="whatsapp-float" target="_blank" rel="noopener" aria-label="Chat with us on WhatsApp">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+  </a>
+
+  <!-- Site Scripts -->
+  <script src="script.js"></script>
+  
+  <!-- Live Sale Specific Scripts -->
+  <script>
+    // Live sale products data
+    const liveProducts = [
+      {
+        id: 101,
+        name: "Embroidered Kurta Set - Blue",
+        price: 3500,
+        timestamp: 0, // seconds into video
+        image: "assets/products/kurta-blue.jpg",
+        inStock: true,
+        description: "Hand-embroidered cotton kurta with matching pajama"
+      },
+      {
+        id: 102,
+        name: "Occasion Fro - Pink",
+        price: 4200,
+        timestamp: 180, // 3 minutes
+        image: "assets/products/frock-pink.jpg",
+        inStock: true,
+        description: "Festive frock with sequin work"
+      },
+      {
+        id: 103,
+        name: "Casual Shirt & Pant Set",
+        price: 2800,
+        timestamp: 360, // 6 minutes
+        image: "assets/products/casual-set.jpg",
+        inStock: true,
+        description: "Comfortable everyday wear"
+      },
+      {
+        id: 104,
+        name: "Waistcoat & Kurta - Grey",
+        price: 3800,
+        timestamp: 540, // 9 minutes
+        image: "assets/products/waistcoat-grey.jpg",
+        inStock: false,
+        description: "Formal three-piece set"
+      },
+      {
+        id: 105,
+        name: "Summer Cotton Frock",
+        price: 2400,
+        timestamp: 720, // 12 minutes
+        image: "assets/products/summer-frock.jpg",
+        inStock: true,
+        description: "Light and breezy for hot days"
+      },
+      {
+        id: 106,
+        name: "Eid Special Kurta Pajama",
+        price: 4500,
+        timestamp: 900, // 15 minutes
+        image: "assets/products/eid-kurta.jpg",
+        inStock: true,
+        description: "Premium fabric with intricate embroidery"
+      }
+    ];
+
+    let currentProductIndex = 0;
+    let videoElement = document.getElementById('liveVideo');
+
+    // Initialize product timeline
+    function renderProductTimeline() {
+      const timeline = document.getElementById('productTimeline');
+      timeline.innerHTML = '';
+      
+      liveProducts.forEach((product, index) => {
+        const item = document.createElement('div');
+        item.className = `timeline-item ${index === currentProductIndex ? 'active' : ''} ${!product.inStock ? 'sold-out' : ''}`;
+        item.onclick = () => jumpToProduct(index);
+        
+        const minutes = Math.floor(product.timestamp / 60);
+        const seconds = product.timestamp % 60;
+        const timeStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        
+        item.innerHTML = `
+          <div class="timeline-item-grid">
+            <div class="timeline-thumb">
+              <img src="${product.image}" alt="${product.name}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2250%22 height=%2250%22><rect fill=%22%23F3FAF3%22 width=%2250%22 height=%2250%22/></svg>'">
+            </div>
+            <div class="timeline-info">
+              <div class="name">${product.name}</div>
+              <div class="time">${timeStr} into stream</div>
+            </div>
+            <div class="timeline-actions">
+              <div class="timeline-price">PKR ${product.price.toLocaleString()}</div>
+              ${product.inStock 
+                ? `<button class="add-to-cart-sm" onclick="event.stopPropagation(); addToCart(${product.id})">Add to Cart</button>`
+                : `<span class="sold-badge">Sold Out</span>`
+              }
+            </div>
+          </div>
+        `;
+        
+        timeline.appendChild(item);
+      });
+      
+      document.getElementById('productCount').textContent = liveProducts.length;
+    }
+
+    // Jump to specific product timestamp
+    function jumpToProduct(index) {
+      currentProductIndex = index;
+      const product = liveProducts[index];
+      
+      if (videoElement) {
+        videoElement.currentTime = product.timestamp;
+        videoElement.play();
+      }
+      
+      updateCurrentItemBanner();
+      renderProductTimeline();
+    }
+
+    // Update current item banner
+    function updateCurrentItemBanner() {
+      const banner = document.getElementById('currentItemBanner');
+      const product = liveProducts[currentProductIndex];
+      
+      if (videoElement && videoElement.currentTime >= product.timestamp) {
+        banner.classList.add('show');
+        document.getElementById('currentItemName').textContent = product.name;
+        document.getElementById('currentItemPrice').textContent = `PKR ${product.price.toLocaleString()}`;
+      } else {
+        banner.classList.remove('show');
+      }
+    }
+
+    // Video time update handler
+    if (videoElement) {
+      videoElement.addEventListener('timeupdate', () => {
+        const currentTime = videoElement.currentTime;
+        
+        // Find current product based on timestamp
+        for (let i = liveProducts.length - 1; i >= 0; i--) {
+          if (currentTime >= liveProducts[i].timestamp) {
+            if (currentProductIndex !== i) {
+              currentProductIndex = i;
+              updateCurrentItemBanner();
+              renderProductTimeline();
+            }
+            break;
+          }
+        }
+      });
+    }
+
+    // Add to cart function
+    function addToCart(productId) {
+      const product = liveProducts.find(p => p.id === productId);
+      if (!product || !product.inStock) return;
+      
+      // Get existing cart or create new
+      let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+      
+      // Check if already in cart
+      const existingItem = cart.find(item => item.id === productId);
+      if (existingItem) {
+        existingItem.quantity += 1;
+      } else {
+        cart.push({
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          image: product.image,
+          quantity: 1
+        });
+      }
+      
+      localStorage.setItem('cart', JSON.stringify(cart));
+      updateCartCount();
+      
+      // Show toast notification
+      showToast(`${product.name} added to cart!`);
+    }
+
+    // Update cart count
+    function updateCartCount() {
+      const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+      const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+      document.getElementById('cartCount').textContent = count;
+    }
+
+    // Show toast notification
+    function showToast(message) {
+      const toast = document.createElement('div');
+      toast.className = 'toast show';
+      toast.textContent = message;
+      toast.style.cssText = `
+        position: fixed;
+        bottom: 26px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--ink);
+        color: #fff;
+        padding: 13px 22px;
+        border-radius: 999px;
+        font-size: 13.5px;
+        z-index: 1000;
+      `;
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.remove();
+      }, 3000);
+    }
+
+    // Toggle video mute
+    function toggleMute() {
+      if (videoElement) {
+        videoElement.muted = !videoElement.muted;
+      }
+    }
+
+    // Toggle fullscreen
+    function toggleFullscreen() {
+      const videoWrapper = document.querySelector('.video-wrapper');
+      if (!document.fullscreenElement) {
+        videoWrapper.requestFullscreen().catch(err => {
+          console.log(`Error attempting to enable fullscreen: ${err.message}`);
+        });
+      } else {
+        document.exitFullscreen();
+      }
+    }
+
+    // Share stream
+    function shareStream() {
+      if (navigator.share) {
+        navigator.share({
+          title: 'Tifl Live Sale',
+          text: 'Join our live sale event!',
+          url: window.location.href
+        });
+      } else {
+        // Fallback: copy to clipboard
+        navigator.clipboard.writeText(window.location.href);
+        showToast('Link copied to clipboard!');
+      }
+    }
+
+    // Chat functionality
+    function sendMessage() {
+      const input = document.getElementById('chatInput');
+      const message = input.value.trim();
+      
+      if (!message) return;
+      
+      const chatMessages = document.getElementById('chatMessages');
+      const now = new Date();
+      const timeStr = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+      
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'chat-message';
+      messageDiv.innerHTML = `
+        <span class="username">You</span>
+        <span class="time">${timeStr}</span>
+        <div>${message}</div>
+      `;
+      
+      chatMessages.appendChild(messageDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      input.value = '';
+      
+      // Here you would normally send to a backend
+      console.log('Chat message:', message);
+    }
+
+    // Simulate viewer count updates
+    function updateViewerCount() {
+      const baseCount = 234;
+      const variation = Math.floor(Math.random() * 20) - 10;
+      document.getElementById('viewerCount').textContent = baseCount + variation;
+    }
+
+    // Simulate incoming chat messages
+    function simulateChatMessage() {
+      const sampleMessages = [
+        { user: 'Ayesha M.', text: 'Is the blue kurta available in size 6?' },
+        { user: 'Fatima K.', text: 'Love the fabric quality!' },
+        { user: 'Hassan R.', text: 'When will you show the waistcoat again?' },
+        { user: 'Zara B.', text: 'Just ordered! Can\'t wait 😊' }
+      ];
+      
+      const randomMsg = sampleMessages[Math.floor(Math.random() * sampleMessages.length)];
+      const chatMessages = document.getElementById('chatMessages');
+      const now = new Date();
+      const timeStr = 'Just now';
+      
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'chat-message';
+      messageDiv.innerHTML = `
+        <span class="username">${randomMsg.user}</span>
+        <span class="time">${timeStr}</span>
+        <div>${randomMsg.text}</div>
+      `;
+      
+      chatMessages.appendChild(messageDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      
+      // Keep only last 50 messages
+      while (chatMessages.children.length > 50) {
+        chatMessages.removeChild(chatMessages.firstChild);
+      }
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      renderProductTimeline();
+      updateCartCount();
+      
+      // Simulate live updates
+      setInterval(updateViewerCount, 5000);
+      setInterval(simulateChatMessage, 15000);
+      
+      // Enter key for chat
+      document.getElementById('chatInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
+      });
+    });
+
+    // Multi-platform streaming setup guide
+    /*
+    TO STREAM TO MULTIPLE PLATFORMS SIMULTANEOUSLY:
+    
+    Option 1: Use Restream.io (Recommended)
+    1. Sign up at restream.io
+    2. Connect your YouTube, Facebook, TikTok accounts
+    3. Get your RTMP server URL and stream key
+    4. Use OBS Studio or similar:
+       - Server: rtmp://live.restream.io/live
+       - Stream Key: (from Restream dashboard)
+    5. Embed the Restream player on this page
+    
+    Option 2: Use YouTube + Manual Sharing
+    1. Go live on YouTube
+    2. Use the YouTube embed code above
+    3. Share the YouTube link to other platforms
+    
+    Option 3: Use StreamYard
+    1. Sign up at streamyard.com
+    2. Connect multiple platforms
+    3. Get embed code and replace video section
+    
+    For pre-recorded looped video:
+    - Upload your video file to assets/live-sale-video.mp4
+    - The video will loop automatically
+    - Products sync based on timestamps
+    */
+  </script>
+</body>
+</html>
