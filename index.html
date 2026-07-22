@@ -1,242 +1,285 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tifl Little Wear — Made-to-Measure Kidswear in Lahore</title>
-  <meta name="description" content="Tifl Little Wear is a made-to-measure kidswear studio in Lahore. We take real measurements, draft a real pattern, and hand-finish every seam.">
-  
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
-  
-  <!-- Stylesheet -->
-  <link rel="stylesheet" href="styles.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tifl Little Wear — Made-to-Measure Kidswear in Lahore</title>
+<meta name="description" content="Tifl Little Wear is a made-to-measure children's clothing studio in Lahore. Hand-taken measurements, hand-finished stitching, and a shop of partner kidswear brands.">
+<link rel="canonical" href="https://www.tifllittlewear.com/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Tifl Little Wear — Made-to-Measure Kidswear in Lahore">
+<meta property="og:description" content="A made-to-measure children's clothing studio in Lahore. Hand-taken measurements, hand-finished stitching.">
+<meta property="og:url" content="https://www.tifllittlewear.com/">
+<meta name="twitter:card" content="summary_large_image">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ClothingStore",
+  "name": "Tifl Little Wear",
+  "description": "Made-to-measure children's clothing studio in Lahore, Pakistan.",
+  "url": "https://www.tifllittlewear.com/",
+  "telephone": "+92-42-1234-5678",
+  "priceRange": "PKR 850 - PKR 8400",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "MM Alam Road area, Gulberg III",
+    "addressLocality": "Lahore",
+    "addressCountry": "PK"
+  },
+  "openingHoursSpecification": {
+    "@type": "OpeningHoursSpecification",
+    "dayOfWeek": ["Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
+    "opens": "11:00",
+    "closes": "20:00"
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.9",
+    "reviewCount": "186"
+  }
+}
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-  <!-- =============== HEADER / NAV =============== -->
-  <header class="site">
-    <div class="nav-inner">
-      <a href="index.html" class="brand">
-        <span class="name">Tifl</span>
-        <span class="sub">Little Wear · Lahore</span>
+<header class="site">
+  <div class="nav-inner">
+    <a class="brand" href="index.html">
+      <span class="name">Tifl</span>
+      <span class="sub">Little&nbsp;Wear · Lahore</span>
+    </a>
+    <nav class="tabs" id="navTabs">
+      <a href="index.html" aria-current="page">Home</a>
+      <a href="measurements.html">Measurements</a>
+      <a href="booking.html">Booking</a>
+      <a href="shop.html">Shop</a>
+      <a href="blog.html">Blog</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+    <div class="nav-right">
+      <a class="cart-btn" href="shop.html" aria-label="View cart">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        <span class="cart-badge" id="cartBadge" style="display:none;">0</span>
       </a>
-      <nav class="tabs">
-        <a href="index.html" aria-current="page">Home</a>
-        <a href="measurements.html">Measurements</a>
-        <a href="booking.html">Booking</a>
-        <a href="shop.html">Shop</a>
-        <a href="blog.html">Blog</a>
-        <a href="contact.html">Contact</a>
-      </nav>
-      <div class="nav-right">
-        <a href="shop.html" class="cart-btn">
-          <span>0</span>
-        </a>
-        <button class="menu-toggle" aria-label="Toggle menu">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-        </button>
+      <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div class="hero">
+    <div class="hero-grid">
+      <div>
+        <div class="eyebrow">Studio · Lahore</div>
+        <h1>Clothes cut for a child who <span class="accent">won't</span> sit still.</h1>
+        <p class="lede">Tifl Little Wear is a made-to-measure kidswear studio. We take real measurements, draft a real pattern, and hand-finish every seam — so the fit lasts more than one wash.</p>
+        <div class="hero-ctas">
+          <a class="btn btn-primary" href="booking.html">Book a fitting</a>
+          <a class="btn btn-ghost" href="shop.html">Browse the shop</a>
+        </div>
+        <div class="stat-row">
+          <div class="stat"><b>11</b><span>Measurement points taken</span></div>
+          <div class="stat"><b>3–5</b><span>Days, first fitting to stitch</span></div>
+          <div class="stat"><b>6</b><span>Partner brands in the shop</span></div>
+        </div>
+      </div>
+
+      <div class="tape-figure" aria-hidden="true">
+        <svg viewBox="0 0 420 440" xmlns="http://www.w3.org/2000/svg">
+          <rect x="1" y="1" width="418" height="438" rx="19" fill="#F3FAF3" stroke="#E1E9E2"/>
+          <path d="M40 380 C 40 200, 120 90, 210 90 C 300 90, 380 180, 380 340" fill="none" stroke="#108A00" stroke-width="26" stroke-linecap="round"/>
+          <path d="M40 380 C 40 200, 120 90, 210 90 C 300 90, 380 180, 380 340" fill="none" stroke="#FFFFFF" stroke-width="20" stroke-linecap="round" stroke-dasharray="2 12"/>
+          <g transform="translate(140,150)" fill="#0F2B1B">
+            <circle cx="70" cy="30" r="26"/>
+            <path d="M30 62 Q70 40 110 62 L120 190 Q70 210 20 190 Z"/>
+            <rect x="0" y="70" width="24" height="90" rx="12"/>
+            <rect x="116" y="70" width="24" height="90" rx="12"/>
+            <rect x="35" y="190" width="28" height="90" rx="12"/>
+            <rect x="77" y="190" width="28" height="90" rx="12"/>
+          </g>
+          <g font-family="IBM Plex Mono, monospace" font-size="10" fill="#0C6B00">
+            <text x="90" y="105">chest 58cm</text>
+            <text x="230" y="150">shoulder 26cm</text>
+            <text x="230" y="300">inseam 34cm</text>
+            <text x="60" y="330">waist 52cm</text>
+          </g>
+        </svg>
       </div>
     </div>
-  </header>
+  </div>
 
-  <!-- =============== MAIN CONTENT =============== -->
-  <main>
-    
-    <!-- Hero Section -->
-    <section class="hero">
-      <div class="wrap">
-        <div class="hero-grid">
-          <div class="hero-text">
-            <div class="eyebrow">Studio · Lahore</div>
-            <h1>Clothes cut for a child who won't sit still.</h1>
-            <p class="lede">Tifl Little Wear is a made-to-measure kidswear studio. We take real measurements, draft a real pattern, and hand-finish every seam — so the fit lasts more than one wash.</p>
-            <div class="hero-ctas">
-              <a href="booking.html" class="btn btn-primary">Book a fitting</a>
-              <a href="shop.html" class="btn btn-ghost">Browse the shop</a>
-            </div>
-            <div class="stat-row">
-              <div class="stat">
-                <b>11</b>
-                <span>Measurement points taken</span>
-              </div>
-              <div class="stat">
-                <b>3–5</b>
-                <span>Days, first fitting to stitch</span>
-              </div>
-              <div class="stat">
-                <b>6</b>
-                <span>Partner brands in the shop</span>
-              </div>
-            </div>
-          </div>
-          <div class="tape-figure">
-            <!-- Placeholder for your hero illustration -->
-            <svg viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect width="400" height="400" rx="20" fill="#F3FAF3"/>
-              <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#108A00" font-family="Sora" font-weight="700" font-size="24">Illustration</text>
-            </svg>
-          </div>
-        </div>
+  <hr class="seam">
+
+  <div style="padding:56px 0 10px;">
+    <div class="eyebrow">Why families come to us</div>
+    <div class="craft-grid">
+      <div class="craft-card">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="9"/></svg>
+        <h3>Made to measure</h3>
+        <p>Every garment is drafted from your child's own measurements, not a size chart — growth spurts and all.</p>
       </div>
-    </section>
-
-    <!-- Features / Craft Grid -->
-    <section class="wrap" style="padding: 80px 28px;">
-      <div class="eyebrow">Why families come to us</div>
-      <div class="craft-grid">
-        <div class="craft-card">
-          <div class="ico">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.38 3.46L16 2 12 3.46 8 2 3.62 3.46a2 2 0 00-1.34 2.23l.58 3.47a1 1 0 00.99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 002-2V10h2.15a1 1 0 00.99-.84l.58-3.47a2 2 0 00-1.34-2.23z"/></svg>
-          </div>
-          <h3>Made to measure</h3>
-          <p>Every garment is drafted from your child's own measurements, not a size chart — growth spurts and all.</p>
-        </div>
-        <div class="craft-card">
-          <div class="ico">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-          </div>
-          <h3>Hand-finished seams</h3>
-          <p>French seams on everyday wear, hand-set embroidery on occasion pieces — finished by tailors we've worked with for years.</p>
-        </div>
-        <div class="craft-card">
-          <div class="ico">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
-          </div>
-          <h3>Partner brands</h3>
-          <p>Alongside our stitching line, we carry ready pieces from Lahore-based kidswear labels we trust.</p>
-        </div>
+      <div class="craft-card">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 21v-6a4 4 0 014-4h8a4 4 0 014 4v6M9 11V7a3 3 0 016 0v4"/></svg>
+        <h3>Hand-finished seams</h3>
+        <p>French seams on everyday wear, hand-set embroidery on occasion pieces — finished by tailors we've worked with for years.</p>
       </div>
-    </section>
+      <div class="craft-card">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 7L12 3 4 7l8 4 8-4z"/><path d="M4 7v10l8 4 8-4V7"/><path d="M12 11v10"/></svg>
+        <h3>Partner brands</h3>
+        <p>Alongside our stitching line, we carry ready pieces from Lahore-based kidswear labels we trust.</p>
+      </div>
+    </div>
+  </div>
 
-    <!-- Process CTA -->
-    <section class="wrap" style="padding: 0 28px 80px;">
-      <div class="eyebrow">Start to finish</div>
-      <h2 style="font-size: clamp(24px, 3vw, 32px); max-width: 600px; margin-bottom: 16px;">A consultation call, a fitting, and a finished garment — usually inside a week.</h2>
-      <p style="color: var(--ink-soft); max-width: 500px; margin-bottom: 24px;">See exactly how we take measurements and what happens between your first call and delivery.</p>
-      <a href="measurements.html" class="btn btn-ghost">See our process →</a>
-    </section>
+  <div style="padding-top:36px;">
+    <div class="eyebrow">Start to finish</div>
+    <h2 style="font-size:clamp(24px,3vw,32px);max-width:600px;">A consultation call, a fitting, and a finished garment — usually inside a week.</h2>
+    <p style="color:var(--ink-soft);max-width:560px;margin-top:12px;font-size:15px;">See exactly how we take measurements and what happens between your first call and delivery.</p>
+    <a class="btn btn-ghost" style="margin-top:20px;" href="measurements.html">See our process →</a>
+  </div>
 
-    <!-- =============== NEW REVIEWS SECTION (Fabric Swatches) =============== -->
-    <section class="reviews-section" style="background: var(--bg-alt);">
-      <div class="wrap">
+  <!-- ============ REVIEWS ============ -->
+  <div class="reviews-block">
+    <div class="reviews-head">
+      <div>
         <div class="eyebrow">What parents say</div>
-        <h2>Real fittings, real families, real feedback.</h2>
-
-        <div class="rating-summary">
-          <span class="rating-score">4.9</span>
-          <span class="rating-count">186 fittings reviewed</span>
-        </div>
-
-        <div class="swatch-grid">
-          <!-- Card 1 -->
-          <article class="swatch-card">
-            <div class="swatch-inner">
-              <div class="swatch-quote">
-                <p>"They measured my son properly — shoulders, sleeve length, all of it, not just his height off a chart. His eid kurta finally sits right on him, and it still fits three months later."</p>
-              </div>
-              <div class="care-label">
-                <div class="care-label-loop"></div>
-                <div class="care-label-content">
-                  <div class="care-label-name">Sana R.</div>
-                  <div class="care-label-location">DHA, Lahore</div>
-                  <div class="care-label-booking">Verified booking · Eid kurta pajama</div>
-                </div>
-              </div>
-            </div>
-          </article>
-
-          <!-- Card 2 -->
-          <article class="swatch-card">
-            <div class="swatch-inner">
-              <div class="swatch-quote">
-                <p>"The home visit for measurements took fifteen minutes. The kurta pajama arrived in four days — faster than I expected."</p>
-              </div>
-              <div class="care-label">
-                <div class="care-label-loop"></div>
-                <div class="care-label-content">
-                  <div class="care-label-name">Bilal A.</div>
-                  <div class="care-label-location">Gulberg, Lahore</div>
-                  <div class="care-label-booking">Verified booking · Home fitting</div>
-                </div>
-              </div>
-            </div>
-          </article>
-
-          <!-- Card 3 -->
-          <article class="swatch-card">
-            <div class="swatch-inner">
-              <div class="swatch-quote">
-                <p>"First studio that let me pick the fabric and the fit separately. My daughter actually likes wearing her frock now."</p>
-              </div>
-              <div class="care-label">
-                <div class="care-label-loop"></div>
-                <div class="care-label-content">
-                  <div class="care-label-name">Ayesha K.</div>
-                  <div class="care-label-location">Cantt, Lahore</div>
-                  <div class="care-label-booking">Verified booking · Occasion frock</div>
-                </div>
-              </div>
-            </div>
-          </article>
-
-          <!-- Card 4 -->
-          <article class="swatch-card">
-            <div class="swatch-inner">
-              <div class="swatch-quote">
-                <p>"Bought a set from the shop for a wedding — arrived well packed, sizing notes were spot on for a 5 year old."</p>
-              </div>
-              <div class="care-label">
-                <div class="care-label-loop"></div>
-                <div class="care-label-content">
-                  <div class="care-label-name">Mahnoor F.</div>
-                  <div class="care-label-location">Model Town, Lahore</div>
-                  <div class="care-label-booking">Verified booking · Ready-to-wear</div>
-                </div>
-              </div>
-            </div>
-          </article>
-        </div>
+        <h2 style="font-size:28px;">Real fittings, real families, real feedback.</h2>
       </div>
-    </section>
-
-  </main>
-
-  <!-- =============== FOOTER =============== -->
-  <footer class="site">
-    <div class="wrap">
-      <div class="foot-grid">
+      <div class="rating-summary">
+        <span class="score">4.9</span>
         <div>
-          <h5>Tifl</h5>
-          <p style="font-size:14px;color:var(--ink-soft);margin-top:10px;max-width:280px;">A made-to-measure kidswear studio working out of Gulberg, Lahore. Measured by hand, stitched by hand.</p>
+          <div class="stars">
+            <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 5.9 6.4.6-4.8 4.3 1.4 6.3L10 15l-5.6 3.1 1.4-6.3L1 7.5l6.4-.6z"/></svg>
+            <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 5.9 6.4.6-4.8 4.3 1.4 6.3L10 15l-5.6 3.1 1.4-6.3L1 7.5l6.4-.6z"/></svg>
+            <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 5.9 6.4.6-4.8 4.3 1.4 6.3L10 15l-5.6 3.1 1.4-6.3L1 7.5l6.4-.6z"/></svg>
+            <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 5.9 6.4.6-4.8 4.3 1.4 6.3L10 15l-5.6 3.1 1.4-6.3L1 7.5l6.4-.6z"/></svg>
+            <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 5.9 6.4.6-4.8 4.3 1.4 6.3L10 15l-5.6 3.1 1.4-6.3L1 7.5l6.4-.6z"/></svg>
+          </div>
+          <div class="count">186 fittings reviewed</div>
         </div>
-        <div>
-          <h5>Studio</h5>
-          <a href="index.html">Home</a>
-          <a href="measurements.html">Our process</a>
-          <a href="booking.html">Book a fitting</a>
-        </div>
-        <div>
-          <h5>Shop</h5>
-          <a href="shop.html">Ready pieces</a>
-          <a href="blog.html">Blog</a>
-        </div>
-        <div>
-          <h5>Contact</h5>
-          <a href="tel:+924212345678">+92 42 1234 5678</a>
-          <a href="mailto:studio@tiflwear.pk">studio@tiflwear.pk</a>
-          <p style="font-size:14px;color:var(--ink-soft);margin-top:4px;">Gulberg III, Lahore</p>
-        </div>
-      </div>
-      <div class="foot-bottom">
-        <span>© 2026 Tifl Little Wear, Lahore.</span>
-        <span>Made-to-measure kidswear, stitched in Lahore</span>
       </div>
     </div>
-  </footer>
 
-  <!-- =============== WHATSAPP FLOAT BUTTON =============== -->
-  <a href="https://wa.me/924212345678" class="whatsapp-float" target="_blank" rel="noopener" aria-label="Chat with us on WhatsApp">
-    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554
+    <div class="review-grid">
+      <div class="review-card featured">
+        <span class="verified-badge">Verified booking</span>
+        <div class="stars">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 5.9 6.4.6-4.8 4.3 1.4 6.3L10 15l-5.6 3.1 1.4-6.3L1 7.5l6.4-.6z"/></svg>
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 5.9 6.4.6-4.8 4.3 1.4 6.3L10 15l-5.6 3.1 1.4-6.3L1 7.5l6.4-.6z"/></svg>
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 5.9 6.4.6-4.8 4.3 1.4 6.3L10 15l-5.6 3.1 1.4-6.3L1 7.5l6.4-.6z"/></svg>
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 5.9 6.4.6-4.8 4.3 1.4 6.3L10 15l-5.6 3.1 1.4-6.3L1 7.5l6.4-.6z"/></svg>
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 5.9 6.4.6-4.8 4.3 1.4 6.3L10 15l-5.6 3.1 1.4-6.3L1 7.5l6.4-.6z"/></svg>
+        </div>
+        <span class="garment-tag">Eid kurta pajama</span>
+        <p class="quote">"They measured my son properly — shoulders, sleeve length, all of it, not just his height off a chart. His eid kurta finally sits right on him, and it still fits three months later."</p>
+        <div class="review-who">
+          <div class="avatar" style="background:#108A00;">SR</div>
+          <div class="meta"><div class="wname">Sana R.</div><div class="wloc">DHA, Lahore</div></div>
+        </div>
+      </div>
+
+      <div class="review-card">
+        <span class="verified-badge">Verified booking</span>
+        <div class="stars">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 5.9 6.4.6-4.8 4.3 1.4 6.3L10 15l-5.6 3.1 1.4-6.3L1 7.5l6.4-.6z"/></svg>
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 5.9 6.4.6-4.8 4.3 1.4 6.3L10 15l-5.6 3.1 1.4-6.3L1 7.5l6.4-.6z"/></svg>
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 5.9 6.4.6-4.8 4.3 1.4 6.3L10 15l-5.6 3.1 1.4-6.3L1 7.5l6.4-.6z"/></svg>
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 5.9 6.4.6-4.8 4.3 1.4 6.3L10 15l-5.6 3.1 1.4-6.3L1 7.5l6.4-.6z"/></svg>
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 5.9 6.4.6-4.8 4.3 1.4 6.3L10 15l-5.6 3.1 1.4-6.3L1 7.5l6.4-.6z"/></svg>
+        </div>
+        <span class="garment-tag">Home fitting</span>
+        <p class="quote">"The home visit for measurements took fifteen minutes. The kurta pajama arrived in four days — faster than I expected."</p>
+        <div class="review-who">
+          <div class="avatar" style="background:#0C6B00;">BA</div>
+          <div class="meta"><div class="wname">Bilal A.</div><div class="wloc">Gulberg, Lahore</div></div>
+        </div>
+      </div>
+
+      <div class="review-card">
+        <span class="verified-badge">Verified booking</span>
+        <div class="stars">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 5.9 6.4.6-4.8 4.3 1.4 6.3L10 15l-5.6 3.1 1.4-6.3L1 7.5l6.4-.6z"/></svg>
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 5.9 6.4.6-4.8 4.3 1.4 6.3L10 15l-5.6 3.1 1.4-6.3L1 7.5l6.4-.6z"/></svg>
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 5.9 6.4.6-4.8 4.3 1.4 6.3L10 15l-5.6 3.1 1.4-6.3L1 7.5l6.4-.6z"/></svg>
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 5.9 6.4.6-4.8 4.3 1.4 6.3L10 15l-5.6 3.1 1.4-6.3L1 7.5l6.4-.6z"/></svg>
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M10 1l2.6 5.9 6.4.6-4.8 4.3 1.4 6.3L10 15l-5.6 3.1 1.4-6.3L1 7.5l6.4-.6z"/></svg>
+        </div>
+        <span class="garment-tag">Occasion frock</span>
+        <p class="quote">"First studio that let me pick the fabric and the fit separately. My daughter actually likes wearing her frock now."</p>
+        <div class="review-who">
+          <div class="avatar" style="background:#5C6B61;">AK</div>
+          <div class="meta"><div class="wname">Ayesha K.</div><div class="wloc">Cantt, Lahore</div></div>
+        </div>
+      </div>
+
+      <div class="review-card">
+        <span class="verified-badge">Verified booking</span>
+        <div class="stars">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 5.9 6.4.6-4.8 4.3 1.4 6.3L10 15l-5.6 3.1 1.4-6.3L1 7.5l6.4-.6z"/></svg>
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 5.9 6.4.6-4.8 4.3 1.4 6.3L10 15l-5.6 3.1 1.4-6.3L1 7.5l6.4-.6z"/></svg>
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 5.9 6.4.6-4.8 4.3 1.4 6.3L10 15l-5.6 3.1 1.4-6.3L1 7.5l6.4-.6z"/></svg>
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 5.9 6.4.6-4.8 4.3 1.4 6.3L10 15l-5.6 3.1 1.4-6.3L1 7.5l6.4-.6z"/></svg>
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 5.9 6.4.6-4.8 4.3 1.4 6.3L10 15l-5.6 3.1 1.4-6.3L1 7.5l6.4-.6z"/></svg>
+        </div>
+        <span class="garment-tag">Ready-to-wear</span>
+        <p class="quote">"Bought a set from the shop for a wedding — arrived well packed, sizing notes were spot on for a 5 year old."</p>
+        <div class="review-who">
+          <div class="avatar" style="background:#108A00;">MF</div>
+          <div class="meta"><div class="wname">Mahnoor F.</div><div class="wloc">Model Town, Lahore</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <span style="font-family:'Sora',sans-serif;font-weight:700;font-size:20px;">Tifl</span>
+        <p style="color:var(--ink-soft);font-size:13.5px;margin-top:12px;max-width:260px;">A made-to-measure kidswear studio working out of Gulberg, Lahore. Measured by hand, stitched by hand.</p>
+      </div>
+      <div>
+        <h5>Studio</h5>
+        <a href="index.html">Home</a>
+        <a href="measurements.html">Our process</a>
+        <a href="booking.html">Book a fitting</a>
+      </div>
+      <div>
+        <h5>Shop</h5>
+        <a href="shop.html">Ready pieces</a>
+        <a href="blog.html">Blog</a>
+      </div>
+      <div>
+        <h5>Contact</h5>
+        <a href="tel:+924212345678">+92 42 1234 5678</a>
+        <a href="mailto:studio@tiflwear.pk">studio@tiflwear.pk</a>
+        <span style="display:block;font-size:14px;padding:4px 0;">Gulberg III, Lahore</span>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 Tifl Little Wear, Lahore.</span>
+      <span>Made-to-measure kidswear, stitched in Lahore</span>
+    </div>
+  </div>
+</footer>
+
+<a class="whatsapp-float" href="https://wa.me/924212345678" target="_blank" rel="noopener" aria-label="Chat with us on WhatsApp">
+  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.6 15L2 22l5.2-1.4A10 10 0 1012 2zm5.7 14.2c-.2.6-1.3 1.2-1.8 1.3-.5.1-1 .2-3.3-.7-2.8-1.1-4.6-3.9-4.7-4.1-.1-.2-1.1-1.5-1.1-2.9 0-1.4.7-2 1-2.3.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5.2.5.7 1.8.8 1.9.1.2.1.3 0 .5-.1.2-.2.3-.3.5-.2.2-.3.3-.5.5-.2.2-.3.4-.2.6.3.5.9 1.5 1.9 2.4 1.3 1.2 2.4 1.5 2.7 1.7.3.2.5.1.7-.1.2-.2.8-.9 1-1.2.2-.3.4-.2.7-.1.3.1 1.8.9 2.1 1 .3.1.5.2.6.3.1.2.1.7-.1 1.3z"/></svg>
+</a>
+<span class="whatsapp-tip">Chat with us</span>
+
+<div class="toast" id="toast"></div>
+<script src="script.js"></script>
+</body>
+</html>
