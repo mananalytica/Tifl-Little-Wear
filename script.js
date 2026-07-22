@@ -81,7 +81,7 @@ function refreshCartBadge(){
 refreshCartBadge();
 
 /* ============================================================
-   PRODUCT CATALOGUE — served from the backend (MotherDuck),
+   PRODUCT CATALOGUE — now served from the backend (MotherDuck),
    so products can be added/edited from admin.html without
    touching code. Falls back to a small offline set only if the
    API can't be reached, so the shop never renders empty.
@@ -103,6 +103,7 @@ async function loadProducts(){
   }
   return PRODUCTS;
 }
+// Normalizes a product row (from API or fallback) to the shape the UI uses.
 function normalizeProduct(p){
   return {
     id: p.product_id || p.id,
@@ -112,7 +113,22 @@ function normalizeProduct(p){
     price: p.price,
     currency: p.currency || 'PKR',
     image_url: p.image_url || '#108A00',
-    description: p.description || ''
+    description: p.description || '',
+    sku: p.sku || '',
+    // Shopping feed attributes (Google Merchant Center / Meta Catalog)
+    link: p.link || '',
+    availability: p.availability || 'in stock',
+    sale_price: p.sale_price || null,
+    gtin: p.gtin || '',
+    mpn: p.mpn || '',
+    condition: p.condition || 'new',
+    google_product_category: p.google_product_category || '',
+    product_type: p.product_type || '',
+    color: p.color || '',
+    size: p.size || '',
+    gender: p.gender || '',
+    age_group: p.age_group || 'kids',
+    item_group_id: p.item_group_id || ''
   };
 }
 
@@ -164,6 +180,9 @@ function isColor(value){ return typeof value === 'string' && value.startsWith('#
 function garmentIllustration(color){
   return `<svg viewBox="0 0 100 100" width="46%" height="46%"><path d="M50 10 L35 22 L20 18 L10 34 L22 42 L22 90 L78 90 L78 42 L90 34 L80 18 L65 22 Z" fill="${color}" opacity="0.85"/></svg>`;
 }
+// Returns thumbnail HTML for a product: a real photo if image_url is a URL,
+// otherwise a simple colour illustration (useful for products added before
+// photography exists).
 function productThumbHTML(p, size){
   size = size || '46%';
   if(p.image_url && !isColor(p.image_url)){
@@ -248,6 +267,8 @@ function renderProducts(cat){
           </button>
         </div>
       </div>`;
+    // Clicking the product (not the add button) opens its detail page —
+    // view_item fires there, not here, so it matches one real "view" per page load.
     card.addEventListener('click', ()=>{
       fireSelectItem(p);
       window.location.href = 'product.html?id='+encodeURIComponent(p.id);
@@ -327,16 +348,11 @@ async function initShopPage(){
     }
 
     firePurchase(cart, txId);
-
-    // Save order details for the thank-you page, then go there.
-    try{
-      sessionStorage.setItem('tifl_last_order', JSON.stringify(Object.assign({order_id: txId}, payload)));
-    }catch(e){ /* storage unavailable, thank-you page will show a fallback */ }
-
     closeCheckout(); closeDrawer();
     Store.set('tifl_cart', []);
     refreshCartBadge(); updateCartUI();
-    window.location.href = 'thank-you.html';
+    submitBtn.disabled = false; submitBtn.textContent = 'Place order';
+    showToast(placed ? 'Order '+txId+' placed — thank you!' : 'Order saved on this device — we will confirm by phone');
   });
 }
 
@@ -496,42 +512,77 @@ async function initProductPage(){
     root.style.display='none'; empty.style.display='block'; return;
   }
 
+  // Fill in the page
   document.getElementById('pdMedia').innerHTML = productThumbHTML(p, '55%');
   document.getElementById('pdBrand').textContent = p.brand;
   document.getElementById('pdName').textContent = p.name;
   document.getElementById('pdCategory').textContent = p.category;
-  document.getElementById('pdPrice').textContent = p.currency+' '+p.price.toLocaleString();
+  const priceEl = document.getElementById('pdPrice');
+  if(p.sale_price){
+    priceEl.innerHTML = `<span style="color:var(--primary-dark);">${p.currency} ${p.sale_price.toLocaleString()}</span> <span style="text-decoration:line-through;color:var(--ink-soft);font-size:16px;font-weight:400;">${p.currency} ${p.price.toLocaleString()}</span>`;
+  } else {
+    priceEl.textContent = p.currency+' '+p.price.toLocaleString();
+  }
   document.getElementById('pdDescription').textContent = p.description || 'A ready-to-wear piece from our partner brands, checked for fit and finish before it reaches the shop.';
+  const chips = [];
+  if(p.color) chips.push('Colour: '+p.color);
+  if(p.size) chips.push('Size: '+p.size);
+  if(p.gender) chips.push(p.gender.charAt(0).toUpperCase()+p.gender.slice(1));
+  if(p.age_group) chips.push(p.age_group.charAt(0).toUpperCase()+p.age_group.slice(1));
+  document.getElementById('pdAttributes').innerHTML = chips.map(c=>`<span class="garment-tag">${c}</span>`).join('');
   document.getElementById('pdAddBtn').addEventListener('click', ()=>{
     const qty = parseInt(document.getElementById('pdQty').value, 10) || 1;
     addToCart(p, qty);
   });
 
+  // SEO/AEO: update title, meta description and inject Product JSON-LD now
+  // that we know which product this is — useful for search, Google/Meta
+  // catalogue sync, and for LLM shopping agents that read schema.org
+  // Product markup directly off the page (an increasingly common pattern
+  // as ChatGPT/Perplexity-style agents shop on a user's behalf).
   document.title = p.name + ' — Tifl Little Wear';
   const metaDesc = document.querySelector('meta[name="description"]');
   if(metaDesc) metaDesc.setAttribute('content', p.name+' by '+p.brand+' — '+p.currency+' '+p.price+'. Ready-to-wear kidswear from Tifl Little Wear, Lahore.');
 
-  const ld = document.createElement('script');
-  ld.type = 'application/ld+json';
-  ld.textContent = JSON.stringify({
+  const availabilityMap = {
+    'in stock': 'https://schema.org/InStock',
+    'out of stock': 'https://schema.org/OutOfStock',
+    'preorder': 'https://schema.org/PreOrder',
+    'backorder': 'https://schema.org/BackOrder'
+  };
+
+  const productLd = {
     "@context":"https://schema.org",
     "@type":"Product",
     "name": p.name,
     "brand": {"@type":"Brand","name": p.brand},
     "category": p.category,
     "description": p.description || p.name,
+    "sku": p.sku || p.id,
     "offers": {
       "@type":"Offer",
       "priceCurrency": p.currency,
-      "price": p.price,
-      "availability": "https://schema.org/InStock",
+      "price": p.sale_price || p.price,
+      "availability": availabilityMap[p.availability] || 'https://schema.org/InStock',
+      "itemCondition": 'https://schema.org/'+(p.condition==='used' ? 'UsedCondition' : p.condition==='refurbished' ? 'RefurbishedCondition' : 'NewCondition'),
       "url": window.location.href
     }
-  });
+  };
+  if(p.gtin) productLd.gtin = p.gtin;
+  if(p.mpn) productLd.mpn = p.mpn;
+  if(p.color) productLd.color = p.color;
+  if(p.size) productLd.size = p.size;
+  if(p.gender) productLd.audience = {"@type":"PeopleAudience","suggestedGender": p.gender};
+  if(p.age_group) productLd.additionalProperty = [{"@type":"PropertyValue","name":"age_group","value":p.age_group}];
+
+  const ld = document.createElement('script');
+  ld.type = 'application/ld+json';
+  ld.textContent = JSON.stringify(productLd);
   document.head.appendChild(ld);
 
   fireViewItem(p);
 
+  // simple related products rail
   await loadProducts();
   const related = PRODUCTS.filter(x=>x.id!==p.id && x.category===p.category).slice(0,4);
   const relatedRoot = document.getElementById('pdRelated');
@@ -592,7 +643,7 @@ function initAdminPage(){
         <div class="admin-row-thumb">${productThumbHTML(p,'70%')}</div>
         <div class="admin-row-info">
           <div class="admin-row-name">${p.name}</div>
-          <div class="admin-row-meta">${p.brand} · ${p.category} · ${p.currency} ${p.price.toLocaleString()}</div>
+          <div class="admin-row-meta">${p.brand} · ${p.category} · ${p.currency} ${p.price.toLocaleString()}${p.sku ? ' · SKU '+p.sku : ''}</div>
         </div>
         <button class="btn btn-ghost btn-sm" data-edit="${p.id}">Edit</button>
         <button class="btn btn-ghost btn-sm" data-del="${p.id}">Delete</button>
@@ -601,6 +652,7 @@ function initAdminPage(){
     listRoot.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click', ()=>{
       const p = products.find(x=>x.id===b.dataset.edit);
       fillForm(p);
+      window.scrollTo({top: document.getElementById('productForm').getBoundingClientRect().top + window.scrollY - 20, behavior:'smooth'});
     }));
     listRoot.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click', async ()=>{
       if(!confirm('Delete this product?')) return;
@@ -615,15 +667,59 @@ function initAdminPage(){
     document.getElementById('apBrand').value = p.brand;
     document.getElementById('apCategory').value = p.category;
     document.getElementById('apPrice').value = p.price;
+    document.getElementById('apSalePrice').value = p.sale_price || '';
     document.getElementById('apImage').value = isColor(p.image_url) ? '' : p.image_url;
-    document.getElementById('apColor').value = isColor(p.image_url) ? p.image_url : '#108A00';
+    document.getElementById('apSwatch').value = isColor(p.image_url) ? p.image_url : '#108A00';
     document.getElementById('apDescription').value = p.description;
+    document.getElementById('apSku').value = p.sku || '';
+    document.getElementById('apGtin').value = p.gtin || '';
+    document.getElementById('apMpn').value = p.mpn || '';
+    document.getElementById('apItemGroupId').value = p.item_group_id || '';
+    document.getElementById('apAvailability').value = p.availability || 'in stock';
+    document.getElementById('apCondition').value = p.condition || 'new';
+    document.getElementById('apColorAttr').value = p.color || '';
+    document.getElementById('apSize').value = p.size || '';
+    document.getElementById('apGender').value = p.gender || '';
+    document.getElementById('apAgeGroup').value = p.age_group || 'kids';
+    document.getElementById('apGoogleCategory').value = p.google_product_category || '';
+    document.getElementById('apProductType').value = p.product_type || '';
+    document.getElementById('apLink').value = p.link || '';
     document.getElementById('apFormTitle').textContent = 'Editing: '+p.name;
   }
   function resetForm(){
     document.getElementById('productForm').reset();
     document.getElementById('apEditingId').value = '';
+    document.getElementById('apAgeGroup').value = 'kids';
+    document.getElementById('apAvailability').value = 'in stock';
+    document.getElementById('apCondition').value = 'new';
     document.getElementById('apFormTitle').textContent = 'Add a new product';
+  }
+
+  function formToPayload(){
+    return {
+      name: document.getElementById('apName').value,
+      brand: document.getElementById('apBrand').value,
+      category: document.getElementById('apCategory').value,
+      price: parseFloat(document.getElementById('apPrice').value),
+      sale_price: document.getElementById('apSalePrice').value ? parseFloat(document.getElementById('apSalePrice').value) : null,
+      currency: 'PKR',
+      image_url: document.getElementById('apImage').value.trim() || document.getElementById('apSwatch').value,
+      description: document.getElementById('apDescription').value,
+      sku: document.getElementById('apSku').value || null,
+      gtin: document.getElementById('apGtin').value || null,
+      mpn: document.getElementById('apMpn').value || null,
+      item_group_id: document.getElementById('apItemGroupId').value || null,
+      availability: document.getElementById('apAvailability').value,
+      condition: document.getElementById('apCondition').value,
+      color: document.getElementById('apColorAttr').value || null,
+      size: document.getElementById('apSize').value || null,
+      gender: document.getElementById('apGender').value || null,
+      age_group: document.getElementById('apAgeGroup').value,
+      google_product_category: document.getElementById('apGoogleCategory').value || null,
+      product_type: document.getElementById('apProductType').value || null,
+      link: document.getElementById('apLink').value || null,
+      active: true
+    };
   }
 
   document.getElementById('adminUnlockBtn')?.addEventListener('click', ()=>{
@@ -638,17 +734,7 @@ function initAdminPage(){
   document.getElementById('productForm')?.addEventListener('submit', async (e)=>{
     e.preventDefault();
     const editingId = document.getElementById('apEditingId').value;
-    const imageUrl = document.getElementById('apImage').value.trim() || document.getElementById('apColor').value;
-    const payload = {
-      name: document.getElementById('apName').value,
-      brand: document.getElementById('apBrand').value,
-      category: document.getElementById('apCategory').value,
-      price: parseFloat(document.getElementById('apPrice').value),
-      currency: 'PKR',
-      image_url: imageUrl,
-      description: document.getElementById('apDescription').value,
-      active: true
-    };
+    const payload = formToPayload();
     try{
       if(editingId) await apiCall('/api/products/'+editingId, 'PUT', payload);
       else await apiCall('/api/products', 'POST', payload);
@@ -658,6 +744,94 @@ function initAdminPage(){
     }catch(e){ /* apiCall already toasts on 401 */ }
   });
   document.getElementById('apCancelEdit')?.addEventListener('click', resetForm);
+
+  /* ---------- bulk import (CSV / XML) ---------- */
+  // Maps common Google Shopping / Meta Catalog feed column names onto our
+  // Product fields. "id" becomes our sku, since that's the stable
+  // identifier a merchant feed uses to track one product across uploads.
+  function mapFeedRow(row){
+    const get = (...keys)=>{
+      for(const k of keys){
+        if(row[k] !== undefined && row[k] !== '') return row[k];
+      }
+      return null;
+    };
+    const price = parseFloat((get('price')||'').toString().replace(/[^0-9.]/g,'')) || null;
+    const salePrice = parseFloat((get('sale_price')||'').toString().replace(/[^0-9.]/g,'')) || null;
+    return {
+      sku: get('id','sku'),
+      name: get('title','name'),
+      description: get('description'),
+      link: get('link'),
+      image_url: get('image_link','image_url'),
+      price,
+      sale_price: salePrice,
+      availability: get('availability') || 'in stock',
+      brand: get('brand'),
+      condition: get('condition') || 'new',
+      gtin: get('gtin'),
+      mpn: get('mpn'),
+      google_product_category: get('google_product_category'),
+      product_type: get('product_type'),
+      color: get('color'),
+      size: get('size'),
+      gender: get('gender'),
+      age_group: get('age_group') || 'kids',
+      item_group_id: get('item_group_id'),
+      category: get('product_type','category') ? (get('product_type','category').split('>').pop() || '').trim() : 'Other',
+      currency: 'PKR',
+      active: true
+    };
+  }
+
+  function parseCSV(text){
+    const result = Papa.parse(text, {header:true, skipEmptyLines:true});
+    return result.data.map(mapFeedRow);
+  }
+  function parseXML(text){
+    const doc = new DOMParser().parseFromString(text, 'text/xml');
+    const items = Array.from(doc.getElementsByTagName('item'));
+    return items.map(item=>{
+      const row = {};
+      Array.from(item.children).forEach(el=>{
+        const tag = el.tagName.includes(':') ? el.tagName.split(':')[1] : el.tagName;
+        row[tag] = el.textContent;
+      });
+      return mapFeedRow(row);
+    });
+  }
+
+  document.getElementById('bulkUploadBtn')?.addEventListener('click', async ()=>{
+    const fileInput = document.getElementById('bulkFile');
+    const resultsEl = document.getElementById('bulkResults');
+    const file = fileInput.files[0];
+    if(!file){ showToast('Choose a CSV or XML file first'); return; }
+
+    const text = await file.text();
+    let items;
+    try{
+      if(file.name.toLowerCase().endsWith('.xml')) items = parseXML(text);
+      else items = parseCSV(text);
+    }catch(e){
+      resultsEl.innerHTML = '<p style="color:var(--primary-dark);">Could not parse that file: '+e.message+'</p>';
+      return;
+    }
+
+    items = items.filter(i=>i.name && i.price);
+    if(items.length===0){
+      resultsEl.innerHTML = '<p style="color:var(--primary-dark);">No usable rows found — check the file has "title"/"name" and "price" columns.</p>';
+      return;
+    }
+
+    resultsEl.innerHTML = '<p style="color:var(--ink-soft);">Importing '+items.length+' rows…</p>';
+    try{
+      const result = await apiCall('/api/products/bulk', 'POST', {items});
+      resultsEl.innerHTML = `<p style="color:var(--primary-dark);">Done — ${result.created} created, ${result.updated} updated${result.errors.length ? ', '+result.errors.length+' skipped (see below)' : ''}.</p>` +
+        (result.errors.length ? '<pre style="font-size:11.5px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;margin-top:8px;overflow-x:auto;">'+JSON.stringify(result.errors,null,2)+'</pre>' : '');
+      showToast('Bulk import complete');
+      refreshList();
+    }catch(e){ /* apiCall already toasts on 401 */ }
+  });
 
   if(getKey()){
     document.getElementById('adminGate').style.display = 'none';

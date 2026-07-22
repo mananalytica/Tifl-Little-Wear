@@ -35,6 +35,7 @@ os.environ["HOME"] = "/tmp"
 import duckdb
 from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 from pydantic import BaseModel
 
 MOTHERDUCK_TOKEN = os.environ.get("MOTHERDUCK_TOKEN", "")
@@ -127,6 +128,37 @@ def ensure_schema(conn):
         )
         """
     )
+    # ================= SHOPPING FEED ATTRIBUTES =================
+    # Added on top of the original table with ALTER TABLE ... ADD COLUMN
+    # IF NOT EXISTS, so existing products already saved in MotherDuck are
+    # kept — they'll just show blank/default values for these new fields
+    # until you fill them in (via admin.html or a bulk CSV/XML upload).
+    # Column names follow Google Merchant Center / Meta Catalog feed specs
+    # directly, so they map straight onto the feed with no translation.
+    shopping_columns = [
+        ("link", "VARCHAR"),                    # product page URL
+        ("additional_image_link", "VARCHAR"),
+        ("availability", "VARCHAR"),             # in stock | out of stock | preorder | backorder
+        ("sale_price", "DOUBLE"),
+        ("gtin", "VARCHAR"),                     # barcode (UPC/EAN/ISBN)
+        ("mpn", "VARCHAR"),                      # manufacturer part number
+        ("condition", "VARCHAR"),                # new | refurbished | used
+        ("google_product_category", "VARCHAR"),
+        ("product_type", "VARCHAR"),             # your own category path, e.g. "Kids > Boys > Kurta"
+        ("color", "VARCHAR"),
+        ("size", "VARCHAR"),
+        ("gender", "VARCHAR"),                   # male | female | unisex
+        ("age_group", "VARCHAR"),                # newborn | infant | toddler | kids | adult
+        ("item_group_id", "VARCHAR"),            # groups size/colour variants of the same product
+    ]
+    for col_name, col_type in shopping_columns:
+        try:
+            conn.execute(f"ALTER TABLE products ADD COLUMN IF NOT EXISTS {col_name} {col_type}")
+        except Exception:
+            # Older DuckDB/MotherDuck versions without "IF NOT EXISTS" on
+            # ALTER — safe to ignore if the column already exists.
+            pass
+
     conn.execute(
         """
         CREATE TABLE IF NOT EXISTS orders (
@@ -219,8 +251,24 @@ class Product(BaseModel):
     image_url: str | None = None
     description: str | None = None
     sku: str | None = None
-    stock_status: str | None = "in_stock"
+    stock_status: str | None = "in_stock"   # legacy field, kept for backward compatibility — use availability instead
     active: bool | None = True
+
+    # ---- Shopping feed attributes (Google Merchant Center / Meta Catalog) ----
+    link: str | None = None                          # product page URL — auto-filled if left blank
+    additional_image_link: str | None = None
+    availability: str | None = "in stock"            # in stock | out of stock | preorder | backorder
+    sale_price: float | None = None
+    gtin: str | None = None                          # barcode: UPC / EAN / ISBN
+    mpn: str | None = None                            # manufacturer part number
+    condition: str | None = "new"                     # new | refurbished | used
+    google_product_category: str | None = None        # Google's taxonomy, e.g. "Apparel & Accessories > Clothing > Kids' Clothing"
+    product_type: str | None = None                   # your own category path, e.g. "Kids > Boys > Kurta"
+    color: str | None = None
+    size: str | None = None
+    gender: str | None = None                          # male | female | unisex
+    age_group: str | None = "kids"                     # newborn | infant | toddler | kids | adult
+    item_group_id: str | None = None                   # same value across size/colour variants of one product
 
 
 class OrderItem(BaseModel):
@@ -334,6 +382,118 @@ def list_products():
     return [dict(zip(cols, row)) for row in rows]
 
 
+# ================= SHOPPING FEEDS =================
+# Point Google Merchant Center and Meta Commerce Manager directly at these
+# URLs to sync your catalogue automatically. Both only include active
+# products with a price set. IMPORTANT: these must be registered before
+# the "/api/products/{product_id}" route below — otherwise FastAPI would
+# treat "feed.xml"/"feed.csv" as a product_id and 404 instead of serving
+# the feed.
+SITE_URL = "https://www.tifllittlewear.com"
+
+def feed_rows(conn):
+    rows = conn.execute(
+        "SELECT * FROM products WHERE active = true AND price IS NOT NULL ORDER BY created_at DESC"
+    ).fetchall()
+    cols = [c[0] for c in conn.description]
+    return [dict(zip(cols, row)) for row in rows]
+
+
+@app.get("/api/products/feed.xml")
+def products_feed_xml():
+    import xml.sax.saxutils as sx
+    conn = get_conn()
+    items = feed_rows(conn)
+    conn.close()
+
+    def esc(v):
+        return sx.escape(str(v)) if v is not None else ""
+
+    xml_items = []
+    for p in items:
+        link = p.get("link") or f"{SITE_URL}/product.html?id={p['product_id']}"
+        image = p.get("image_url") or ""
+        if image.startswith("#"):
+            image = ""  # placeholder colour swatches aren't real images — omit rather than send a bad link
+        xml_items.append(f"""
+    <item>
+      <g:id>{esc(p.get('sku') or p['product_id'])}</g:id>
+      <title>{esc(p['name'])}</title>
+      <description>{esc(p.get('description') or p['name'])}</description>
+      <link>{esc(link)}</link>
+      <g:image_link>{esc(image)}</g:image_link>
+      <g:availability>{esc(p.get('availability') or 'in stock')}</g:availability>
+      <g:price>{esc(p['price'])} {esc(p.get('currency') or 'PKR')}</g:price>
+      {f"<g:sale_price>{esc(p['sale_price'])} {esc(p.get('currency') or 'PKR')}</g:sale_price>" if p.get('sale_price') else ""}
+      <g:brand>{esc(p.get('brand') or 'Tifl Little Wear')}</g:brand>
+      <g:condition>{esc(p.get('condition') or 'new')}</g:condition>
+      {f"<g:gtin>{esc(p['gtin'])}</g:gtin>" if p.get('gtin') else ""}
+      {f"<g:mpn>{esc(p['mpn'])}</g:mpn>" if p.get('mpn') else ""}
+      {f"<g:google_product_category>{esc(p['google_product_category'])}</g:google_product_category>" if p.get('google_product_category') else ""}
+      {f"<g:product_type>{esc(p['product_type'])}</g:product_type>" if p.get('product_type') else ""}
+      {f"<g:color>{esc(p['color'])}</g:color>" if p.get('color') else ""}
+      {f"<g:size>{esc(p['size'])}</g:size>" if p.get('size') else ""}
+      {f"<g:gender>{esc(p['gender'])}</g:gender>" if p.get('gender') else ""}
+      <g:age_group>{esc(p.get('age_group') or 'kids')}</g:age_group>
+      {f"<g:item_group_id>{esc(p['item_group_id'])}</g:item_group_id>" if p.get('item_group_id') else ""}
+    </item>""")
+
+    feed = f"""<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
+  <channel>
+    <title>Tifl Little Wear — Product Feed</title>
+    <link>{SITE_URL}</link>
+    <description>Made-to-measure and ready-to-wear kidswear, Lahore.</description>
+    {''.join(xml_items)}
+  </channel>
+</rss>"""
+    return Response(content=feed, media_type="application/xml")
+
+
+@app.get("/api/products/feed.csv")
+def products_feed_csv():
+    import io, csv
+    conn = get_conn()
+    items = feed_rows(conn)
+    conn.close()
+
+    header = [
+        "id", "title", "description", "link", "image_link", "availability", "price",
+        "sale_price", "brand", "condition", "gtin", "mpn", "google_product_category",
+        "product_type", "color", "size", "gender", "age_group", "item_group_id",
+    ]
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(header)
+    for p in items:
+        link = p.get("link") or f"{SITE_URL}/product.html?id={p['product_id']}"
+        image = p.get("image_url") or ""
+        if image.startswith("#"):
+            image = ""
+        writer.writerow([
+            p.get("sku") or p["product_id"],
+            p["name"],
+            p.get("description") or p["name"],
+            link,
+            image,
+            p.get("availability") or "in stock",
+            f"{p['price']} {p.get('currency') or 'PKR'}",
+            f"{p['sale_price']} {p.get('currency') or 'PKR'}" if p.get("sale_price") else "",
+            p.get("brand") or "Tifl Little Wear",
+            p.get("condition") or "new",
+            p.get("gtin") or "",
+            p.get("mpn") or "",
+            p.get("google_product_category") or "",
+            p.get("product_type") or "",
+            p.get("color") or "",
+            p.get("size") or "",
+            p.get("gender") or "",
+            p.get("age_group") or "kids",
+            p.get("item_group_id") or "",
+        ])
+    return Response(content=buf.getvalue(), media_type="text/csv")
+
+
 @app.get("/api/products/{product_id}")
 def get_product(product_id: str):
     conn = get_conn()
@@ -347,19 +507,30 @@ def get_product(product_id: str):
     return dict(zip(cols, row))
 
 
+# All product columns except product_id/created_at (which are handled
+# separately) — used to build INSERT/UPDATE statements without manually
+# counting placeholders every time a field is added.
+PRODUCT_FIELDS = [
+    "name", "brand", "category", "price", "currency", "image_url", "description",
+    "sku", "stock_status", "active", "link", "additional_image_link", "availability",
+    "sale_price", "gtin", "mpn", "condition", "google_product_category", "product_type",
+    "color", "size", "gender", "age_group", "item_group_id",
+]
+
+def product_values(product: "Product"):
+    return [getattr(product, f) for f in PRODUCT_FIELDS]
+
+
 @app.post("/api/products")
 def create_product(product: Product, x_admin_key: str | None = Header(default=None)):
     require_admin(x_admin_key)
     product_id = "p-" + uuid.uuid4().hex[:8]
     conn = get_conn()
+    cols = ", ".join(PRODUCT_FIELDS)
+    placeholders = ", ".join(["?"] * len(PRODUCT_FIELDS))
     conn.execute(
-        """INSERT INTO products
-           (product_id, created_at, name, brand, category, price, currency,
-            image_url, description, sku, stock_status, active)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-        [product_id, datetime.now(), product.name, product.brand, product.category,
-         product.price, product.currency, product.image_url, product.description,
-         product.sku, product.stock_status, product.active],
+        f"INSERT INTO products (product_id, created_at, {cols}) VALUES (?, ?, {placeholders})",
+        [product_id, datetime.now()] + product_values(product),
     )
     conn.close()
     return {"product_id": product_id, "status": "created"}
@@ -369,13 +540,10 @@ def create_product(product: Product, x_admin_key: str | None = Header(default=No
 def update_product(product_id: str, product: Product, x_admin_key: str | None = Header(default=None)):
     require_admin(x_admin_key)
     conn = get_conn()
+    set_clause = ", ".join([f"{f}=?" for f in PRODUCT_FIELDS])
     conn.execute(
-        """UPDATE products SET name=?, brand=?, category=?, price=?, currency=?,
-           image_url=?, description=?, sku=?, stock_status=?, active=?
-           WHERE product_id=?""",
-        [product.name, product.brand, product.category, product.price, product.currency,
-         product.image_url, product.description, product.sku, product.stock_status,
-         product.active, product_id],
+        f"UPDATE products SET {set_clause} WHERE product_id=?",
+        product_values(product) + [product_id],
     )
     conn.close()
     return {"product_id": product_id, "status": "updated"}
@@ -388,6 +556,55 @@ def delete_product(product_id: str, x_admin_key: str | None = Header(default=Non
     conn.execute("DELETE FROM products WHERE product_id = ?", [product_id])
     conn.close()
     return {"product_id": product_id, "status": "deleted"}
+
+
+# ================= BULK IMPORT (CSV / XML from admin.html) =================
+# The browser parses the uploaded CSV/XML into JSON and posts it here — this
+# endpoint never touches a file, just a list of product-shaped dicts. If an
+# item's "sku" matches an existing product, that product is updated in
+# place; otherwise a new product is created. This makes re-uploading the
+# same feed file safe to repeat (e.g. a weekly export from your supplier).
+@app.post("/api/products/bulk")
+def bulk_import_products(payload: dict, x_admin_key: str | None = Header(default=None)):
+    require_admin(x_admin_key)
+    items = payload.get("items", [])
+    conn = get_conn()
+    created, updated, errors = 0, 0, []
+
+    for i, raw in enumerate(items):
+        try:
+            product = Product(**{k: v for k, v in raw.items() if k in Product.model_fields})
+        except Exception as e:
+            errors.append({"row": i, "error": str(e)})
+            continue
+
+        existing_id = None
+        if product.sku:
+            row = conn.execute(
+                "SELECT product_id FROM products WHERE sku = ? LIMIT 1", [product.sku]
+            ).fetchone()
+            if row:
+                existing_id = row[0]
+
+        if existing_id:
+            set_clause = ", ".join([f"{f}=?" for f in PRODUCT_FIELDS])
+            conn.execute(
+                f"UPDATE products SET {set_clause} WHERE product_id=?",
+                product_values(product) + [existing_id],
+            )
+            updated += 1
+        else:
+            product_id = "p-" + uuid.uuid4().hex[:8]
+            cols = ", ".join(PRODUCT_FIELDS)
+            placeholders = ", ".join(["?"] * len(PRODUCT_FIELDS))
+            conn.execute(
+                f"INSERT INTO products (product_id, created_at, {cols}) VALUES (?, ?, {placeholders})",
+                [product_id, datetime.now()] + product_values(product),
+            )
+            created += 1
+
+    conn.close()
+    return {"created": created, "updated": updated, "errors": errors, "total": len(items)}
 
 
 # ================= ORDERS =================

@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Atelier Design Studio — 2D Fabric Layering Engine</title>
+<style>
+  :root {
+    --emerald: #0f4c3a;
+    --emerald-deep: #0a3528;
+    --gold: #c9a961;
+    --gold-light: #e4cf9a;
+    --cream: #faf6ef;
+    --ivory: #fffdf7;
+    --ink: #1f2a26;
+    --muted: #6b7570;
+    --line: #e6ddc9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--cream);
+    color: var(--ink);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    line-height: 1.5;
+  }
+
+  /* --- LAYOUT --- */
+  .studio-wrap {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+  }
+  header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  header h1 {
+    font-family: 'Georgia', serif;
+    font-size: 2.5rem;
+    color: var(--emerald-deep);
+    letter-spacing: 1px;
+  }
+  header p {
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin-top: 8px;
+  }
+
+  .studio-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 30px;
+    align-items: start;
+  }
+  @media (max-width: 900px) {
+    .studio-grid { grid-template-columns: 1fr; }
+  }
+
+  /* --- CONTROLS PANEL --- */
+  .controls-panel {
+    background: var(--ivory);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 10px 30px rgba(15,76,58,0.05);
+  }
+  .control-group {
+    margin-bottom: 24px;
+  }
+  .control-group h3 {
+    font-family: 'Georgia', serif;
+    font-size: 1.1rem;
+    color: var(--emerald-deep);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--line);
+  }
+  .options-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 10px;
+  }
+  .option-btn {
+    padding: 10px;
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    text-align: center;
+    transition: all 0.2s ease;
+  }
+  .option-btn:hover {
+    border-color: var(--gold);
+    transform: translateY(-2px);
+  }
+  .option-btn.active {
+    background: var(--emerald);
+    color: var(--ivory);
+    border-color: var(--emerald);
+    font-weight: 600;
+  }
+
+  .color-swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .swatch {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: transform 0.2s;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+  .swatch:hover { transform: scale(1.1); }
+  .swatch.active {
+    border-color: var(--emerald-deep);
+    transform: scale(1.15);
+  }
+
+  /* --- PREVIEW PANEL (THE LAYERING ENGINE) --- */
+  .preview-panel {
+    background: linear-gradient(135deg, #fdfbf7 0%, #f4efe4 100%);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 600px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* The Mannequin / Base */
+  .mannequin-stage {
+    position: relative;
+    width: 320px;
+    height: 550px;
+  }
+
+  /* LAYER SYSTEM */
+  .layer {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    transition: all 0.4s ease;
+  }
+
+  /* 1. Body/Skin Layer */
+  .layer-body {
+    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 550"><path d="M160,40 C140,40 130,55 130,75 C130,90 140,100 145,105 L145,120 L110,130 L90,250 L110,260 L120,150 L120,300 L100,500 L140,500 L150,350 L170,350 L180,500 L220,500 L200,300 L200,150 L210,260 L230,250 L210,130 L175,120 L175,105 C180,100 190,90 190,75 C190,55 180,40 160,40 Z" fill="%23f4d4b8" stroke="%23e0b896" stroke-width="1"/></svg>') no-repeat center center;
+    background-size: contain;
+    z-index: 1;
+  }
+
+  /* 2. Garment Base Shape (The Cut) */
+  .layer-garment {
+    z-index: 2;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center top;
+  }
+  
+  /* Simulating different cuts with CSS clip-paths for demonstration */
+  .cut-shalwar-kameez {
+    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 550"><path d="M130,120 L190,120 L210,320 L110,320 Z M110,320 L90,520 L150,520 L160,340 L160,340 L170,520 L230,520 L210,320 Z" fill="%23ffffff" opacity="0.95"/></svg>') no-repeat center top;
+    background-size: contain;
+  }
+  .cut-lehenga {
+    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 550"><path d="M130,120 L190,120 L195,220 L125,220 Z M100,220 L220,220 L260,520 L60,520 Z" fill="%23ffffff" opacity="0.95"/></svg>') no-repeat center top;
+    background-size: contain;
+  }
+  .cut-anarkali {
+    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 550"><path d="M130,120 L190,120 L240,520 L80,520 Z" fill="%23ffffff" opacity="0.95"/></svg>') no-repeat center top;
+    background-size: contain;
+  }
+
+  /* 3. Fabric Texture Layer (Uses mix-blend-mode) */
+  .layer-fabric {
+    z-index: 3;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center top;
+    mix-blend-mode: multiply; /* This makes the texture blend with the color below */
+  }
+  /* Simulated Textures */
+  .tex-lawn {
+    background-image: repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px), repeating-linear-gradient(-45deg, transparent, transparent 2px, rgba(0,0,0,0.02) 2px, rgba(0,0,0,0.02) 4px);
+    /* In production, replace above with: background-image: url('assets/lawn-texture.png'); */
+  }
+  .tex-chiffon {
+    background-image: linear-gradient(rgba(255,255,255,0.4), rgba(255,255,255,0.1));
+    opacity: 0.6; /* Sheer effect */
+    mix-blend-mode: normal;
+  }
+  .tex-velvet {
+    background-image: radial-gradient(circle at 50% 30%, rgba(255,255,255,0.15) 0%, transparent 60%), radial-gradient(circle at 50% 80%, rgba(0,0,0,0.2) 0%, transparent 50%);
+    mix-blend-mode: overlay;
+  }
+  .tex-silk {
+    background-image: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, transparent 40%, rgba(0,0,0,0.1) 100%);
+    mix-blend-mode: overlay;
+  }
+
+  /* 4. Color Overlay Layer */
+  .layer-color {
+    z-index: 4;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center top;
+    mix-blend-mode: multiply; /* Multiplies the chosen color onto the white garment shape */
+  }
+
+  /* 5. Embroidery / Details Layer */
+  .layer-embroidery {
+    z-index: 5;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center top;
+    mix-blend-mode: normal;
+  }
+  /* Simulated Gold Tilla Work */
+  .emb-gold {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 550"><path d="M140,125 Q160,140 180,125 M115,315 L205,315 M100,515 L220,515" stroke="%23c9a961" stroke-width="3" fill="none" stroke-dasharray="5,3"/><circle cx="160" cy="135" r="4" fill="%23c9a961"/><circle cx="150" cy="310" r="3" fill="%23c9a961"/><circle cx="170" cy="310" r="3" fill="%23c9a961"/></svg>');
+  }
+  .emb-silver {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 550"><path d="M140,125 Q160,140 180,125 M115,315 L205,315 M100,515 L220,515" stroke="%23e0e0e0" stroke-width="3" fill="none" stroke-dasharray="5,3"/><circle cx="160" cy="135" r="4" fill="%23e0e0e0"/></svg>');
+  }
+  .emb-resham {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 550"><path d="M140,125 Q160,140 180,125 M115,315 L205,315" stroke="%230f4c3a" stroke-width="4" fill="none"/></svg>');
+  }
+
+  /* 6. Dupatta Layer (Sheer drape) */
+  .layer-dupatta {
+    z-index: 6;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center top;
+    opacity: 0.75;
+    mix-blend-mode: multiply;
+  }
+  .dupatta-chiffon {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 550"><path d="M130,120 Q80,200 90,400 L130,400 Q120,250 150,130 Z" fill="%23ffffff" opacity="0.6"/><path d="M190,120 Q240,200 230,400 L190,400 Q200,250 170,130 Z" fill="%23ffffff" opacity="0.6"/></svg>');
+  }
+
+  /* Summary Box */
+  .design-summary {
+    margin-top: 30px;
+    padding: 20px;
+    background: var(--ivory);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    width: 100%;
+    max-width: 320px;
+    text-align: center;
+  }
+  .design-summary h4 {
+    color: var(--emerald-deep);
+    font-family: 'Georgia', serif;
+    margin-bottom: 10px;
+  }
+  .design-summary p {
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+
+  .action-btn {
+    margin-top: 20px;
+    padding: 12px 24px;
+    background: var(--emerald);
+    color: var(--ivory);
+    border: none;
+    border-radius: 999px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .action-btn:hover { background: var(--emerald-deep); }
+
+</style>
+</head>
+<body>
+
+<div class="studio-wrap">
+  <header>
+    <h1>Atelier Design Studio</h1>
+    <p>Visualize your custom Pakistani ensemble with our 2D Fabric Layering Engine</p>
+  </header>
+
+  <div class="studio-grid">
+    
+    <!-- CONTROLS -->
+    <div class="controls-panel">
+      
+      <div class="control-group">
+        <h3>1. Outfit Silhouette</h3>
+        <div class="options-grid" id="cutOptions">
+          <div class="option-btn active" data-val="shalwar-kameez">Shalwar Kameez</div>
+          <div class="option-btn" data-val="lehenga">Lehenga</div>
+          <div class="option-btn" data-val="anarkali">Anarkali</div>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h3>2. Fabric Type</h3>
+        <div class="options-grid" id="fabricOptions">
+          <div class="option-btn active" data-val="lawn">Lawn</div>
+          <div class="option-btn" data-val="chiffon">Chiffon</div>
+          <div class="option-btn" data-val="silk">Silk</div>
+          <div class="option-btn" data-val="velvet">Velvet</div>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h3>3. Main Color</h3>
+        <div class="color-swatches" id="colorOptions">
+          <div class="swatch active" data-val="#0f4c3a" style="background:#0f4c3a" title="Emerald"></div>
+          <div class="swatch" data-val="#8b0000" style="background:#8b0000" title="Maroon"></div>
+          <div class="swatch" data-val="#1e3a5f" style="background:#1e3a5f" title="Navy"></div>
+          <div class="swatch" data-val="#4a0e4e" style="background:#4a0e4e" title="Deep Purple"></div>
+          <div class="swatch" data-val="#c9a961" style="background:#c9a961" title="Gold"></div>
+          <div class="swatch" data-val="#2c2c2c" style="background:#2c2c2c" title="Black"></div>
+          <div class="swatch" data-val="#f5f5dc" style="background:#f5f5dc; border:1px solid #ccc" title="Cream"></div>
+          <div class="swatch" data-val="#ff6b9d" style="background:#ff6b9d" title="Rani Pink"></div>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h3>4. Embroidery Work (Kaam)</h3>
+        <div class="options-grid" id="embOptions">
+          <div class="option-btn active" data-val="gold">Tilla / Gold</div>
+          <div class="option-btn" data-val="silver">Dabka / Silver</div>
+          <div class="option-btn" data-val="resham">Resham (Thread)</div>
+          <div class="option-btn" data-val="none">Plain / No Work</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- PREVIEW -->
+    <div class="preview-panel">
+      <div class="mannequin-stage">
+        <!-- The Layer Stack -->
+        <div class="layer layer-body"></div>
+        <div class="layer layer-garment cut-shalwar-kameez" id="layerGarment"></div>
+        <div class="layer layer-fabric tex-lawn" id="layerFabric"></div>
+        <div class="layer layer-color" id="layerColor"></div>
+        <div class="layer layer-embroidery emb-gold" id="layerEmbroidery"></div>
+        <div class="layer layer-dupatta dupatta-chiffon" id="layerDupatta"></div>
+      </div>
+
+      <div class="design-summary">
+        <h4>Current Design</h4>
+        <p id="summaryText">Emerald Lawn Shalwar Kameez with Gold Tilla work and Chiffon Dupatta.</p>
+        <button class="action-btn" onclick="alert('Design saved to your boutique dashboard!')">Save Design</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // --- STATE MANAGEMENT ---
+  const state = {
+    cut: 'shalwar-kameez',
+    fabric: 'lawn',
+    color: '#0f4c3a',
+    embroidery: 'gold'
+  };
+
+  // --- DOM ELEMENTS ---
+  const layerGarment = document.getElementById('layerGarment');
+  const layerFabric = document.getElementById('layerFabric');
+  const layerColor = document.getElementById('layerColor');
+  const layerEmbroidery = document.getElementById('layerEmbroidery');
+  const layerDupatta = document.getElementById('layerDupatta');
+  const summaryText = document.getElementById('summaryText');
+
+  // --- UPDATE ENGINE ---
+  function updatePreview() {
+    // 1. Update Cut (Silhouette)
+    layerGarment.className = `layer layer-garment cut-${state.cut}`;
+    
+    // 2. Update Fabric Texture
+    layerFabric.className = `layer layer-fabric tex-${state.fabric}`;
+    
+    // 3. Update Color Overlay
+    // We apply the color to the background of the color layer. 
+    // Because it uses mix-blend-mode: multiply, it will tint the white garment shape beneath it.
+    layerColor.style.backgroundImage = `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 550"><rect width="320" height="550" fill="${state.color}" opacity="0.85"/></svg>')`;
+    layerColor.style.backgroundSize = 'contain';
+    layerColor.style.backgroundRepeat = 'no-repeat';
+    layerColor.style.backgroundPosition = 'center top';
+
+    // 4. Update Embroidery
+    if (state.embroidery === 'none') {
+      layerEmbroidery.style.display = 'none';
+    } else {
+      layerEmbroidery.style.display = 'block';
+      layerEmbroidery.className = `layer layer-embroidery emb-${state.embroidery}`;
+    }
+
+    // 5. Update Dupatta (Only show for certain cuts)
+    if (state.cut === 'lehenga' || state.cut === 'shalwar-kameez') {
+      layerDupatta.style.display = 'block';
+      layerDupatta.className = `layer layer-dupatta dupatta-chiffon`;
+      // Tint dupatta slightly with main color for cohesion
+      layerDupatta.style.filter = `hue-rotate(0deg) drop-shadow(0 5px 10px rgba(0,0,0,0.1))`;
+    } else {
+      layerDupatta.style.display = 'none';
+    }
+
+    // 6. Update Summary Text
+    const fabricNames = { lawn: 'Lawn', chiffon: 'Chiffon', silk: 'Silk', velvet: 'Velvet' };
+    const cutNames = { 'shalwar-kameez': 'Shalwar Kameez', lehenga: 'Lehenga', anarkali: 'Anarkali' };
+    const embNames = { gold: 'Gold Tilla', silver: 'Silver Dabka', resham: 'Resham Thread', none: 'Plain' };
+    
+    summaryText.textContent = `${getColorName(state.color)} ${fabricNames[state.fabric]} ${cutNames[state.cut]} with ${embNames[state.embroidery]} work.`;
+  }
+
+  function getColorName(hex) {
+    const map = {
+      '#0f4c3a': 'Emerald', '#8b0000': 'Maroon', '#1e3a5f': 'Navy', 
+      '#4a0e4e': 'Deep Purple', '#c9a961': 'Gold', '#2c2c2c': 'Black', 
+      '#f5f5dc': 'Cream', '#ff6b9d': 'Rani Pink'
+    };
+    return map[hex] || 'Custom';
+  }
+
+  // --- EVENT LISTENERS ---
+  function setupOptions(containerId, stateKey) {
+    const btns = document.querySelectorAll(`#${containerId} .option-btn, #${containerId} .swatch`);
+    btns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        // Remove active class from siblings
+        btns.forEach(b => b.classList.remove('active'));
+        // Add to clicked
+        btn.classList.add('active');
+        // Update state
+        state[stateKey] = btn.dataset.val;
+        // Re-render
+        updatePreview();
+      });
+    });
+  }
+
+  setupOptions('cutOptions', 'cut');
+  setupOptions('fabricOptions', 'fabric');
+  setupOptions('colorOptions', 'color');
+  setupOptions('embOptions', 'embroidery');
+
+  // Initial render
+  updatePreview();
+
+</script>
+</body>
+</html>

@@ -7,6 +7,7 @@
 <meta name="robots" content="noindex, nofollow">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 </head>
 <body>
 
@@ -25,11 +26,14 @@
 <main class="wrap" id="adminRoot" style="padding:50px 0 90px;">
   <div class="eyebrow">Studio admin</div>
   <h1 style="font-size:28px;margin-bottom:8px;">Add and manage products</h1>
-  <p style="color:var(--ink-soft);font-size:14.5px;max-width:560px;">
+  <p style="color:var(--ink-soft);font-size:14.5px;max-width:640px;">
     Anything you add or edit here appears on the Shop page immediately — no
-    code changes needed. This page is not linked from the site menu and isn't
-    indexed by search engines, but it's not hidden by a real login — don't
-    share this URL publicly.
+    code changes needed. Fields below match the Google Merchant Center and
+    Meta Catalog feed spec directly, so the same product data can power your
+    website, a Google Shopping listing, and a Meta/Instagram catalogue at
+    once. This page is not linked from the site menu and isn't indexed by
+    search engines, but it's not hidden by a real login — don't share this
+    URL publicly.
   </p>
 
   <div id="adminGate" style="max-width:420px;margin-top:34px;background:var(--bg-alt);border-radius:var(--radius);padding:28px;">
@@ -40,24 +44,103 @@
   </div>
 
   <div id="adminPanel" style="display:none;margin-top:34px;">
+
+    <!-- ===== Bulk import ===== -->
+    <div class="side-card" style="margin-bottom:40px;">
+      <h3>Bulk upload (CSV or XML)</h3>
+      <p style="margin-bottom:16px;">Upload a Google Shopping-style feed file to add or update many products at once. Matching is done by <b>SKU</b> — if a row's SKU matches an existing product, that product is updated instead of duplicated, so it's safe to re-upload the same file later.</p>
+      <p style="font-size:12.5px;color:var(--ink-soft);margin-bottom:14px;">
+        Expected columns (CSV header row, or XML <code>&lt;item&gt;</code> tags): <code>id, title, description, link, image_link, price, sale_price, availability, brand, condition, gtin, mpn, google_product_category, product_type, color, size, gender, age_group, item_group_id</code>.
+        <code>id</code> is used as the SKU. Missing columns are fine — only <code>title</code> and <code>price</code> are required.
+      </p>
+      <input type="file" id="bulkFile" accept=".csv,.xml" style="margin-bottom:12px;">
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-primary btn-sm" id="bulkUploadBtn">Upload &amp; import</button>
+      </div>
+      <div id="bulkResults" style="margin-top:14px;font-size:13.3px;"></div>
+    </div>
+
+    <!-- ===== Feed links ===== -->
+    <div class="side-card" style="margin-bottom:40px;">
+      <h3>Shopping feed URLs</h3>
+      <p style="margin-bottom:12px;">Give these directly to Google Merchant Center (Scheduled fetch) or Meta Commerce Manager (Data feed) to keep them synced automatically.</p>
+      <div style="display:flex;flex-direction:column;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:12.8px;">
+        <a id="feedXmlLink" href="/api/products/feed.xml" target="_blank" style="color:var(--primary-dark);">/api/products/feed.xml</a>
+        <a id="feedCsvLink" href="/api/products/feed.csv" target="_blank" style="color:var(--primary-dark);">/api/products/feed.csv</a>
+      </div>
+    </div>
+
     <div class="contact-grid">
       <div class="contact-form" style="background:var(--bg-alt);">
         <h2 id="apFormTitle" style="font-size:18px;margin-bottom:16px;">Add a new product</h2>
         <form id="productForm">
           <input type="hidden" id="apEditingId">
+
+          <p class="eyebrow" style="margin-top:0;">Basics</p>
           <div class="form-grid">
-            <div class="field full"><label for="apName">Product name</label><input id="apName" required type="text" placeholder="e.g. Block-print Kurta Set"></div>
+            <div class="field full"><label for="apName">Product name / title</label><input id="apName" required type="text" placeholder="e.g. Block-print Kurta Set"></div>
             <div class="field"><label for="apBrand">Brand</label><input id="apBrand" required type="text" placeholder="Partner brand name"></div>
-            <div class="field"><label for="apCategory">Category</label>
+            <div class="field"><label for="apCategory">Site category</label>
               <select id="apCategory">
                 <option>Boys</option><option>Girls</option><option>Newborn</option><option>Occasion</option><option>Accessories</option>
               </select>
             </div>
             <div class="field"><label for="apPrice">Price (PKR)</label><input id="apPrice" required type="number" min="0" placeholder="3200"></div>
-            <div class="field"><label for="apColor">Placeholder colour</label><input id="apColor" type="color" value="#108A00" style="height:42px;padding:4px;"></div>
-            <div class="field full"><label for="apImage">Photo URL (optional — leave blank to use the colour swatch above)</label><input id="apImage" type="text" placeholder="https://..."></div>
+            <div class="field"><label for="apSalePrice">Sale price (optional)</label><input id="apSalePrice" type="number" min="0" placeholder="Leave blank if not on sale"></div>
+            <div class="field"><label for="apSwatch">Placeholder colour swatch</label><input id="apSwatch" type="color" value="#108A00" style="height:42px;padding:4px;"></div>
+            <div class="field"><label for="apImage">Photo URL (optional)</label><input id="apImage" type="text" placeholder="https://..."></div>
             <div class="field full"><label for="apDescription">Description</label><textarea id="apDescription" rows="3" placeholder="A short, honest description of the piece."></textarea></div>
           </div>
+
+          <p class="eyebrow">Identifiers</p>
+          <div class="form-grid">
+            <div class="field"><label for="apSku">SKU <span style="color:var(--primary-dark);">(used to match bulk uploads)</span></label><input id="apSku" type="text" placeholder="e.g. TLW-KURTA-001"></div>
+            <div class="field"><label for="apGtin">GTIN / barcode</label><input id="apGtin" type="text" placeholder="UPC / EAN, if you have one"></div>
+            <div class="field"><label for="apMpn">MPN</label><input id="apMpn" type="text" placeholder="Manufacturer part number"></div>
+            <div class="field"><label for="apItemGroupId">Item group ID</label><input id="apItemGroupId" type="text" placeholder="Same value across size/colour variants"></div>
+          </div>
+
+          <p class="eyebrow">Shopping attributes</p>
+          <div class="form-grid">
+            <div class="field"><label for="apAvailability">Availability</label>
+              <select id="apAvailability">
+                <option value="in stock">In stock</option>
+                <option value="out of stock">Out of stock</option>
+                <option value="preorder">Preorder</option>
+                <option value="backorder">Backorder</option>
+              </select>
+            </div>
+            <div class="field"><label for="apCondition">Condition</label>
+              <select id="apCondition">
+                <option value="new">New</option>
+                <option value="refurbished">Refurbished</option>
+                <option value="used">Used</option>
+              </select>
+            </div>
+            <div class="field"><label for="apColorAttr">Colour</label><input id="apColorAttr" type="text" placeholder="e.g. Forest Green"></div>
+            <div class="field"><label for="apSize">Size</label><input id="apSize" type="text" placeholder="e.g. 4-5Y"></div>
+            <div class="field"><label for="apGender">Gender</label>
+              <select id="apGender">
+                <option value="">—</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="unisex">Unisex</option>
+              </select>
+            </div>
+            <div class="field"><label for="apAgeGroup">Age group</label>
+              <select id="apAgeGroup">
+                <option value="newborn">Newborn</option>
+                <option value="infant">Infant</option>
+                <option value="toddler">Toddler</option>
+                <option value="kids" selected>Kids</option>
+                <option value="adult">Adult</option>
+              </select>
+            </div>
+            <div class="field full"><label for="apGoogleCategory">Google product category</label><input id="apGoogleCategory" type="text" placeholder="e.g. Apparel & Accessories > Clothing > Kids' Clothing"></div>
+            <div class="field full"><label for="apProductType">Your product type / category path</label><input id="apProductType" type="text" placeholder="e.g. Kids > Boys > Kurta"></div>
+            <div class="field full"><label for="apLink">Product page link (optional — auto-generated if blank)</label><input id="apLink" type="text" placeholder="Leave blank to use the default product page"></div>
+          </div>
+
           <div style="display:flex;gap:10px;margin-top:18px;">
             <button type="button" class="btn btn-ghost" id="apCancelEdit">Clear</button>
             <button type="submit" class="btn btn-primary btn-block">Save product</button>
@@ -75,5 +158,11 @@
 
 <div class="toast" id="toast"></div>
 <script src="script.js"></script>
+<script>
+  document.getElementById('feedXmlLink').href = window.location.origin + '/api/products/feed.xml';
+  document.getElementById('feedCsvLink').href = window.location.origin + '/api/products/feed.csv';
+  document.getElementById('feedXmlLink').textContent = window.location.origin + '/api/products/feed.xml';
+  document.getElementById('feedCsvLink').textContent = window.location.origin + '/api/products/feed.csv';
+</script>
 </body>
 </html>
