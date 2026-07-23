@@ -82,12 +82,12 @@ def get_conn():
 
 
 def ensure_schema(conn):
-    # All CREATE TABLE statements run as ONE batched script instead of one
-    # network round trip per table — with 7 tables, that's the difference
-    # between 7 round trips and 1. DuckDB's execute() can run a full
-    # multi-statement SQL script as long as it doesn't use "?" parameters.
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS bookings (
+    # Try running all CREATE TABLE statements as one batched script first
+    # (fewer network round trips to MotherDuck). If this DuckDB/MotherDuck
+    # version doesn't support multi-statement execute(), fall back to one
+    # statement at a time — slower on that one cold start, but never fails.
+    create_statements = [
+        """CREATE TABLE IF NOT EXISTS bookings (
             booking_id      VARCHAR PRIMARY KEY,
             created_at      TIMESTAMP,
             parent_name     VARCHAR,
@@ -99,16 +99,16 @@ def ensure_schema(conn):
             time_slot       VARCHAR,
             notes           VARCHAR,
             measurements    JSON
-        );
-        CREATE TABLE IF NOT EXISTS contact_messages (
+        );""",
+        """CREATE TABLE IF NOT EXISTS contact_messages (
             message_id      VARCHAR PRIMARY KEY,
             created_at      TIMESTAMP,
             name            VARCHAR,
             phone           VARCHAR,
             email           VARCHAR,
             message         VARCHAR
-        );
-        CREATE TABLE IF NOT EXISTS products (
+        );""",
+        """CREATE TABLE IF NOT EXISTS products (
             product_id      VARCHAR PRIMARY KEY,
             created_at      TIMESTAMP,
             name            VARCHAR,
@@ -121,8 +121,8 @@ def ensure_schema(conn):
             sku             VARCHAR,
             stock_status    VARCHAR,
             active          BOOLEAN
-        );
-        CREATE TABLE IF NOT EXISTS orders (
+        );""",
+        """CREATE TABLE IF NOT EXISTS orders (
             order_id         VARCHAR PRIMARY KEY,
             created_at        TIMESTAMP,
             customer_name     VARCHAR,
@@ -138,8 +138,8 @@ def ensure_schema(conn):
             total             DOUBLE,
             currency          VARCHAR,
             status            VARCHAR
-        );
-        CREATE TABLE IF NOT EXISTS customers (
+        );""",
+        """CREATE TABLE IF NOT EXISTS customers (
             customer_id      VARCHAR PRIMARY KEY,
             created_at       TIMESTAMP,
             name             VARCHAR,
@@ -148,28 +148,33 @@ def ensure_schema(conn):
             password_hash    VARCHAR,
             address          VARCHAR,
             city             VARCHAR
-        );
-        CREATE TABLE IF NOT EXISTS sessions (
+        );""",
+        """CREATE TABLE IF NOT EXISTS sessions (
             token            VARCHAR PRIMARY KEY,
             customer_id      VARCHAR,
             created_at       TIMESTAMP,
             expires_at       TIMESTAMP
-        );
-        CREATE TABLE IF NOT EXISTS live_comments (
+        );""",
+        """CREATE TABLE IF NOT EXISTS live_comments (
             comment_id       VARCHAR PRIMARY KEY,
             created_at       TIMESTAMP,
             customer_id      VARCHAR,
             name             VARCHAR,
             message          VARCHAR
-        );
-    """)
+        );""",
+    ]
+    try:
+        conn.execute("\n".join(create_statements))
+    except Exception:
+        for stmt in create_statements:
+            try:
+                conn.execute(stmt)
+            except Exception:
+                pass
 
     # ================= SHOPPING FEED ATTRIBUTES + customer_id =================
-    # Same idea — one batched ALTER script instead of 15 separate round
-    # trips. Column names follow Google Merchant Center / Meta Catalog feed
-    # specs directly. Falls back to one-by-one only if the batch itself
-    # fails for some reason (e.g. an older DuckDB without multi-statement
-    # ALTER support) — safe either way, just slower on that one cold start.
+    # Same batch-then-fallback pattern. Column names follow Google Merchant
+    # Center / Meta Catalog feed specs directly.
     shopping_columns = [
         ("link", "VARCHAR"), ("additional_image_link", "VARCHAR"),
         ("availability", "VARCHAR"), ("sale_price", "DOUBLE"),
