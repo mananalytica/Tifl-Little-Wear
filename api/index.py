@@ -57,24 +57,23 @@ _schema_ready = False
 
 def get_conn():
     global _schema_ready
-    # Connect at the account level first (no database name) so we can
-    # create tifl_bookings if it doesn't exist yet, then attach to it.
-    root = duckdb.connect(
-        f"md:?motherduck_token={MOTHERDUCK_TOKEN}",
-        config={"home_directory": "/tmp"},
-    )
-    root.execute(f"CREATE DATABASE IF NOT EXISTS {DB_NAME}")
-    root.close()
+    if not _schema_ready:
+        # Only touch the account-level (no-database) connection once per
+        # warm instance, purely to create the database if it's missing.
+        # Doing this on every single request (as before) was an extra
+        # avoidable network round trip every time.
+        root = duckdb.connect(
+            f"md:?motherduck_token={MOTHERDUCK_TOKEN}",
+            config={"home_directory": "/tmp"},
+        )
+        root.execute(f"CREATE DATABASE IF NOT EXISTS {DB_NAME}")
+        root.close()
 
     conn = duckdb.connect(
         f"md:{DB_NAME}?motherduck_token={MOTHERDUCK_TOKEN}",
         config={"home_directory": "/tmp"},
     )
 
-    # Only set up tables once per warm instance instead of on every single
-    # request — running 4 CREATE TABLE statements plus a seed check on every
-    # call was slow enough to risk timing out, which is what caused products
-    # to intermittently disappear.
     if not _schema_ready:
         ensure_schema(conn)
         _schema_ready = True
@@ -83,8 +82,11 @@ def get_conn():
 
 
 def ensure_schema(conn):
-    conn.execute(
-        """
+    # All CREATE TABLE statements run as ONE batched script instead of one
+    # network round trip per table — with 7 tables, that's the difference
+    # between 7 round trips and 1. DuckDB's execute() can run a full
+    # multi-statement SQL script as long as it doesn't use "?" parameters.
+    conn.execute("""
         CREATE TABLE IF NOT EXISTS bookings (
             booking_id      VARCHAR PRIMARY KEY,
             created_at      TIMESTAMP,
@@ -97,11 +99,7 @@ def ensure_schema(conn):
             time_slot       VARCHAR,
             notes           VARCHAR,
             measurements    JSON
-        )
-        """
-    )
-    conn.execute(
-        """
+        );
         CREATE TABLE IF NOT EXISTS contact_messages (
             message_id      VARCHAR PRIMARY KEY,
             created_at      TIMESTAMP,
@@ -109,11 +107,7 @@ def ensure_schema(conn):
             phone           VARCHAR,
             email           VARCHAR,
             message         VARCHAR
-        )
-        """
-    )
-    conn.execute(
-        """
+        );
         CREATE TABLE IF NOT EXISTS products (
             product_id      VARCHAR PRIMARY KEY,
             created_at      TIMESTAMP,
@@ -127,42 +121,7 @@ def ensure_schema(conn):
             sku             VARCHAR,
             stock_status    VARCHAR,
             active          BOOLEAN
-        )
-        """
-    )
-    # ================= SHOPPING FEED ATTRIBUTES =================
-    # Added on top of the original table with ALTER TABLE ... ADD COLUMN
-    # IF NOT EXISTS, so existing products already saved in MotherDuck are
-    # kept — they'll just show blank/default values for these new fields
-    # until you fill them in (via admin.html or a bulk CSV/XML upload).
-    # Column names follow Google Merchant Center / Meta Catalog feed specs
-    # directly, so they map straight onto the feed with no translation.
-    shopping_columns = [
-        ("link", "VARCHAR"),                    # product page URL
-        ("additional_image_link", "VARCHAR"),
-        ("availability", "VARCHAR"),             # in stock | out of stock | preorder | backorder
-        ("sale_price", "DOUBLE"),
-        ("gtin", "VARCHAR"),                     # barcode (UPC/EAN/ISBN)
-        ("mpn", "VARCHAR"),                      # manufacturer part number
-        ("condition", "VARCHAR"),                # new | refurbished | used
-        ("google_product_category", "VARCHAR"),
-        ("product_type", "VARCHAR"),             # your own category path, e.g. "Kids > Boys > Kurta"
-        ("color", "VARCHAR"),
-        ("size", "VARCHAR"),
-        ("gender", "VARCHAR"),                   # male | female | unisex
-        ("age_group", "VARCHAR"),                # newborn | infant | toddler | kids | adult
-        ("item_group_id", "VARCHAR"),            # groups size/colour variants of the same product
-    ]
-    for col_name, col_type in shopping_columns:
-        try:
-            conn.execute(f"ALTER TABLE products ADD COLUMN IF NOT EXISTS {col_name} {col_type}")
-        except Exception:
-            # Older DuckDB/MotherDuck versions without "IF NOT EXISTS" on
-            # ALTER — safe to ignore if the column already exists.
-            pass
-
-    conn.execute(
-        """
+        );
         CREATE TABLE IF NOT EXISTS orders (
             order_id         VARCHAR PRIMARY KEY,
             created_at        TIMESTAMP,
@@ -179,23 +138,7 @@ def ensure_schema(conn):
             total             DOUBLE,
             currency          VARCHAR,
             status            VARCHAR
-        )
-        """
-    )
-    try:
-        conn.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_id VARCHAR")
-    except Exception:
-        pass
-
-    # ================= CUSTOMER ACCOUNTS =================
-    # Lightweight accounts so a shopper can save an address for true
-    # one-click buying on the live sale, comment while logged in, and see
-    # their own order history. This is simple email+password auth with
-    # opaque session tokens — appropriate for a small studio, not a
-    # replacement for a full identity provider (no email verification or
-    # password-reset flow yet).
-    conn.execute(
-        """
+        );
         CREATE TABLE IF NOT EXISTS customers (
             customer_id      VARCHAR PRIMARY KEY,
             created_at       TIMESTAMP,
@@ -205,30 +148,47 @@ def ensure_schema(conn):
             password_hash    VARCHAR,
             address          VARCHAR,
             city             VARCHAR
-        )
-        """
-    )
-    conn.execute(
-        """
+        );
         CREATE TABLE IF NOT EXISTS sessions (
             token            VARCHAR PRIMARY KEY,
             customer_id      VARCHAR,
             created_at       TIMESTAMP,
             expires_at       TIMESTAMP
-        )
-        """
-    )
-    conn.execute(
-        """
+        );
         CREATE TABLE IF NOT EXISTS live_comments (
             comment_id       VARCHAR PRIMARY KEY,
             created_at       TIMESTAMP,
             customer_id      VARCHAR,
             name             VARCHAR,
             message          VARCHAR
-        )
-        """
-    )
+        );
+    """)
+
+    # ================= SHOPPING FEED ATTRIBUTES + customer_id =================
+    # Same idea — one batched ALTER script instead of 15 separate round
+    # trips. Column names follow Google Merchant Center / Meta Catalog feed
+    # specs directly. Falls back to one-by-one only if the batch itself
+    # fails for some reason (e.g. an older DuckDB without multi-statement
+    # ALTER support) — safe either way, just slower on that one cold start.
+    shopping_columns = [
+        ("link", "VARCHAR"), ("additional_image_link", "VARCHAR"),
+        ("availability", "VARCHAR"), ("sale_price", "DOUBLE"),
+        ("gtin", "VARCHAR"), ("mpn", "VARCHAR"), ("condition", "VARCHAR"),
+        ("google_product_category", "VARCHAR"), ("product_type", "VARCHAR"),
+        ("color", "VARCHAR"), ("size", "VARCHAR"), ("gender", "VARCHAR"),
+        ("age_group", "VARCHAR"), ("item_group_id", "VARCHAR"),
+    ]
+    alter_statements = [f"ALTER TABLE products ADD COLUMN IF NOT EXISTS {c} {t};" for c, t in shopping_columns]
+    alter_statements.append("ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_id VARCHAR;")
+    try:
+        conn.execute("\n".join(alter_statements))
+    except Exception:
+        for stmt in alter_statements:
+            try:
+                conn.execute(stmt)
+            except Exception:
+                pass
+
     seed_products_if_empty(conn)
 
 
