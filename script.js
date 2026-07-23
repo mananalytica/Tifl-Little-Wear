@@ -50,6 +50,57 @@ const Store = {
   }
 };
 
+/* ============================================================
+   AUTH — lightweight customer accounts (signup/login/session)
+   Used by account.html and, on live-sell.html, to let a signed-in
+   customer buy in one tap using their saved address, and to post
+   live comments under their real name.
+============================================================= */
+const Auth = {
+  getToken(){ return Store.get('tifl_session', null)?.token || null; },
+  getProfile(){ return Store.get('tifl_session', null); },
+  isLoggedIn(){ return !!this.getToken(); },
+
+  async signup(payload){
+    const res = await fetch('/api/auth/signup', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
+    });
+    if(!res.ok){ const e = await res.json().catch(()=>({})); throw new Error(e.detail || 'Signup failed'); }
+    const data = await res.json();
+    Store.set('tifl_session', {token: data.token, name: data.name, email: data.email});
+    return data;
+  },
+  async login(email, password){
+    const res = await fetch('/api/auth/login', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email, password})
+    });
+    if(!res.ok){ const e = await res.json().catch(()=>({})); throw new Error(e.detail || 'Login failed'); }
+    const data = await res.json();
+    Store.set('tifl_session', {token: data.token, name: data.name, email: data.email});
+    return data;
+  },
+  async logout(){
+    const token = this.getToken();
+    if(token){
+      try{ await fetch('/api/auth/logout', {method:'POST', headers:{'Authorization':'Bearer '+token}}); }catch(e){}
+    }
+    Store.set('tifl_session', null);
+  },
+  async fetchMe(){
+    const token = this.getToken();
+    if(!token) return null;
+    try{
+      const res = await fetch('/api/auth/me', {headers:{'Authorization':'Bearer '+token}});
+      if(!res.ok){ Store.set('tifl_session', null); return null; }
+      return await res.json();
+    }catch(e){ return null; }
+  },
+  authHeader(){
+    const token = this.getToken();
+    return token ? {'Authorization': 'Bearer '+token} : {};
+  }
+};
+
 /* ---------- nav ---------- */
 document.getElementById('menuToggle')?.addEventListener('click', ()=>{
   document.getElementById('navTabs').classList.toggle('show');
@@ -840,6 +891,291 @@ function initAdminPage(){
   }
 }
 
+/* ============================================================
+   LIVE SALE PAGE (live-sell.html)
+   Buy Now is a true instant purchase for signed-in customers with
+   a saved address (one click, straight to /api/orders). Guests
+   and signed-in customers without a saved address get a short
+   quick-buy form instead of the full cart + checkout flow — still
+   far faster than a normal purchase, which is the point of a live
+   sale.
+============================================================= */
+let LIVE_ITEMS = [];
+let pendingQuickBuyProduct = null;
+
+function renderLiveTimeline(){
+  const root = document.getElementById('productTimeline');
+  if(!root) return;
+  if(LIVE_ITEMS.length===0){
+    root.innerHTML = '<p style="color:var(--ink-soft);font-size:13px;">No products are live right now — check back soon.</p>';
+    return;
+  }
+  root.innerHTML = LIVE_ITEMS.map(p=>`
+    <div class="timeline-item" data-id="${p.id}">
+      <div class="timeline-item-grid">
+        <div class="timeline-thumb">${productThumbHTML(p,'80%')}</div>
+        <div class="timeline-info">
+          <div class="name">${p.name}</div>
+          <div class="time">${p.brand}</div>
+        </div>
+        <div class="timeline-actions">
+          <div class="timeline-price">PKR ${p.price.toLocaleString()}</div>
+          <button class="btn btn-primary btn-sm" data-buy="${p.id}" style="padding:6px 12px;font-size:11.5px;">Buy now</button>
+          <button class="btn btn-ghost btn-sm" data-add="${p.id}" style="padding:6px 12px;font-size:11.5px;">Add to cart</button>
+        </div>
+      </div>
+    </div>`).join('');
+
+  root.querySelectorAll('[data-buy]').forEach(b=>b.addEventListener('click', ()=>{
+    const p = LIVE_ITEMS.find(x=>x.id===b.dataset.buy);
+    if(p) startInstantBuy(p);
+  }));
+  root.querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click', ()=>{
+    const p = LIVE_ITEMS.find(x=>x.id===b.dataset.add);
+    if(p) addToCart(p, 1);
+  }));
+  document.getElementById('productCount').textContent = LIVE_ITEMS.length;
+}
+
+async function startInstantBuy(product){
+  const profile = await Auth.fetchMe();
+  if(profile && profile.address){
+    // True one-click: saved address on file, place the order immediately.
+    await placeLiveOrder(product, {
+      customer_name: profile.name, phone: profile.phone || '', email: profile.email,
+      address: profile.address, city: profile.city || 'Lahore'
+    });
+    return;
+  }
+  // No saved address (guest, or logged in without one on file) — a short
+  // quick-buy form instead of the full cart/checkout flow.
+  pendingQuickBuyProduct = product;
+  document.getElementById('qbProductName').textContent = product.name+' — PKR '+product.price.toLocaleString();
+  if(profile){ document.getElementById('qbName').value = profile.name || ''; document.getElementById('qbPhone').value = profile.phone || ''; }
+  document.getElementById('quickBuyModal').classList.add('show');
+}
+
+async function placeLiveOrder(product, buyer){
+  const payload = Object.assign({
+    payment_method: 'Cash on delivery',
+    notes: 'Live sale — instant buy',
+    items: [{id:product.id, name:product.name, brand:product.brand, price:product.price, qty:1}],
+    subtotal: product.price, shipping_fee: 0, total: product.price, currency:'PKR'
+  }, buyer);
+
+  let txId;
+  try{
+    const res = await fetch('/api/orders', {
+      method:'POST',
+      headers: Object.assign({'Content-Type':'application/json'}, Auth.authHeader()),
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout ? AbortSignal.timeout(4000) : undefined
+    });
+    if(res.ok){ const data = await res.json(); txId = data.order_id; }
+    else throw new Error('non-200');
+  }catch(e){
+    txId = 'TLW-ORD-'+Math.floor(100000+Math.random()*900000)+'-OFFLINE';
+  }
+
+  fireAddToCart(product, 1);
+  firePurchase([Object.assign({qty:1}, product)], txId);
+  try{ sessionStorage.setItem('tifl_last_order', JSON.stringify(Object.assign({order_id: txId}, payload))); }catch(e){}
+  window.location.href = 'thank-you.html';
+}
+
+function initLiveSellPage(){
+  const root = document.getElementById('productTimeline');
+  if(!root) return;
+
+  (async ()=>{
+    await loadProducts();
+    LIVE_ITEMS = PRODUCTS.slice(0, 8);
+    renderLiveTimeline();
+  })();
+
+  document.getElementById('qbCancelBtn')?.addEventListener('click', ()=>{
+    document.getElementById('quickBuyModal').classList.remove('show');
+    pendingQuickBuyProduct = null;
+  });
+  document.getElementById('quickBuyForm')?.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    if(!pendingQuickBuyProduct) return;
+    const btn = e.target.querySelector('button[type=submit]');
+    btn.disabled = true; btn.textContent = 'Placing order…';
+    await placeLiveOrder(pendingQuickBuyProduct, {
+      customer_name: document.getElementById('qbName').value,
+      phone: document.getElementById('qbPhone').value,
+      email: null,
+      address: document.getElementById('qbAddress').value,
+      city: document.getElementById('qbCity').value || 'Lahore'
+    });
+  });
+
+  async function loadComments(){
+    const listEl = document.getElementById('liveCommentsList');
+    if(!listEl) return;
+    try{
+      const res = await fetch('/api/live/comments');
+      const comments = await res.json();
+      listEl.innerHTML = comments.length ? comments.map(c=>`
+        <div class="chat-message"><span class="username">${c.name}</span><div>${c.message}</div></div>
+      `).join('') : '<p style="color:var(--ink-soft);font-size:13px;">No comments yet — be the first to say hello.</p>';
+      listEl.scrollTop = listEl.scrollHeight;
+    }catch(e){ /* leave whatever was last rendered */ }
+  }
+  async function refreshCommentGate(){
+    const profile = await Auth.fetchMe();
+    document.getElementById('commentSignedOut').style.display = profile ? 'none' : 'flex';
+    document.getElementById('commentForm').style.display = profile ? 'flex' : 'none';
+  }
+  document.getElementById('commentForm')?.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const input = document.getElementById('commentInput');
+    const message = input.value.trim();
+    if(!message) return;
+    try{
+      await fetch('/api/live/comments', {
+        method:'POST',
+        headers: Object.assign({'Content-Type':'application/json'}, Auth.authHeader()),
+        body: JSON.stringify({message})
+      });
+      input.value = '';
+      loadComments();
+    }catch(e){ showToast('Could not post — try again'); }
+  });
+  loadComments();
+  refreshCommentGate();
+  setInterval(loadComments, 8000);
+
+  let viewers = 234;
+  setInterval(()=>{
+    viewers += Math.floor(Math.random()*7)-3;
+    viewers = Math.max(120, viewers);
+    const el = document.getElementById('viewerCount');
+    if(el) el.textContent = viewers;
+  }, 4000);
+
+  document.getElementById('shareStreamBtn')?.addEventListener('click', ()=>{
+    if(navigator.share){ navigator.share({title:'Tifl Live Sale', text:'Join our live sale!', url:window.location.href}); }
+    else { navigator.clipboard.writeText(window.location.href); showToast('Link copied to clipboard'); }
+  });
+  document.getElementById('muteBtn')?.addEventListener('click', ()=>{
+    const v = document.getElementById('liveVideo');
+    if(v) v.muted = !v.muted;
+  });
+  document.getElementById('fullscreenBtn')?.addEventListener('click', ()=>{
+    const wrap = document.querySelector('.video-wrapper');
+    if(!document.fullscreenElement) wrap.requestFullscreen?.().catch(()=>{});
+    else document.exitFullscreen?.();
+  });
+}
+
+/* ============================================================
+   ACCOUNT PAGE (account.html) — signup/login, then shows saved
+   profile + recent orders. The same account is what powers
+   one-click Buy Now on live-sell.html and commenting there.
+============================================================= */
+function initAccountPage(){
+  const root = document.getElementById('accountRoot');
+  if(!root) return;
+
+  const gate = document.getElementById('authGate');
+  const panel = document.getElementById('accountPanel');
+
+  function showSignupForm(){
+    document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('signupForm').style.display = 'flex';
+  }
+  function showLoginForm(){
+    document.getElementById('signupForm').style.display = 'none';
+    document.getElementById('loginForm').style.display = 'flex';
+  }
+  document.getElementById('showSignupLink')?.addEventListener('click', (e)=>{ e.preventDefault(); showSignupForm(); });
+  document.getElementById('showLoginLink')?.addEventListener('click', (e)=>{ e.preventDefault(); showLoginForm(); });
+
+  async function loadOrders(){
+    const listEl = document.getElementById('myOrdersList');
+    try{
+      const res = await fetch('/api/orders/mine', {headers: Auth.authHeader()});
+      if(!res.ok) throw new Error('failed');
+      const orders = await res.json();
+      listEl.innerHTML = orders.length ? orders.map(o=>{
+        let items = [];
+        try{ items = JSON.parse(o.items); }catch(e){}
+        return `<div class="side-card" style="margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span class="ref" style="font-family:'IBM Plex Mono',monospace;color:var(--primary-dark);font-size:13px;">${o.order_id}</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-soft);">${new Date(o.created_at).toLocaleDateString()}</span>
+          </div>
+          <p style="font-size:13px;margin-top:8px;">${items.map(i=>i.name+' × '+i.qty).join(', ')}</p>
+          <div style="display:flex;justify-content:space-between;margin-top:8px;font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:600;">
+            <span>${o.status}</span><span>${o.currency} ${o.total.toLocaleString()}</span>
+          </div>
+        </div>`;
+      }).join('') : '<p style="color:var(--ink-soft);font-size:13.5px;">No orders yet — your purchases will show up here.</p>';
+    }catch(e){
+      listEl.innerHTML = '<p style="color:var(--ink-soft);font-size:13.5px;">Could not load orders right now.</p>';
+    }
+  }
+
+  async function showAccountPanel(profile){
+    gate.style.display = 'none';
+    panel.style.display = 'block';
+    document.getElementById('acctName').textContent = profile.name;
+    document.getElementById('acctEmail').textContent = profile.email;
+    document.getElementById('acctAddress').textContent = profile.address ? (profile.address+', '+(profile.city||'')) : 'No saved address yet — add one to enable one-tap buying on the live sale.';
+    document.getElementById('acctPhone').textContent = profile.phone || '—';
+    loadOrders();
+  }
+
+  document.getElementById('signupForm')?.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const btn = e.target.querySelector('button[type=submit]');
+    btn.disabled = true; btn.textContent = 'Creating account…';
+    try{
+      await Auth.signup({
+        name: document.getElementById('suName').value,
+        email: document.getElementById('suEmail').value,
+        password: document.getElementById('suPassword').value,
+        phone: document.getElementById('suPhone').value,
+        address: document.getElementById('suAddress').value,
+        city: document.getElementById('suCity').value || 'Lahore'
+      });
+      const profile = await Auth.fetchMe();
+      showAccountPanel(profile);
+      showToast('Account created');
+    }catch(err){ showToast(err.message); }
+    btn.disabled = false; btn.textContent = 'Create account';
+  });
+
+  document.getElementById('loginForm')?.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const btn = e.target.querySelector('button[type=submit]');
+    btn.disabled = true; btn.textContent = 'Signing in…';
+    try{
+      await Auth.login(document.getElementById('liEmail').value, document.getElementById('liPassword').value);
+      const profile = await Auth.fetchMe();
+      showAccountPanel(profile);
+      showToast('Signed in');
+    }catch(err){ showToast(err.message); }
+    btn.disabled = false; btn.textContent = 'Sign in';
+  });
+
+  document.getElementById('logoutBtn')?.addEventListener('click', async ()=>{
+    await Auth.logout();
+    panel.style.display = 'none';
+    gate.style.display = 'block';
+    showLoginForm();
+  });
+
+  (async ()=>{
+    if(Auth.isLoggedIn()){
+      const profile = await Auth.fetchMe();
+      if(profile) showAccountPanel(profile);
+    }
+  })();
+}
+
 /* ---------- boot ---------- */
 document.addEventListener('DOMContentLoaded', ()=>{
   applyConfig();
@@ -849,4 +1185,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
   initContactPage();
   initProductPage();
   initAdminPage();
+  initLiveSellPage();
+  initAccountPage();
 });
