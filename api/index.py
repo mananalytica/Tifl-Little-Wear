@@ -35,6 +35,7 @@ from datetime import datetime, timedelta
 os.environ["HOME"] = "/tmp"
 
 import duckdb
+import rudder_analytics
 from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
@@ -42,6 +43,34 @@ from pydantic import BaseModel
 
 MOTHERDUCK_TOKEN = os.environ.get("MOTHERDUCK_TOKEN", "")
 DB_NAME = "tifl_bookings"
+
+# ================= RUDDERSTACK (server-side) =================
+# Used for the conversion-critical events (orders, bookings, signups) —
+# firing these from the server instead of only the browser means they
+# still get recorded even if a customer has an ad blocker, third-party
+# cookies disabled, or closes the tab right after paying.
+# ⚙️ EDIT ME: set RUDDERSTACK_WRITE_KEY and RUDDERSTACK_DATA_PLANE_URL in
+# Vercel → Settings → Environment Variables (use your server/backend write
+# key here, not the JS one from rudderstack.js — RudderStack sources have
+# separate keys per platform).
+rudder_analytics.write_key = os.environ.get("RUDDERSTACK_WRITE_KEY", "")
+rudder_analytics.dataPlaneUrl = os.environ.get("RUDDERSTACK_DATA_PLANE_URL", "")
+
+def rs_track(user_id: str, event: str, properties: dict):
+    if not rudder_analytics.write_key:
+        return  # not configured yet — no-op rather than error
+    try:
+        rudder_analytics.track(user_id=user_id, event=event, properties=properties)
+    except Exception:
+        pass  # analytics should never break a real request
+
+def rs_identify(user_id: str, traits: dict):
+    if not rudder_analytics.write_key:
+        return
+    try:
+        rudder_analytics.identify(user_id=user_id, traits=traits)
+    except Exception:
+        pass
 
 app = FastAPI(title="Tifl Little Wear — Booking API")
 
@@ -398,6 +427,11 @@ def signup(payload: SignupRequest):
         [token, customer_id, datetime.now(), datetime.now() + timedelta(days=SESSION_DAYS)],
     )
     conn.close()
+    rs_identify(payload.email, {
+        "name": payload.name, "email": payload.email, "phone": payload.phone,
+        "address": payload.address, "city": payload.city,
+    })
+    rs_track(payload.email, "Signed Up", {"method": "email"})
     return {"token": token, "name": payload.name, "email": payload.email}
 
 
@@ -418,6 +452,7 @@ def login(payload: LoginRequest):
         [token, row[0], datetime.now(), datetime.now() + timedelta(days=SESSION_DAYS)],
     )
     conn.close()
+    rs_track(payload.email, "Logged In", {"method": "email"})
     return {"token": token, "name": row[1], "email": payload.email}
 
 
@@ -466,6 +501,10 @@ def create_booking(booking: Booking):
         ],
     )
     conn.close()
+    rs_track(booking.phone, "Booking Confirmed", {
+        "booking_id": booking_id, "parent_name": booking.parent_name, "child_name": booking.child_name,
+        "garment_type": booking.garment_type, "mode": booking.mode, "date": booking.date, "time_slot": booking.time_slot,
+    })
     return {"booking_id": booking_id, "status": "confirmed"}
 
 
@@ -487,6 +526,9 @@ def create_contact_message(msg: ContactMessage):
         [message_id, datetime.now(), msg.name, msg.phone, msg.email, msg.message],
     )
     conn.close()
+    rs_track(msg.email or msg.phone or message_id, "Contact Form Submitted", {
+        "message_id": message_id, "name": msg.name,
+    })
     return {"message_id": message_id, "status": "received"}
 
 
@@ -762,6 +804,19 @@ def create_order(order: Order, authorization: str | None = Header(default=None))
          customer["customer_id"] if customer else None],
     )
     conn.close()
+    order_user_id = customer["email"] if customer else (order.email or order.phone)
+    rs_track(order_user_id, "Order Completed", {
+        "order_id": order_id,
+        "currency": order.currency,
+        "revenue": order.total,
+        "subtotal": order.subtotal,
+        "shipping": order.shipping_fee,
+        "payment_method": order.payment_method,
+        "products": [
+            {"product_id": i.id, "name": i.name, "brand": i.brand, "price": i.price, "quantity": i.qty}
+            for i in order.items
+        ],
+    })
     return {"order_id": order_id, "status": "received"}
 
 
@@ -812,4 +867,5 @@ def post_live_comment(comment: LiveComment, authorization: str | None = Header(d
         [comment_id, datetime.now(), customer["customer_id"], customer["name"], comment.message.strip()[:500]],
     )
     conn.close()
+    rs_track(customer["email"], "Live Comment Posted", {"comment_id": comment_id})
     return {"comment_id": comment_id, "status": "posted"}
