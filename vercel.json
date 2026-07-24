@@ -1,24 +1,19 @@
 {
-  "routes": [
+  "version": 2,
+  "builds": [
     {
-      "src": "/api/(.*)",
-      "dest": "api/main.py"
+      "src": "api/main.py",
+      "use": "@vercel/python"
     },
     {
-      "src": "/rudderstack.js",
-      "dest": "/rudderstack.js"
-    },
+      "src": "public/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "rewrites": [
     {
-      "src": "/script.js",
-      "dest": "/script.js"
-    },
-    {
-      "src": "/styles.css",
-      "dest": "/styles.css"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
+      "source": "/api/(.*)",
+      "destination": "api/main.py"
     }
   ]
 }
