@@ -869,3 +869,4 @@ def post_live_comment(comment: LiveComment, authorization: str | None = Header(d
     conn.close()
     rs_track(customer["email"], "Live Comment Posted", {"comment_id": comment_id})
     return {"comment_id": comment_id, "status": "posted"}
+# rebuild trigger Fri Jul 24 12:16:28 PKT 2026
