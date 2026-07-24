@@ -1,14 +1,20 @@
 {
-  "builds": [
-    {
-      "src": "api/main.py",
-      "use": "@vercel/python"
-    }
-  ],
   "routes": [
     {
       "src": "/api/(.*)",
       "dest": "api/main.py"
+    },
+    {
+      "src": "/rudderstack.js",
+      "dest": "/rudderstack.js"
+    },
+    {
+      "src": "/script.js",
+      "dest": "/script.js"
+    },
+    {
+      "src": "/styles.css",
+      "dest": "/styles.css"
     },
     {
       "src": "/(.*)",
