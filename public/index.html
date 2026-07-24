@@ -12,55 +12,6 @@
 <meta property="og:url" content="https://www.tifllittlewear.com/">
 <meta name="twitter:card" content="summary_large_image">
 
-<script>
-    !function() {
-        "use strict";
-        var WRITE_KEY = "3Gm1kin1xBKjQnCJfuCHVDJvNsL";
-        var DATA_PLANE_URL = "https://tifllittlekzei.dataplane.eu.rudderstack.com";
-        
-        var e = window.rudderanalytics = window.rudderanalytics || [];
-        e.methods = ["load","page","track","identify","alias","group","ready","reset","getAnonymousId","setAnonymousId","startSession","endSession"];
-        e.factory = function(t) {
-            return function() {
-                var r = Array.prototype.slice.call(arguments);
-                return e.push([t].concat(r)), e;
-            }
-        };
-        for(var t = 0; t < e.methods.length; t++) {
-            var r = e.methods[t];
-            e[r] = e.factory(r);
-        }
-        e.loadJS = function(e, t) {
-            var r = document.createElement("script");
-            r.type = "text/javascript";
-            r.async = !0;
-            r.src = "https://cdn.rudderlabs.com/v3/modern/rsa.min.js";
-            r.onload = function() {
-                console.log("[RudderStack] SDK loaded from CDN");
-                e.load(WRITE_KEY, DATA_PLANE_URL, {
-                    logLevel: "DEBUG",
-                    onLoaded: function() {
-                        console.log("[RudderStack] SDK initialized");
-                        console.log("[RudderStack] Anonymous ID:", e.getAnonymousId());
-                        e.page();
-                    },
-                    ready: function() {
-                        console.log("[RudderStack] Destinations ready");
-                    }
-                });
-            };
-            r.onerror = function() {
-                console.error("[RudderStack] FAILED to load SDK");
-            };
-            var a = document.getElementsByTagName("script")[0];
-            a.parentNode.insertBefore(r, a);
-        };
-        
-        e.loadJS();
-        console.log("[RudderStack] Loading snippet executed");
-    }();
-    </script>
-
 
 <script type="application/ld+json">
 {
