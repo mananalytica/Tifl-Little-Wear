@@ -68,6 +68,8 @@ const Auth = {
     if(!res.ok){ const e = await res.json().catch(()=>({})); throw new Error(e.detail || 'Signup failed'); }
     const data = await res.json();
     Store.set('tifl_session', {token: data.token, name: data.name, email: data.email});
+    rsIdentify(data.email, {name: data.name, email: data.email, phone: payload.phone, city: payload.city});
+    rsTrack('sign_up', {method:'email'});
     return data;
   },
   async login(email, password){
@@ -77,6 +79,8 @@ const Auth = {
     if(!res.ok){ const e = await res.json().catch(()=>({})); throw new Error(e.detail || 'Login failed'); }
     const data = await res.json();
     Store.set('tifl_session', {token: data.token, name: data.name, email: data.email});
+    rsIdentify(data.email, {name: data.name, email: data.email});
+    rsTrack('login', {method:'email'});
     return data;
   },
   async logout(){
@@ -85,6 +89,7 @@ const Auth = {
       try{ await fetch('/api/auth/logout', {method:'POST', headers:{'Authorization':'Bearer '+token}}); }catch(e){}
     }
     Store.set('tifl_session', null);
+    rsTrack('logout', {});
   },
   async fetchMe(){
     const token = this.getToken();
@@ -92,7 +97,9 @@ const Auth = {
     try{
       const res = await fetch('/api/auth/me', {headers:{'Authorization':'Bearer '+token}});
       if(!res.ok){ Store.set('tifl_session', null); return null; }
-      return await res.json();
+      const profile = await res.json();
+      rsIdentify(profile.email, {name: profile.name, email: profile.email, phone: profile.phone, address: profile.address, city: profile.city});
+      return profile;
     }catch(e){ return null; }
   },
   authHeader(){
@@ -195,6 +202,7 @@ function toGA4Item(p, qty){
 function pushEcom(eventName, extra){
   dataLayer.push({ecommerce:null});
   dataLayer.push(Object.assign({event:eventName}, extra));
+  rsTrack(eventName, extra.ecommerce || {});
 }
 function fireViewItemList(list, name){
   pushEcom('view_item_list', {ecommerce:{item_list_name:name, items:list.map(p=>toGA4Item(p))}});
@@ -497,6 +505,7 @@ function initBookingPage(){
     }
 
     dataLayer.push({event:'generate_lead', lead_type:'booking', booking_ref:ref, garment_type:payload.garment_type, fitting_mode:mode});
+    rsTrack('generate_lead', {lead_type:'booking', booking_ref:ref, garment_type:payload.garment_type, fitting_mode:mode});
 
     document.getElementById('confirmRef').textContent = wasOnline
       ? 'Reference '+ref+' · saved to studio database'
@@ -535,6 +544,7 @@ function initContactPage(){
     }catch(err){ ok = false; }
 
     dataLayer.push({event:'generate_lead', lead_type:'contact_message'});
+    rsTrack('generate_lead', {lead_type:'contact_message'});
     document.getElementById('contactConfirm').classList.add('show');
     document.getElementById('contactConfirm').textContent = ok
       ? "Message sent — we'll reply within a day."
@@ -1178,6 +1188,7 @@ function initAccountPage(){
 
 /* ---------- boot ---------- */
 document.addEventListener('DOMContentLoaded', ()=>{
+  rsPage();
   applyConfig();
   initShopPage();
   initMeasurementsPage();
