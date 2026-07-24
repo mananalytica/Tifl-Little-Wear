@@ -138,8 +138,8 @@ refreshCartBadge();
    API can't be reached, so the shop never renders empty.
 ============================================================= */
 const FALLBACK_PRODUCTS = [
-  {product_id:'p1', name:'Block-print Kurta Set', brand:'Chinar Kids', category:'Boys', price:3200, currency:'PKR', image_url:'#108A00'},
-  {product_id:'p2', name:'Layered Cotton Frock', brand:'Bunain', category:'Girls', price:3800, currency:'PKR', image_url:'#0C6B00'}
+  {product_id:'p1', name:'Block-print Kurta Set', brand:'Chinar Kids', category:'Boys', price:3200, currency:'PKR', image_url:'#4A93E8'},
+  {product_id:'p2', name:'Layered Cotton Frock', brand:'Bunain', category:'Girls', price:3800, currency:'PKR', image_url:'#3576C9'}
 ];
 let PRODUCTS = [];
 
@@ -163,7 +163,7 @@ function normalizeProduct(p){
     category: p.category || 'Other',
     price: p.price,
     currency: p.currency || 'PKR',
-    image_url: p.image_url || '#108A00',
+    image_url: p.image_url || '#4A93E8',
     description: p.description || '',
     sku: p.sku || '',
     // Shopping feed attributes (Google Merchant Center / Meta Catalog)
@@ -239,7 +239,7 @@ function productThumbHTML(p, size){
   if(p.image_url && !isColor(p.image_url)){
     return `<img src="${p.image_url}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;">`;
   }
-  const color = isColor(p.image_url) ? p.image_url : '#108A00';
+  const color = isColor(p.image_url) ? p.image_url : '#4A93E8';
   return `<div style="background:${color}1A;width:100%;height:100%;display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 100 100" width="${size}" height="${size}"><path d="M50 10 L35 22 L20 18 L10 34 L22 42 L22 90 L78 90 L78 42 L90 34 L80 18 L65 22 Z" fill="${color}" opacity="0.85"/></svg></div>`;
 }
 function addToCart(p, qty=1){
@@ -720,7 +720,7 @@ function initAdminPage(){
     document.getElementById('apPrice').value = p.price;
     document.getElementById('apSalePrice').value = p.sale_price || '';
     document.getElementById('apImage').value = isColor(p.image_url) ? '' : p.image_url;
-    document.getElementById('apSwatch').value = isColor(p.image_url) ? p.image_url : '#108A00';
+    document.getElementById('apSwatch').value = isColor(p.image_url) ? p.image_url : '#4A93E8';
     document.getElementById('apDescription').value = p.description;
     document.getElementById('apSku').value = p.sku || '';
     document.getElementById('apGtin').value = p.gtin || '';

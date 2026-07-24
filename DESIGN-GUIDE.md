@@ -1,23 +1,48 @@
 # Tifl Little Wear — Design Guide
 
-This is the actual design system already built into `styles.css`. Keep any
-new page or section within this guide so the site stays consistent as it
-grows. Everything below is pulled directly from the live CSS variables —
+This is the actual design system built into `styles.css`, updated to match
+the official logo (sky-blue bubble wordmark + smiling cloud mascot). Keep
+any new page or section within this guide so the site stays consistent as
+it grows. Everything below is pulled directly from the live CSS variables —
 nothing here is aspirational, it's what's already running.
 
 ---
 
 ## 1. Brand direction
 
-Clean, green/white, Upwork-inspired — trustworthy and modern rather than
-"boutique craft." The one deliberate signature motif carried over from the
-brand's tailoring identity is the **dashed stitch-line divider** (`.seam`),
-used instead of a plain `<hr>` wherever sections need separating. Don't
-introduce a second unrelated motif — extend this one instead.
+Warm, playful, trustworthy — a children's brand first, a boutique second.
+The palette and type now follow the logo directly: sky blue, a soft cloud
+white, a blush-pink accent used sparingly (the mascot's cheeks), and a
+rounded, friendly display typeface that echoes the bubble lettering in the
+wordmark. The site should read as approachable to parents and genuinely
+kid-friendly, not corporate.
+
+The dashed stitch-line divider (`.seam`) from the tailoring identity is
+kept as the signature structural motif — it still ties every page back to
+"a studio that actually stitches things by hand," which the logo alone
+doesn't communicate. Don't drop it when building new sections.
 
 ---
 
-## 2. Colour tokens
+## 2. Logo usage
+
+The logo file lives at `assets/logo.png` (source: the official artwork,
+square canvas, transparent-safe on white).
+
+- **Header:** use the logo image itself as the brand mark — it already
+  contains both "tifl" and "little wear," so don't also set a separate
+  text wordmark next to it. A small "· Lahore" location tag is fine
+  alongside it in muted text.
+- **Footer:** same logo image, slightly smaller.
+- **Minimum size:** don't render the logo below ~28px tall — the cloud
+  mascot's face stops reading at small sizes.
+- **Clear space:** leave at least the height of the cloud around all sides.
+- **Never** recolor the logo, place it on a busy background, or stretch it
+  off its square aspect ratio.
+
+---
+
+## 3. Colour tokens
 
 All defined in `styles.css` under `:root`. Always use the variable, never a
 hardcoded hex, so a future palette tweak only needs one edit.
@@ -25,44 +50,44 @@ hardcoded hex, so a future palette tweak only needs one edit.
 | Variable | Value | Use |
 |---|---|---|
 | `--bg` | `#FFFFFF` | Page background |
-| `--bg-alt` | `#F3FAF3` | Card/section surfaces (soft mint-white) |
-| `--bg-dark` | `#0F2B1B` | Contrast sections (deep pine) — featured review card, confirmation cards |
-| `--bg-dark-2` | `#0B2115` | Slightly darker variant, rarely used |
-| `--ink` | `#16201A` | Primary text |
-| `--ink-soft` | `#5C6B61` | Secondary/muted text |
-| `--ink-on-dark` | `#F1F7F2` | Text on dark backgrounds |
-| `--ink-on-dark-soft` | `#9FB6A7` | Muted text on dark backgrounds |
-| `--primary` | `#108A00` | Brand green — buttons, links, active states |
-| `--primary-dark` | `#0C6B00` | Hover state for primary green |
-| `--primary-light` | `#E3F5DE` | Light green chip/badge backgrounds |
+| `--bg-alt` | `#F2F8FE` | Card/section surfaces (pale sky tint) |
+| `--bg-dark` | `#16233B` | Contrast sections (night-sky navy) — featured review card, confirmation cards |
+| `--bg-dark-2` | `#101B2E` | Slightly darker variant, rarely used |
+| `--ink` | `#1F2A3D` | Primary text (matches the mascot's eye navy) |
+| `--ink-soft` | `#5C6B85` | Secondary/muted text |
+| `--ink-on-dark` | `#F1F6FD` | Text on dark backgrounds |
+| `--ink-on-dark-soft` | `#9FB1CC` | Muted text on dark backgrounds |
+| `--primary` | `#4A93E8` | Brand sky blue — buttons, links, active states, sampled directly from the logo |
+| `--primary-dark` | `#3576C9` | Hover state for primary blue |
+| `--primary-light` | `#E6F1FD` | Light blue chip/badge backgrounds |
+| `--accent-pink` | `#F7C6C2` | The mascot's blush — sparingly, for warmth (sale badges, small highlights). Never as a primary colour. |
 | `--star` | `#E3A008` | Rating stars only — don't use elsewhere |
-| `--line` | `#E1E9E2` | Borders, dividers on light backgrounds |
-| `--line-dark` | `#23402F` | Borders, dividers on dark backgrounds |
+| `--line` | `#E1E8F2` | Borders, dividers on light backgrounds |
+| `--line-dark` | `#233553` | Borders, dividers on dark backgrounds |
 
-**Rule of thumb:** white/mint backgrounds + green accents for 95% of the
-site. Dark pine sections are the exception, used only to make one element
-per page stand out (a featured review, a confirmation card) — never as a
-whole-page background.
+**Rule of thumb:** white/pale-sky backgrounds + brand blue for 95% of the
+site. Night-navy dark sections are the exception, used only to make one
+element per page stand out. Blush pink is a seasoning, not a base colour —
+if a whole section is turning pink, pull back.
 
 ---
 
-## 3. Typography
+## 4. Typography
 
 Loaded via Google Fonts in every page `<head>`:
 ```html
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 ```
 
 | Font | Role | Where |
 |---|---|---|
-| **Sora** (600–800) | Headings (`h1`–`h4`) | Bold, geometric, does the "brand voice" work |
-| **Inter** (400–700) | Body text, buttons, forms | Default `body` font |
+| **Fredoka** (500–700) | Headings (`h1`–`h4`) | Rounded, bubbly — deliberately echoes the logo's lettering |
+| **Inter** (400–700) | Body text, buttons, forms | Default `body` font — kept clean and readable so playful headlines don't tip into hard-to-read |
 | **IBM Plex Mono** (400–500) | Data & functional text | Prices, measurements, dates, order numbers, step numbers, eyebrow labels |
 
-The mono font is a deliberate functional signal — anywhere a number matters
-(a price, a measurement, a booking reference), it's in IBM Plex Mono, not
-Inter. Keep that pattern for anything new (e.g. don't put an order total in
-Inter).
+The mono font is a deliberate functional signal, unrelated to the rebrand —
+anywhere a number matters (price, measurement, booking reference), it's in
+IBM Plex Mono, not Inter. Keep that pattern for anything new.
 
 **Eyebrow label** pattern (small caps mono label above a heading):
 ```html
@@ -71,11 +96,12 @@ Inter).
 
 ---
 
-## 4. Layout
+## 5. Layout
 
 - Max content width: `1180px` (`--maxw`), via the `.wrap` class
 - Border radius: `14px` standard (`--radius`), `8px` for small elements like
-  inputs/chips (`--radius-sm`)
+  inputs/chips (`--radius-sm`) — kept generous and rounded to match the
+  logo's soft, bubbly shapes
 - Buttons are pill-shaped (`border-radius: 999px`), never square
 - Card surfaces use `--bg-alt` with a `1px solid var(--line)` border, not
   shadows, as the primary way to separate content — shadows (`--shadow`,
@@ -84,12 +110,12 @@ Inter).
 
 ---
 
-## 5. Core components (already built, reuse these classes)
+## 6. Core components (already built, reuse these classes)
 
 - `.btn.btn-primary` / `.btn.btn-ghost` — buttons, plus `.btn-sm` and
   `.btn-block` modifiers
 - `.eyebrow` — small mono label above a heading
-- `.seam` — dashed stitch-line divider (the signature motif)
+- `.seam` — dashed stitch-line divider (the tailoring signature motif)
 - `.side-card` — bordered info card (used in Booking sidebar, Contact info)
 - `.p-card` / `.p-thumb` / `.p-info` — product card, shop grid and related
   products
@@ -102,11 +128,24 @@ Inter).
 
 **New pages should copy the header/nav/footer markup from an existing page
 exactly** (e.g. `contact.html`) rather than rebuilding it — this keeps nav
-links, the cart badge, and the WhatsApp button consistent automatically.
+links, the logo, the cart badge, and the WhatsApp button consistent
+automatically.
 
 ---
 
-## 6. Site-wide settings — keep this the single source of truth
+## 7. Decorative colour accents
+
+A few places use a hardcoded hex instead of a CSS variable, since they're
+generating variety (product placeholder swatches, review avatar circles)
+rather than a single consistent brand colour. These should stay inside the
+blue/navy/pink family established above — pull new accent hexes from:
+`#4A93E8` (primary blue), `#3576C9` (deep blue), `#8FB7E8` (soft periwinkle),
+`#F7C6C2` (blush pink), `#1F2A3D` (navy) — rather than introducing an
+unrelated hue.
+
+---
+
+## 8. Site-wide settings — keep this the single source of truth
 
 At the top of `script.js`:
 ```js
@@ -122,14 +161,11 @@ const CONFIG = {
 ```
 Change contact details **here only**. Any element tagged `data-config="phone"`
 (etc.) auto-fills from this on page load, and the WhatsApp button always
-pulls from `CONFIG.whatsappNumber`. Not every page has every field wired to
-`data-config` yet (some footers are still hardcoded) — when you touch a
-page, prefer converting its contact info to `data-config` tags instead of
-typing the number by hand, so it stays in this system.
+pulls from `CONFIG.whatsappNumber`.
 
 ---
 
-## 7. Responsive rules
+## 9. Responsive rules
 
 Breakpoints: `980px` (tablet/nav collapse) and `560px` (small mobile). Any
 new multi-column grid should collapse to a single column (or two, for
@@ -139,10 +175,15 @@ selector there rather than writing a new media query elsewhere.
 
 ---
 
-## 8. What NOT to do
+## 10. What NOT to do
 
-- Don't hardcode colours — use the CSS variables
-- Don't introduce a second display font — Sora is the only headline font
+- Don't hardcode colours outside the palette in section 3/7 — use the CSS
+  variables, or the approved accent hexes for decorative variety
+- Don't introduce a second display font — Fredoka is the only headline font
 - Don't add drop shadows to static cards — borders only
 - Don't build a new page without copying the existing header/nav/footer
 - Don't put numeric/data content in Inter — use IBM Plex Mono
+- Don't recolor, distort, or shrink the logo below ~28px tall
+- Don't let blush pink become a background colour for large areas — it's an
+  accent, the base palette is blue/white/navy
+
