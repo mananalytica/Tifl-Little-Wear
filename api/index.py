@@ -20,6 +20,10 @@ SETUP
 6. Your endpoint becomes:  https://<your-domain>/api/bookings
 """
 
+# DEBUG: Force Vercel to rebuild this file
+# Last updated: 2026-07-24 12:18
+BUILD_VERSION = "v2-fixed-rudderstack"
+
 import hashlib
 import json
 import os
