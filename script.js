@@ -6,6 +6,14 @@
    if you add user accounts.
 ============================================================= */
 
+/* If rudderstack.js didn't load on this page (missing script tag, 404,
+   ad blocker, etc.), install harmless no-op stubs instead of leaving
+   these undefined — a missing analytics file should never be able to
+   break bookings, the shop, or any other real functionality again. */
+if (typeof window.rsPage !== 'function') window.rsPage = function(){};
+if (typeof window.rsTrack !== 'function') window.rsTrack = function(){};
+if (typeof window.rsIdentify !== 'function') window.rsIdentify = function(){};
+
 /* ============================================================
    ⚙️  EDIT ME — site-wide settings
    Change a phone number, address, or WhatsApp number ONCE here
@@ -1188,7 +1196,7 @@ function initAccountPage(){
 
 /* ---------- boot ---------- */
 document.addEventListener('DOMContentLoaded', ()=>{
-  rsPage();
+  if(typeof rsPage === 'function') rsPage();
   applyConfig();
   initShopPage();
   initMeasurementsPage();
