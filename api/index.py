@@ -35,7 +35,7 @@ from datetime import datetime, timedelta
 os.environ["HOME"] = "/tmp"
 
 import duckdb
-from rudderstack import analytics as rudder_analytics
+import rudderstack.analytics as rudder_analytics
 from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
