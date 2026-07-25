@@ -20,10 +20,6 @@ SETUP
 6. Your endpoint becomes:  https://<your-domain>/api/bookings
 """
 
-# DEBUG: Force Vercel to rebuild this file
-# Last updated: 2026-07-24 12:18
-BUILD_VERSION = "v2-fixed-rudderstack"
-
 import hashlib
 import json
 import os
@@ -60,21 +56,51 @@ DB_NAME = "tifl_bookings"
 rudder_analytics.write_key = os.environ.get("RUDDERSTACK_WRITE_KEY", "")
 rudder_analytics.dataPlaneUrl = os.environ.get("RUDDERSTACK_DATA_PLANE_URL", "")
 
-def rs_track(user_id: str, event: str, properties: dict):
+def rs_track(user_id: str, event: str, properties: dict, anonymous_id: str | None = None):
     if not rudder_analytics.write_key:
         return  # not configured yet — no-op rather than error
     try:
-        rudder_analytics.track(user_id=user_id, event=event, properties=properties)
+        kwargs = {"event": event, "properties": properties}
+        # Passing both user_id and anonymous_id is what lets RudderStack
+        # merge this server-side event into the same identity graph as
+        # the browser session that submitted the form — without it, a
+        # guest's pre-signup browsing and their order end up as two
+        # disconnected people in RudderStack instead of one.
+        if user_id:
+            kwargs["user_id"] = user_id
+        if anonymous_id:
+            kwargs["anonymous_id"] = anonymous_id
+        if not user_id and not anonymous_id:
+            return  # nothing to key the event on
+        rudder_analytics.track(**kwargs)
     except Exception:
         pass  # analytics should never break a real request
 
-def rs_identify(user_id: str, traits: dict):
+def rs_identify(user_id: str, traits: dict, anonymous_id: str | None = None):
     if not rudder_analytics.write_key:
         return
     try:
-        rudder_analytics.identify(user_id=user_id, traits=traits)
+        kwargs = {"user_id": user_id, "traits": traits}
+        if anonymous_id:
+            kwargs["anonymous_id"] = anonymous_id
+        rudder_analytics.identify(**kwargs)
     except Exception:
         pass
+
+# Flattens the { first_touch: {...}, last_touch: {...} } attribution
+# object from the browser into event properties, e.g.
+# first_touch_utm_source, last_touch_utm_campaign, etc.
+def flatten_attribution(attribution: dict | None) -> dict:
+    if not attribution:
+        return {}
+    flat = {}
+    for touch_name in ("first_touch", "last_touch"):
+        touch = attribution.get(touch_name) if isinstance(attribution, dict) else None
+        if not touch:
+            continue
+        for k, v in touch.items():
+            flat[f"{touch_name}_{k}"] = v
+    return flat
 
 app = FastAPI(title="Tifl Little Wear — Booking API")
 
@@ -277,6 +303,8 @@ class Booking(BaseModel):
     time_slot: str | None = None
     notes: str | None = None
     measurements: Measurements | None = None
+    anonymous_id: str | None = None
+    attribution: dict | None = None
 
 
 class ContactMessage(BaseModel):
@@ -284,6 +312,8 @@ class ContactMessage(BaseModel):
     phone: str | None = None
     email: str | None = None
     message: str
+    anonymous_id: str | None = None
+    attribution: dict | None = None
 
 
 class Product(BaseModel):
@@ -339,6 +369,8 @@ class Order(BaseModel):
     shipping_fee: float | None = 0
     total: float
     currency: str | None = "PKR"
+    anonymous_id: str | None = None
+    attribution: dict | None = None
 
 
 ADMIN_KEY = os.environ.get("ADMIN_KEY", "")
@@ -402,10 +434,13 @@ class SignupRequest(BaseModel):
     phone: str | None = None
     address: str | None = None
     city: str | None = "Lahore"
+    anonymous_id: str | None = None
+    attribution: dict | None = None
 
 class LoginRequest(BaseModel):
     email: str
     password: str
+    anonymous_id: str | None = None
 
 
 @app.post("/api/auth/signup")
@@ -434,8 +469,10 @@ def signup(payload: SignupRequest):
     rs_identify(payload.email, {
         "name": payload.name, "email": payload.email, "phone": payload.phone,
         "address": payload.address, "city": payload.city,
-    })
-    rs_track(payload.email, "Signed Up", {"method": "email"})
+    }, anonymous_id=payload.anonymous_id)
+    rs_track(payload.email, "Signed Up",
+             dict({"method": "email"}, **flatten_attribution(payload.attribution)),
+             anonymous_id=payload.anonymous_id)
     return {"token": token, "name": payload.name, "email": payload.email}
 
 
@@ -456,7 +493,7 @@ def login(payload: LoginRequest):
         [token, row[0], datetime.now(), datetime.now() + timedelta(days=SESSION_DAYS)],
     )
     conn.close()
-    rs_track(payload.email, "Logged In", {"method": "email"})
+    rs_track(payload.email, "Logged In", {"method": "email"}, anonymous_id=payload.anonymous_id)
     return {"token": token, "name": row[1], "email": payload.email}
 
 
@@ -505,10 +542,12 @@ def create_booking(booking: Booking):
         ],
     )
     conn.close()
-    rs_track(booking.phone, "Booking Confirmed", {
-        "booking_id": booking_id, "parent_name": booking.parent_name, "child_name": booking.child_name,
-        "garment_type": booking.garment_type, "mode": booking.mode, "date": booking.date, "time_slot": booking.time_slot,
-    })
+    rs_track(booking.phone, "Booking Confirmed",
+              dict({
+                  "booking_id": booking_id, "parent_name": booking.parent_name, "child_name": booking.child_name,
+                  "garment_type": booking.garment_type, "mode": booking.mode, "date": booking.date, "time_slot": booking.time_slot,
+              }, **flatten_attribution(booking.attribution)),
+              anonymous_id=booking.anonymous_id)
     return {"booking_id": booking_id, "status": "confirmed"}
 
 
@@ -530,9 +569,9 @@ def create_contact_message(msg: ContactMessage):
         [message_id, datetime.now(), msg.name, msg.phone, msg.email, msg.message],
     )
     conn.close()
-    rs_track(msg.email or msg.phone or message_id, "Contact Form Submitted", {
-        "message_id": message_id, "name": msg.name,
-    })
+    rs_track(msg.email or msg.phone or message_id, "Contact Form Submitted",
+              dict({"message_id": message_id, "name": msg.name}, **flatten_attribution(msg.attribution)),
+              anonymous_id=msg.anonymous_id)
     return {"message_id": message_id, "status": "received"}
 
 
@@ -809,18 +848,20 @@ def create_order(order: Order, authorization: str | None = Header(default=None))
     )
     conn.close()
     order_user_id = customer["email"] if customer else (order.email or order.phone)
-    rs_track(order_user_id, "Order Completed", {
-        "order_id": order_id,
-        "currency": order.currency,
-        "revenue": order.total,
-        "subtotal": order.subtotal,
-        "shipping": order.shipping_fee,
-        "payment_method": order.payment_method,
-        "products": [
-            {"product_id": i.id, "name": i.name, "brand": i.brand, "price": i.price, "quantity": i.qty}
-            for i in order.items
-        ],
-    })
+    rs_track(order_user_id, "Order Completed",
+              dict({
+                  "order_id": order_id,
+                  "currency": order.currency,
+                  "revenue": order.total,
+                  "subtotal": order.subtotal,
+                  "shipping": order.shipping_fee,
+                  "payment_method": order.payment_method,
+                  "products": [
+                      {"product_id": i.id, "name": i.name, "brand": i.brand, "price": i.price, "quantity": i.qty}
+                      for i in order.items
+                  ],
+              }, **flatten_attribution(order.attribution)),
+              anonymous_id=order.anonymous_id)
     return {"order_id": order_id, "status": "received"}
 
 
@@ -873,4 +914,3 @@ def post_live_comment(comment: LiveComment, authorization: str | None = Header(d
     conn.close()
     rs_track(customer["email"], "Live Comment Posted", {"comment_id": comment_id})
     return {"comment_id": comment_id, "status": "posted"}
-# rebuild trigger Fri Jul 24 12:16:28 PKT 2026

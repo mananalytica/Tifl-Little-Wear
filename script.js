@@ -82,7 +82,7 @@ const Auth = {
   },
   async login(email, password){
     const res = await fetch('/api/auth/login', {
-      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email, password})
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email, password, anonymous_id: rsGetAnonymousId()})
     });
     if(!res.ok){ const e = await res.json().catch(()=>({})); throw new Error(e.detail || 'Login failed'); }
     const data = await res.json();
@@ -395,7 +395,8 @@ async function initShopPage(){
       payment_method: document.getElementById('coPayment')?.value || 'Cash on delivery',
       notes: document.getElementById('coNotes')?.value || null,
       items: cart.map(c=>({id:c.id, name:c.name, brand:c.brand, price:c.price, qty:c.qty})),
-      subtotal, shipping_fee: shippingFee, total: subtotal+shippingFee, currency:'PKR'
+      subtotal, shipping_fee: shippingFee, total: subtotal+shippingFee, currency:'PKR',
+      anonymous_id: rsGetAnonymousId(), attribution: rsGetAttribution()
     };
 
     const submitBtn = e.target.querySelector('button[type=submit]');
@@ -415,28 +416,11 @@ async function initShopPage(){
     }
 
     firePurchase(cart, txId);
-
-    try{
-      sessionStorage.setItem('tifl_last_order', JSON.stringify({
-        order_id: txId,
-        customer_name: payload.customer_name,
-        phone: payload.phone,
-        email: payload.email,
-        address: payload.address,
-        city: payload.city,
-        payment_method: payload.payment_method,
-        items: payload.items,
-        subtotal: payload.subtotal,
-        shipping_fee: payload.shipping_fee,
-        total: payload.total,
-        currency: payload.currency
-      }));
-    }catch(e){ /* storage unavailable, thank-you page will show a fallback */ }
-
     closeCheckout(); closeDrawer();
     Store.set('tifl_cart', []);
     refreshCartBadge(); updateCartUI();
-    window.location.href = 'thank-you.html';
+    submitBtn.disabled = false; submitBtn.textContent = 'Place order';
+    showToast(placed ? 'Order '+txId+' placed — thank you!' : 'Order saved on this device — we will confirm by phone');
   });
 }
 
@@ -506,7 +490,8 @@ function initBookingPage(){
       mode, time_slot: slot,
       date: document.getElementById('bDate').value,
       notes: document.getElementById('bNotes').value,
-      measurements: Store.get('tifl_measurements', null)
+      measurements: Store.get('tifl_measurements', null),
+      anonymous_id: rsGetAnonymousId(), attribution: rsGetAttribution()
     };
 
     const btn = document.getElementById('bookSubmitBtn');
@@ -553,7 +538,8 @@ function initContactPage(){
       name: document.getElementById('cName').value,
       phone: document.getElementById('cPhone').value,
       email: document.getElementById('cEmail').value,
-      message: document.getElementById('cMessage').value
+      message: document.getElementById('cMessage').value,
+      anonymous_id: rsGetAnonymousId(), attribution: rsGetAttribution()
     };
     const btn = document.getElementById('contactSubmitBtn');
     btn.disabled = true; btn.textContent = 'Sending…';
@@ -995,7 +981,8 @@ async function placeLiveOrder(product, buyer){
     payment_method: 'Cash on delivery',
     notes: 'Live sale — instant buy',
     items: [{id:product.id, name:product.name, brand:product.brand, price:product.price, qty:1}],
-    subtotal: product.price, shipping_fee: 0, total: product.price, currency:'PKR'
+    subtotal: product.price, shipping_fee: 0, total: product.price, currency:'PKR',
+    anonymous_id: rsGetAnonymousId(), attribution: rsGetAttribution()
   }, buyer);
 
   let txId;
@@ -1174,7 +1161,8 @@ function initAccountPage(){
         password: document.getElementById('suPassword').value,
         phone: document.getElementById('suPhone').value,
         address: document.getElementById('suAddress').value,
-        city: document.getElementById('suCity').value || 'Lahore'
+        city: document.getElementById('suCity').value || 'Lahore',
+        anonymous_id: rsGetAnonymousId(), attribution: rsGetAttribution()
       });
       const profile = await Auth.fetchMe();
       showAccountPanel(profile);
