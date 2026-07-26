@@ -73,6 +73,15 @@ def rs_track(user_id: str, event: str, properties: dict, anonymous_id: str | Non
         if not user_id and not anonymous_id:
             return  # nothing to key the event on
         rudder_analytics.track(**kwargs)
+        # RudderStack's own docs warn against calling flush() as part of a
+        # normal request lifecycle, since it blocks until the queue drains —
+        # that advice is for long-running servers. We're on Vercel: this
+        # function can freeze the moment it returns a response, so the
+        # SDK's background flush thread (default: every 0.5s or 100 events)
+        # may never get a chance to actually send the event. Blocking here
+        # is the deliberate exception — without it, events are silently
+        # lost, not just delayed.
+        rudder_analytics.flush()
     except Exception:
         pass  # analytics should never break a real request
 
@@ -84,6 +93,7 @@ def rs_identify(user_id: str, traits: dict, anonymous_id: str | None = None):
         if anonymous_id:
             kwargs["anonymous_id"] = anonymous_id
         rudder_analytics.identify(**kwargs)
+        rudder_analytics.flush()  # see note in rs_track above
     except Exception:
         pass
 
