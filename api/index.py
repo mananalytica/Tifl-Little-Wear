@@ -36,7 +36,7 @@ os.environ["HOME"] = "/tmp"
 
 import duckdb
 import rudderstack.analytics as rudder_analytics
-from fastapi import FastAPI, HTTPException, Header
+from fastapi import FastAPI, HTTPException, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from pydantic import BaseModel
@@ -220,6 +220,15 @@ def ensure_schema(conn):
             customer_id      VARCHAR,
             name             VARCHAR,
             message          VARCHAR
+        );""",
+        """CREATE TABLE IF NOT EXISTS analytics_events (
+            event_id         VARCHAR PRIMARY KEY,
+            received_at      TIMESTAMP,
+            event_name       VARCHAR,
+            event_type       VARCHAR,
+            user_id          VARCHAR,
+            anonymous_id     VARCHAR,
+            payload          JSON
         );""",
     ]
     try:
@@ -914,3 +923,57 @@ def post_live_comment(comment: LiveComment, authorization: str | None = Header(d
     conn.close()
     rs_track(customer["email"], "Live Comment Posted", {"comment_id": comment_id})
     return {"comment_id": comment_id, "status": "posted"}
+
+
+# ================= RUDDERSTACK WEBHOOK -> MOTHERDUCK =================
+# Add this as a "Webhook" destination in RudderStack, pointed at
+# https://<your-domain>/api/rudder-webhook, and connect your JS + Python
+# sources to it the same way you connected them to any other destination.
+#
+# Security: RudderStack's Webhook destination lets you add custom headers
+# to every request it sends. Set WEBHOOK_SHARED_SECRET below (as a Vercel
+# env var) and add a matching header in RudderStack's destination config
+# (Header name: X-Webhook-Secret, Value: the same secret) so random
+# internet traffic can't write fake rows into your database. If the env
+# var is left unset, the check is skipped — fine for initial testing, but
+# set it before relying on this for real.
+WEBHOOK_SHARED_SECRET = os.environ.get("WEBHOOK_SHARED_SECRET", "")
+
+def _event_name(raw: dict) -> str | None:
+    # track calls have "event"; page/screen calls use their "name" (or
+    # fall back to "type"); identify/alias/group have neither.
+    return raw.get("event") or raw.get("name") or raw.get("type")
+
+@app.post("/api/rudder-webhook")
+async def rudder_webhook(request: Request, x_webhook_secret: str | None = Header(default=None)):
+    if WEBHOOK_SHARED_SECRET and x_webhook_secret != WEBHOOK_SHARED_SECRET:
+        raise HTTPException(status_code=401, detail="Invalid webhook secret")
+
+    body = await request.json()
+    # RudderStack's Webhook destination sends one event per request by
+    # default, but this also accepts a list just in case that's ever
+    # changed in the destination config (e.g. batching enabled).
+    events = body if isinstance(body, list) else [body]
+
+    conn = get_conn()
+    inserted = 0
+    for raw in events:
+        if not isinstance(raw, dict):
+            continue
+        event_id = raw.get("messageId") or ("evt-" + uuid.uuid4().hex[:12])
+        received_at = raw.get("originalTimestamp") or raw.get("timestamp") or datetime.now().isoformat()
+        conn.execute(
+            "INSERT OR IGNORE INTO analytics_events VALUES (?, ?, ?, ?, ?, ?, ?)",
+            [
+                event_id,
+                received_at,
+                _event_name(raw),
+                raw.get("type"),
+                raw.get("userId"),
+                raw.get("anonymousId"),
+                json.dumps(raw),
+            ],
+        )
+        inserted += 1
+    conn.close()
+    return {"status": "received", "events_stored": inserted}
