@@ -240,6 +240,16 @@ def ensure_schema(conn):
             anonymous_id     VARCHAR,
             payload          JSON
         );""",
+        """CREATE TABLE IF NOT EXISTS quiz_leads (
+            lead_id          VARCHAR PRIMARY KEY,
+            created_at       TIMESTAMP,
+            email            VARCHAR,
+            age_band         VARCHAR,
+            occasion         VARCHAR,
+            activity         VARCHAR,
+            care             VARCHAR,
+            recommended      VARCHAR
+        );""",
     ]
     try:
         conn.execute("\n".join(create_statements))
@@ -263,6 +273,11 @@ def ensure_schema(conn):
     ]
     alter_statements = [f"ALTER TABLE products ADD COLUMN IF NOT EXISTS {c} {t};" for c, t in shopping_columns]
     alter_statements.append("ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_id VARCHAR;")
+    alter_statements.append("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS email VARCHAR;")
+    alter_statements.append("ALTER TABLE orders ADD COLUMN IF NOT EXISTS address_line2 VARCHAR;")
+    alter_statements.append("ALTER TABLE orders ADD COLUMN IF NOT EXISTS postal_code VARCHAR;")
+    alter_statements.append("ALTER TABLE orders ADD COLUMN IF NOT EXISTS state VARCHAR;")
+    alter_statements.append("ALTER TABLE orders ADD COLUMN IF NOT EXISTS country VARCHAR;")
     try:
         conn.execute("\n".join(alter_statements))
     except Exception:
@@ -315,6 +330,7 @@ class Measurements(BaseModel):
 class Booking(BaseModel):
     parent_name: str
     phone: str
+    email: str | None = None
     child_name: str | None = None
     garment_type: str | None = None
     mode: str | None = None
@@ -380,7 +396,11 @@ class Order(BaseModel):
     phone: str
     email: str | None = None
     address: str
+    address_line2: str | None = None
     city: str | None = "Lahore"
+    postal_code: str | None = None
+    state: str | None = None
+    country: str | None = "Pakistan"
     payment_method: str | None = "Cash on delivery"
     notes: str | None = None
     items: list[OrderItem]
@@ -542,9 +562,9 @@ def create_booking(booking: Booking):
     conn.execute(
         """
         INSERT INTO bookings
-            (booking_id, created_at, parent_name, child_name, phone,
+            (booking_id, created_at, parent_name, child_name, phone, email,
              garment_type, mode, date, time_slot, notes, measurements)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         [
             booking_id,
@@ -552,6 +572,7 @@ def create_booking(booking: Booking):
             booking.parent_name,
             booking.child_name,
             booking.phone,
+            booking.email,
             booking.garment_type,
             booking.mode,
             booking.date,
@@ -561,7 +582,7 @@ def create_booking(booking: Booking):
         ],
     )
     conn.close()
-    rs_track(booking.phone, "Booking Confirmed",
+    rs_track(booking.email or booking.phone, "Booking Confirmed",
               dict({
                   "booking_id": booking_id, "parent_name": booking.parent_name, "child_name": booking.child_name,
                   "garment_type": booking.garment_type, "mode": booking.mode, "date": booking.date, "time_slot": booking.time_slot,
@@ -856,11 +877,13 @@ def create_order(order: Order, authorization: str | None = Header(default=None))
     conn = get_conn()
     conn.execute(
         """INSERT INTO orders
-           (order_id, created_at, customer_name, phone, email, address, city,
-            payment_method, notes, items, subtotal, shipping_fee, total, currency, status, customer_id)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'received', ?)""",
+           (order_id, created_at, customer_name, phone, email, address, address_line2, city,
+            postal_code, state, country, payment_method, notes, items, subtotal, shipping_fee,
+            total, currency, status, customer_id)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'received', ?)""",
         [order_id, datetime.now(), order.customer_name, order.phone, order.email,
-         order.address, order.city, order.payment_method, order.notes,
+         order.address, order.address_line2, order.city, order.postal_code, order.state, order.country,
+         order.payment_method, order.notes,
          json.dumps([i.dict() for i in order.items]), order.subtotal,
          order.shipping_fee, order.total, order.currency,
          customer["customer_id"] if customer else None],
@@ -875,6 +898,9 @@ def create_order(order: Order, authorization: str | None = Header(default=None))
                   "subtotal": order.subtotal,
                   "shipping": order.shipping_fee,
                   "payment_method": order.payment_method,
+                  "city": order.city,
+                  "postal_code": order.postal_code,
+                  "country": order.country,
                   "products": [
                       {"product_id": i.id, "name": i.name, "brand": i.brand, "price": i.price, "quantity": i.qty}
                       for i in order.items
@@ -987,3 +1013,31 @@ async def rudder_webhook(request: Request, x_webhook_secret: str | None = Header
         inserted += 1
     conn.close()
     return {"status": "received", "events_stored": inserted}
+
+
+# ================= FIND MY FABRIC QUIZ — lead capture =================
+class QuizLead(BaseModel):
+    email: str
+    age_band: str | None = None
+    occasion: str | None = None
+    activity: str | None = None
+    care: str | None = None
+    recommended: str | None = None
+    anonymous_id: str | None = None
+
+@app.post("/api/quiz-leads")
+def create_quiz_lead(lead: QuizLead):
+    lead_id = "quiz-" + uuid.uuid4().hex[:10]
+    conn = get_conn()
+    conn.execute(
+        "INSERT INTO quiz_leads VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        [lead_id, datetime.now(), lead.email, lead.age_band, lead.occasion,
+         lead.activity, lead.care, lead.recommended],
+    )
+    conn.close()
+    rs_identify(lead.email, {"email": lead.email, "quiz_age_band": lead.age_band}, anonymous_id=lead.anonymous_id)
+    rs_track(lead.email, "Fabric Quiz Completed", {
+        "age_band": lead.age_band, "occasion": lead.occasion,
+        "activity": lead.activity, "care": lead.care, "recommended": lead.recommended,
+    }, anonymous_id=lead.anonymous_id)
+    return {"lead_id": lead_id, "status": "received"}

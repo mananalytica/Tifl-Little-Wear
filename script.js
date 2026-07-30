@@ -266,8 +266,37 @@ function addToCart(p, qty=1){
   fireAddToCart(p, qty);
   refreshCartBadge();
   updateCartUI();
-  showToast(p.name+' added to cart');
+  openCartDrawer();
 }
+
+// Cart drawer is shared markup (overlay + #cartDrawer) present on any page
+// with an "Add to cart" action — shop, product, and live-sell. These are
+// page-level functions (not nested in a page init) so addToCart() can open
+// the drawer no matter which page it's called from.
+function openCartDrawer(){
+  const overlay = document.getElementById('overlay');
+  const drawer = document.getElementById('cartDrawer');
+  if(!overlay || !drawer) return; // this page doesn't have the drawer markup
+  overlay.classList.add('show');
+  drawer.classList.add('show');
+  fireViewCart(Store.get('tifl_cart', []));
+}
+function closeCartDrawer(){
+  document.getElementById('overlay')?.classList.remove('show');
+  document.getElementById('cartDrawer')?.classList.remove('show');
+}
+function wireCartDrawer(){
+  if(!document.getElementById('cartDrawer')) return;
+  document.getElementById('cartOpenBtn')?.addEventListener('click', (e)=>{ e.preventDefault(); openCartDrawer(); });
+  document.getElementById('drawerCloseBtn')?.addEventListener('click', closeCartDrawer);
+  document.getElementById('overlay')?.addEventListener('click', closeCartDrawer);
+  document.getElementById('checkoutLink')?.addEventListener('click', ()=>{
+    fireBeginCheckout(Store.get('tifl_cart', []));
+    // no preventDefault — this is a real link to checkout.html
+  });
+  updateCartUI();
+}
+
 function changeQty(id, delta){
   let cart = Store.get('tifl_cart', []);
   const item = cart.find(c=>c.id===id);
@@ -357,71 +386,7 @@ async function initShopPage(){
       renderProducts(chip.dataset.cat);
     });
   });
-  updateCartUI();
-
-  const overlay = document.getElementById('overlay');
-  const drawer = document.getElementById('cartDrawer');
-  document.getElementById('cartOpenBtn')?.addEventListener('click', (e)=>{
-    e.preventDefault();
-    overlay.classList.add('show'); drawer.classList.add('show');
-    fireViewCart(Store.get('tifl_cart', []));
-  });
-  function closeDrawer(){ overlay.classList.remove('show'); drawer.classList.remove('show'); }
-  document.getElementById('drawerCloseBtn')?.addEventListener('click', closeDrawer);
-  overlay?.addEventListener('click', ()=>{ closeDrawer(); closeCheckout(); });
-
-  const checkoutModal = document.getElementById('checkoutModal');
-  function closeCheckout(){ checkoutModal.classList.remove('show'); }
-  document.getElementById('checkoutBtn')?.addEventListener('click', ()=>{
-    const cart = Store.get('tifl_cart', []);
-    if(cart.length===0){ showToast('Your cart is empty'); return; }
-    fireBeginCheckout(cart);
-    checkoutModal.classList.add('show');
-  });
-  document.getElementById('coCancelBtn')?.addEventListener('click', closeCheckout);
-  document.getElementById('checkoutForm')?.addEventListener('submit', async (e)=>{
-    e.preventDefault();
-    const cart = Store.get('tifl_cart', []);
-    fireAddShippingInfo(cart);
-
-    const subtotal = cart.reduce((s,c)=>s+c.price*c.qty,0);
-    const shippingFee = 0;
-    const payload = {
-      customer_name: document.getElementById('coName').value,
-      phone: document.getElementById('coPhone').value,
-      email: document.getElementById('coEmail')?.value || null,
-      address: document.getElementById('coAddress').value,
-      city: document.getElementById('coCity')?.value || 'Lahore',
-      payment_method: document.getElementById('coPayment')?.value || 'Cash on delivery',
-      notes: document.getElementById('coNotes')?.value || null,
-      items: cart.map(c=>({id:c.id, name:c.name, brand:c.brand, price:c.price, qty:c.qty})),
-      subtotal, shipping_fee: shippingFee, total: subtotal+shippingFee, currency:'PKR',
-      anonymous_id: rsGetAnonymousId(), attribution: rsGetAttribution()
-    };
-
-    const submitBtn = e.target.querySelector('button[type=submit]');
-    submitBtn.disabled = true; submitBtn.textContent = 'Placing order…';
-
-    let txId, placed = false;
-    try{
-      const res = await fetch('/api/orders', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(payload),
-        signal: AbortSignal.timeout ? AbortSignal.timeout(2500) : undefined
-      });
-      if(res.ok){ const data = await res.json(); txId = data.order_id; placed = true; }
-      else throw new Error('non-200');
-    }catch(err){
-      txId = 'TLW-ORD-'+Math.floor(100000+Math.random()*900000)+'-OFFLINE';
-    }
-
-    firePurchase(cart, txId);
-    closeCheckout(); closeDrawer();
-    Store.set('tifl_cart', []);
-    refreshCartBadge(); updateCartUI();
-    submitBtn.disabled = false; submitBtn.textContent = 'Place order';
-    showToast(placed ? 'Order '+txId+' placed — thank you!' : 'Order saved on this device — we will confirm by phone');
-  });
+  wireCartDrawer();
 }
 
 /* ============================================================
@@ -493,6 +458,7 @@ function initBookingPage(){
     const payload = {
       parent_name: document.getElementById('bParent').value,
       phone: document.getElementById('bPhone').value,
+      email: document.getElementById('bEmail')?.value || null,
       child_name: document.getElementById('bChild').value,
       garment_type: document.getElementById('bGarment').value,
       mode, time_slot: slot,
@@ -579,6 +545,7 @@ function initContactPage(){
 async function initProductPage(){
   const root = document.getElementById('productDetail');
   if(!root) return;
+  wireCartDrawer();
   const id = new URLSearchParams(window.location.search).get('id');
   const empty = document.getElementById('productEmpty');
   if(!id){ root.style.display='none'; empty.style.display='block'; return; }
@@ -1016,6 +983,7 @@ async function placeLiveOrder(product, buyer){
 function initLiveSellPage(){
   const root = document.getElementById('productTimeline');
   if(!root) return;
+  wireCartDrawer();
 
   (async ()=>{
     await loadProducts();
@@ -1207,6 +1175,91 @@ function initAccountPage(){
   })();
 }
 
+/* ============================================================
+   CHECKOUT PAGE (checkout.html)
+   Moved off a modal onto its own page — the modal didn't work
+   well on mobile. Reads the cart straight from Store (same
+   localStorage-backed cart used by the drawer), so nothing about
+   adding to cart changes, only where the address form lives.
+============================================================= */
+function renderCheckoutSummary(){
+  const cart = Store.get('tifl_cart', []);
+  const listEl = document.getElementById('checkoutItems');
+  if(!listEl) return cart;
+  if(cart.length===0){
+    listEl.innerHTML = '<p style="color:var(--ink-soft);font-size:13.5px;">Your cart is empty.</p>';
+  } else {
+    listEl.innerHTML = cart.map(c=>`
+      <div class="cart-line">
+        <div class="cart-thumb" style="overflow:hidden;">${productThumbHTML(c,'70%')}</div>
+        <div style="flex:1;">
+          <div class="ci-name">${c.name}</div>
+          <div class="ci-meta">${c.brand} · PKR ${c.price.toLocaleString()} × ${c.qty}</div>
+        </div>
+      </div>`).join('');
+  }
+  const subtotal = cart.reduce((s,c)=>s+c.price*c.qty,0);
+  const subEl = document.getElementById('checkoutSubtotal'); if(subEl) subEl.textContent = 'PKR '+subtotal.toLocaleString();
+  const totEl = document.getElementById('checkoutTotal'); if(totEl) totEl.textContent = 'PKR '+subtotal.toLocaleString();
+  return cart;
+}
+
+function initCheckoutPage(){
+  const form = document.getElementById('checkoutForm');
+  if(!form) return;
+
+  const cart = renderCheckoutSummary();
+  if(cart.length>0) fireBeginCheckout(cart);
+
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const currentCart = Store.get('tifl_cart', []);
+    if(currentCart.length===0){ showToast('Your cart is empty'); return; }
+    fireAddShippingInfo(currentCart);
+
+    const subtotal = currentCart.reduce((s,c)=>s+c.price*c.qty,0);
+    const shippingFee = 0;
+    const payload = {
+      customer_name: document.getElementById('coName').value,
+      phone: document.getElementById('coPhone').value,
+      email: document.getElementById('coEmail')?.value || null,
+      address: document.getElementById('coAddress').value,
+      address_line2: document.getElementById('coAddress2')?.value || null,
+      city: document.getElementById('coCity').value,
+      postal_code: document.getElementById('coPostal')?.value || null,
+      state: document.getElementById('coState')?.value || null,
+      country: document.getElementById('coCountry')?.value || 'Pakistan',
+      payment_method: document.getElementById('coPayment')?.value || 'Cash on delivery',
+      notes: document.getElementById('coNotes')?.value || null,
+      items: currentCart.map(c=>({id:c.id, name:c.name, brand:c.brand, price:c.price, qty:c.qty})),
+      subtotal, shipping_fee: shippingFee, total: subtotal+shippingFee, currency:'PKR',
+      anonymous_id: rsGetAnonymousId(), attribution: rsGetAttribution()
+    };
+
+    const submitBtn = form.querySelector('button[type=submit]');
+    submitBtn.disabled = true; submitBtn.textContent = 'Placing order…';
+
+    let txId, placed = false;
+    try{
+      const res = await fetch('/api/orders', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout ? AbortSignal.timeout(4000) : undefined
+      });
+      if(res.ok){ const data = await res.json(); txId = data.order_id; placed = true; }
+      else throw new Error('non-200');
+    }catch(err){
+      txId = 'TLW-ORD-'+Math.floor(100000+Math.random()*900000)+'-OFFLINE';
+    }
+
+    firePurchase(currentCart, txId);
+    try{ sessionStorage.setItem('tifl_last_order', JSON.stringify(Object.assign({order_id: txId}, payload))); }catch(e){}
+    Store.set('tifl_cart', []);
+    refreshCartBadge();
+    window.location.href = 'thank-you.html';
+  });
+}
+
 /* ---------- boot ---------- */
 document.addEventListener('DOMContentLoaded', ()=>{
   if(typeof rsPage === 'function') rsPage();
@@ -1219,4 +1272,5 @@ document.addEventListener('DOMContentLoaded', ()=>{
   initAdminPage();
   initLiveSellPage();
   initAccountPage();
+  initCheckoutPage();
 });
