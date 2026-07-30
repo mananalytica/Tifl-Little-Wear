@@ -68,6 +68,45 @@
 .swatch-row{display:flex;gap:6px;margin-bottom:10px;}
 .swatch-row span{width:28px;height:28px;border-radius:50%;border:1px solid rgba(0,0,0,.08);display:inline-block;}
 .color-family-card p{font-size:12.5px;color:var(--ink-soft);}
+
+/* Find My Fabric wizard */
+.wizard-card{border:1px solid var(--line);border-radius:var(--radius);background:linear-gradient(160deg,var(--bg-alt),var(--bg));padding:32px;margin-bottom:56px;position:relative;overflow:hidden;}
+.wizard-progress{height:4px;background:var(--line);border-radius:999px;margin-bottom:26px;overflow:hidden;}
+.wizard-progress-fill{height:100%;background:var(--primary);border-radius:999px;transition:width .35s var(--ease);width:25%;}
+.wizard-step{display:none;}
+.wizard-step.active{display:block;animation:fadeUp .35s var(--ease);}
+.wizard-q{font-size:19px;margin-bottom:18px;}
+.wizard-opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;}
+.wizard-opt{border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--bg);padding:16px 14px;cursor:pointer;text-align:left;transition:all .2s;}
+.wizard-opt:hover{border-color:var(--primary);transform:translateY(-2px);}
+.wizard-opt .emoji{font-size:22px;display:block;margin-bottom:6px;}
+.wizard-opt .label{font-size:13.5px;font-weight:600;color:var(--ink);}
+.wizard-back{margin-top:18px;}
+.wizard-result{display:none;}
+.wizard-result.active{display:block;animation:fadeUp .4s var(--ease);}
+.wizard-result-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:20px 0 24px;}
+.wizard-match-card{border:2px solid var(--primary);border-radius:var(--radius);padding:20px;background:var(--bg);position:relative;}
+.wizard-match-card.second{border-color:var(--line);}
+.wizard-match-badge{position:absolute;top:-11px;left:16px;background:var(--primary);color:#fff;font-family:'IBM Plex Mono',monospace;font-size:10px;padding:3px 10px;border-radius:999px;}
+.wizard-match-card .swatch{width:100%;height:40px;border-radius:var(--radius-sm);margin-bottom:12px;}
+.wizard-match-card h4{font-size:15px;margin-bottom:6px;}
+.wizard-match-card p{font-size:12.6px;color:var(--ink-soft);}
+
+/* Interactive quality checklist */
+.checklist-progress{display:flex;align-items:center;gap:12px;margin-bottom:18px;}
+.checklist-progress .bar{flex:1;height:6px;background:var(--line);border-radius:999px;overflow:hidden;}
+.checklist-progress .bar-fill{height:100%;background:var(--primary);width:0%;transition:width .3s var(--ease);}
+.checklist-progress .count{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-soft);white-space:nowrap;}
+.check-item{display:flex;gap:14px;align-items:flex-start;border-bottom:1px solid var(--line);padding:18px 0;cursor:pointer;}
+.check-item .box{width:22px;height:22px;border:2px solid var(--line);border-radius:6px;flex:none;margin-top:2px;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.check-item.checked .box{background:var(--primary);border-color:var(--primary);}
+.check-item .box svg{width:13px;height:13px;stroke:#fff;opacity:0;transition:opacity .15s;}
+.check-item.checked .box svg{opacity:1;}
+.check-item h3{font-size:16px;margin-bottom:6px;transition:color .2s;}
+.check-item.checked h3{color:var(--primary-dark);}
+.check-item p{color:var(--ink-soft);font-size:14.5px;}
+.checklist-done{display:none;margin-top:18px;padding:16px 18px;background:var(--primary-light);border-radius:var(--radius-sm);font-size:13.5px;color:var(--primary-dark);font-weight:600;}
+.checklist-done.show{display:block;animation:fadeUp .3s var(--ease);}
 </style>
 </head>
 <body>
@@ -159,6 +198,56 @@
 
   <!-- ================= CLOTH SELECTION ================= -->
   <section class="studio-tab-panel" id="panel-cloth">
+
+    <div class="eyebrow">Find my fabric</div>
+    <h2 style="font-size:26px;margin-bottom:8px;">Not sure where to start? Answer three questions.</h2>
+    <p class="lede" style="margin-bottom:24px;">We'll match you to the fabric our tailors would actually recommend, not just the most popular one.</p>
+
+    <div class="wizard-card">
+      <div class="wizard-progress"><div class="wizard-progress-fill" id="wizardProgressFill"></div></div>
+
+      <div class="wizard-step active" data-step="1">
+        <div class="wizard-q">What's the outfit for?</div>
+        <div class="wizard-opts">
+          <div class="wizard-opt" data-q="occasion" data-v="everyday"><span class="emoji">🎒</span><span class="label">Everyday wear</span></div>
+          <div class="wizard-opt" data-q="occasion" data-v="festive"><span class="emoji">🌙</span><span class="label">Eid &amp; festive</span></div>
+          <div class="wizard-opt" data-q="occasion" data-v="wedding"><span class="emoji">💍</span><span class="label">Wedding-side event</span></div>
+          <div class="wizard-opt" data-q="occasion" data-v="school"><span class="emoji">❄️</span><span class="label">Winter &amp; school</span></div>
+        </div>
+      </div>
+
+      <div class="wizard-step" data-step="2">
+        <div class="wizard-q">How active will they be in it?</div>
+        <div class="wizard-opts">
+          <div class="wizard-opt" data-q="activity" data-v="active"><span class="emoji">🏃</span><span class="label">Running around all day</span></div>
+          <div class="wizard-opt" data-q="activity" data-v="mixed"><span class="emoji">🚶</span><span class="label">A bit of both</span></div>
+          <div class="wizard-opt" data-q="activity" data-v="still"><span class="emoji">📸</span><span class="label">Mostly sitting, photos</span></div>
+        </div>
+        <button class="btn btn-ghost btn-sm wizard-back" data-back="1">← Back</button>
+      </div>
+
+      <div class="wizard-step" data-step="3">
+        <div class="wizard-q">Machine-wash easy, or happy to dry clean for the right look?</div>
+        <div class="wizard-opts">
+          <div class="wizard-opt" data-q="care" data-v="easy"><span class="emoji">🧺</span><span class="label">Easiest care possible</span></div>
+          <div class="wizard-opt" data-q="care" data-v="dryclean"><span class="emoji">✨</span><span class="label">Dry clean is fine</span></div>
+        </div>
+        <button class="btn btn-ghost btn-sm wizard-back" data-back="2">← Back</button>
+      </div>
+
+      <div class="wizard-result" id="wizardResult">
+        <div class="eyebrow">Your match</div>
+        <h3 id="wizardResultTitle" style="font-size:20px;margin-bottom:4px;">—</h3>
+        <p style="color:var(--ink-soft);font-size:13.5px;" id="wizardResultSub"></p>
+        <div class="wizard-result-grid" id="wizardResultGrid"></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm" id="wizardRetakeBtn">↺ Retake</button>
+          <a class="btn btn-primary btn-sm" href="booking.html" id="wizardBookBtn">Book a fitting with this fabric →</a>
+        </div>
+      </div>
+    </div>
+
+    <hr class="seam" style="margin-bottom:40px;">
 
     <div class="eyebrow">By occasion</div>
     <h2 style="font-size:24px;margin-bottom:20px;">Start with what it's for.</h2>
@@ -260,31 +349,54 @@
 
     <div class="eyebrow">Quality checklist</div>
     <h2 style="font-size:24px;margin-bottom:8px;">What to actually check before you buy fabric.</h2>
-    <p class="lede" style="margin-bottom:22px;">The same five checks our tailors use before cutting anything.</p>
-    <div class="faq-list">
-      <div class="faq-item">
-        <h3>Hold it up to the light</h3>
-        <p>A tighter, more even weave lets less light through unevenly. Patchy light spots usually mean a looser, weaker weave that won't hold up to repeated wear.</p>
+    <p class="lede" style="margin-bottom:18px;">The same five checks our tailors use before cutting anything — tap each one off as you go.</p>
+
+    <div class="checklist-progress">
+      <div class="bar"><div class="bar-fill" id="checklistBarFill"></div></div>
+      <div class="count" id="checklistCount">0 / 5 checked</div>
+    </div>
+
+    <div id="checklistItems">
+      <div class="check-item" data-check="1">
+        <div class="box"><svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div>
+          <h3>Hold it up to the light</h3>
+          <p>A tighter, more even weave lets less light through unevenly. Patchy light spots usually mean a looser, weaker weave that won't hold up to repeated wear.</p>
+        </div>
       </div>
-      <div class="faq-item">
-        <h3>Rub a damp white cloth across it</h3>
-        <p>If colour transfers onto the cloth, the dye isn't fully set — it will bleed in the wash and fade faster than it should.</p>
+      <div class="check-item" data-check="2">
+        <div class="box"><svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div>
+          <h3>Rub a damp white cloth across it</h3>
+          <p>If colour transfers onto the cloth, the dye isn't fully set — it will bleed in the wash and fade faster than it should.</p>
+        </div>
       </div>
-      <div class="faq-item">
-        <h3>Check the weight for the season</h3>
-        <p>Heavier fabric (measured in GSM) suits winter and structured occasion pieces; lighter weight suits summer and everyday wear. The wrong weight for the season is the most common regret.</p>
+      <div class="check-item" data-check="3">
+        <div class="box"><svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div>
+          <h3>Check the weight for the season</h3>
+          <p>Heavier fabric (measured in GSM) suits winter and structured occasion pieces; lighter weight suits summer and everyday wear. The wrong weight for the season is the most common regret.</p>
+        </div>
       </div>
-      <div class="faq-item">
-        <h3>Ask about shrinkage</h3>
-        <p>Natural fibres like cotton and lawn shrink slightly on first wash. A good tailor builds this into the cut — ask whether that's already accounted for before stitching.</p>
+      <div class="check-item" data-check="4">
+        <div class="box"><svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div>
+          <h3>Ask about shrinkage</h3>
+          <p>Natural fibres like cotton and lawn shrink slightly on first wash. A good tailor builds this into the cut — ask whether that's already accounted for before stitching.</p>
+        </div>
       </div>
-      <div class="faq-item">
-        <h3>Look at the finishing, not just the fabric</h3>
-        <p>Even excellent fabric looks cheap with poor stitching. Check seam edges are enclosed (not fraying), embroidery threads are secure, and hems sit flat — the same standard we hold ourselves to on every piece.</p>
+      <div class="check-item" data-check="5">
+        <div class="box"><svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div>
+          <h3>Look at the finishing, not just the fabric</h3>
+          <p>Even excellent fabric looks cheap with poor stitching. Check seam edges are enclosed (not fraying), embroidery threads are secure, and hems sit flat — the same standard we hold ourselves to on every piece.</p>
+        </div>
       </div>
     </div>
 
-    <div style="margin-top:40px;">
+    <div class="checklist-done" id="checklistDone">✓ All five checked — you're ready to choose fabric with confidence. Bring any questions to your fitting.</div>
+
+    <div style="margin-top:24px;">
       <a class="btn btn-primary" href="booking.html">Bring your questions to a fitting →</a>
     </div>
   </section>
@@ -546,6 +658,98 @@ document.getElementById('bookDesignBtn').addEventListener('click', ()=>{
   const lowerName = lowerMeta(currentDesign.lower).name;
   const note = `Design studio sketch: ${upperName} + ${lowerName}, ${currentDesign.sleeve.replace('-',' ')} sleeve, ${currentDesign.length} length.`;
   try{ sessionStorage.setItem('tifl_design_note', note); }catch(e){}
+});
+
+/* ================= FIND MY FABRIC WIZARD ================= */
+const FABRIC_DATA = [
+  { id:'lawn',     name:'Lawn',     swatch:'#F4EFD8', occasion:['everyday','festive'],          activity:['active','mixed'],        care:['easy'],     desc:'Light, breathable cotton weave — softens with every wash, forgiving for active kids.' },
+  { id:'cotton',   name:'Cotton',   swatch:'#EDEDED', occasion:['everyday','school'],            activity:['active','mixed'],        care:['easy'],     desc:'Sturdier than lawn, holds up to daily wear and repeated washing without losing shape.' },
+  { id:'silk',     name:'Silk',     swatch:'#F0DCC7', occasion:['wedding','festive'],            activity:['still','mixed'],         care:['dryclean'], desc:'Natural sheen and drape — the classic pick for occasion wear that needs to photograph well.' },
+  { id:'chiffon',  name:'Chiffon',  swatch:'#E4EEF9', occasion:['festive','wedding'],            activity:['still','mixed'],         care:['dryclean'], desc:'Very light and floaty, usually layered over a lining — delicate, built for sitting and photos, not running around.' },
+  { id:'organza',  name:'Organza',  swatch:'#F5E6EC', occasion:['wedding'],                      activity:['still'],                 care:['dryclean'], desc:'Crisp and structured, holds its shape — common for dupattas and layered occasion pieces.' },
+  { id:'velvet',   name:'Velvet',   swatch:'#2A2438', occasion:['school','wedding'],             activity:['mixed','still'],         care:['dryclean'], desc:'Heavy and warm with a soft pile — built for winter, especially occasion wear that needs presence.' }
+];
+
+const wizardAnswers = {};
+let wizardCurrentStep = 1;
+
+function goToWizardStep(step){
+  document.querySelectorAll('.wizard-step').forEach(s=>s.classList.remove('active'));
+  document.querySelector(`.wizard-step[data-step="${step}"]`).classList.add('active');
+  wizardCurrentStep = step;
+  document.getElementById('wizardProgressFill').style.width = (step/3*100)+'%';
+}
+
+document.querySelectorAll('.wizard-opt').forEach(opt=>{
+  opt.addEventListener('click', ()=>{
+    const q = opt.dataset.q, v = opt.dataset.v;
+    wizardAnswers[q] = v;
+    if(wizardCurrentStep < 3){
+      goToWizardStep(wizardCurrentStep+1);
+    } else {
+      showWizardResult();
+    }
+  });
+});
+document.querySelectorAll('.wizard-back').forEach(btn=>{
+  btn.addEventListener('click', ()=> goToWizardStep(+btn.dataset.back));
+});
+
+function scoreFabric(f){
+  let score = 0;
+  if(f.occasion.includes(wizardAnswers.occasion)) score += 3;
+  if(f.activity.includes(wizardAnswers.activity)) score += 2;
+  if(f.care.includes(wizardAnswers.care)) score += 2;
+  return score;
+}
+
+function showWizardResult(){
+  document.getElementById('wizardProgressFill').style.width = '100%';
+  document.querySelectorAll('.wizard-step').forEach(s=>s.classList.remove('active'));
+
+  const ranked = FABRIC_DATA.map(f=>({...f, score:scoreFabric(f)})).sort((a,b)=>b.score-a.score);
+  const top = ranked.slice(0,2);
+
+  const occasionLabel = {everyday:'everyday wear', festive:'Eid & festive', wedding:'a wedding-side event', school:'winter & school'}[wizardAnswers.occasion];
+  document.getElementById('wizardResultTitle').textContent = 'Best matches for ' + occasionLabel;
+  document.getElementById('wizardResultSub').textContent = "Based on how active they'll be and your care preference.";
+
+  document.getElementById('wizardResultGrid').innerHTML = top.map((f,i)=>`
+    <div class="wizard-match-card ${i===1?'second':''}">
+      <span class="wizard-match-badge">${i===0?'Best match':'Also good'}</span>
+      <div class="swatch" style="background:${f.swatch};"></div>
+      <h4>${f.name}</h4>
+      <p>${f.desc}</p>
+    </div>`).join('');
+
+  const bookBtn = document.getElementById('wizardBookBtn');
+  bookBtn.onclick = ()=>{
+    const note = `Fabric guide match: ${top[0].name}${top[1] ? ' or '+top[1].name : ''}, for ${occasionLabel}.`;
+    try{ sessionStorage.setItem('tifl_design_note', note); }catch(e){}
+  };
+
+  document.getElementById('wizardResult').classList.add('active');
+}
+
+document.getElementById('wizardRetakeBtn').addEventListener('click', ()=>{
+  Object.keys(wizardAnswers).forEach(k=>delete wizardAnswers[k]);
+  document.getElementById('wizardResult').classList.remove('active');
+  goToWizardStep(1);
+});
+
+/* ================= INTERACTIVE QUALITY CHECKLIST ================= */
+function updateChecklistProgress(){
+  const total = document.querySelectorAll('.check-item').length;
+  const checked = document.querySelectorAll('.check-item.checked').length;
+  document.getElementById('checklistBarFill').style.width = (checked/total*100)+'%';
+  document.getElementById('checklistCount').textContent = `${checked} / ${total} checked`;
+  document.getElementById('checklistDone').classList.toggle('show', checked===total);
+}
+document.querySelectorAll('.check-item').forEach(item=>{
+  item.addEventListener('click', ()=>{
+    item.classList.toggle('checked');
+    updateChecklistProgress();
+  });
 });
 </script>
 </body>
