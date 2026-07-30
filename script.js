@@ -416,28 +416,11 @@ async function initShopPage(){
     }
 
     firePurchase(cart, txId);
-
-    try{
-      sessionStorage.setItem('tifl_last_order', JSON.stringify({
-        order_id: txId,
-        customer_name: payload.customer_name,
-        phone: payload.phone,
-        email: payload.email,
-        address: payload.address,
-        city: payload.city,
-        payment_method: payload.payment_method,
-        items: payload.items,
-        subtotal: payload.subtotal,
-        shipping_fee: payload.shipping_fee,
-        total: payload.total,
-        currency: payload.currency
-      }));
-    }catch(e){ /* storage unavailable, thank-you page will show a fallback */ }
-
     closeCheckout(); closeDrawer();
     Store.set('tifl_cart', []);
     refreshCartBadge(); updateCartUI();
-    window.location.href = 'thank-you.html';
+    submitBtn.disabled = false; submitBtn.textContent = 'Place order';
+    showToast(placed ? 'Order '+txId+' placed — thank you!' : 'Order saved on this device — we will confirm by phone');
   });
 }
 
@@ -480,6 +463,14 @@ function initBookingPage(){
     attachedEl.innerHTML = `<b>${m.child}</b> · chest ${m.chest||'—'}cm · waist ${m.waist||'—'}cm · height ${m.height||'—'}cm · inseam ${m.inseam||'—'}cm`;
     if(m.child && m.child!=='Unnamed') document.getElementById('bChild').value = m.child;
   }
+
+  try{
+    const designNote = sessionStorage.getItem('tifl_design_note');
+    if(designNote){
+      document.getElementById('bNotes').value = designNote;
+      sessionStorage.removeItem('tifl_design_note');
+    }
+  }catch(e){}
 
   document.querySelectorAll('#modeGrid .mode').forEach(el=>{
     el.addEventListener('click', ()=>{

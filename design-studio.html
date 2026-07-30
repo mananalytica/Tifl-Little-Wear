@@ -1,1642 +1,552 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Boutique Sizing Studio — Measurement Calculator & Design Studio</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design Studio — Tifl Little Wear</title>
+<meta name="description" content="Sketch your own outfit at Tifl Little Wear — mix any top with any bottom, then get guidance on choosing the right fabric, color, and quality before your fitting.">
+<link rel="canonical" href="https://www.tifllittlewear.com/design-studio.html">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Design Studio — Tifl Little Wear">
+<meta property="og:description" content="Mix and match a custom outfit, then learn how to choose the right fabric before your fitting.">
+<meta property="og:url" content="https://www.tifllittlewear.com/design-studio.html">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
 <style>
-  :root{
-    --emerald:#0f4c3a;
-    --emerald-deep:#0a3528;
-    --gold:#c9a961;
-    --gold-soft:#e4cf9a;
-    --cream:#faf6ef;
-    --ivory:#fffdf7;
-    --ink:#1f2a26;
-    --muted:#6b7570;
-    --line:#e6ddc9;
-    --danger:#b34a4a;
-    --shadow:0 10px 30px rgba(15,76,58,.08);
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  html,body{background:var(--cream);color:var(--ink);font-family:'Inter',sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased}
-  .wrap{max-width:1200px;margin:0 auto;padding:32px 20px 80px}
-  header.hero{
-    text-align:center;padding:40px 20px 28px;
-    border-bottom:1px solid var(--line);
-    background:radial-gradient(1200px 300px at 50% -100px, rgba(201,169,97,.12), transparent 60%), linear-gradient(180deg, var(--ivory), var(--cream));
-    border-radius:18px 18px 0 0;
-    position:relative;
-  }
-  header.hero::before, header.hero::after{content:"";position:absolute;width:60px;height:1px;background:var(--gold);top:18px}
-  header.hero::before{left:30px}
-  header.hero::after{right:30px}
-  .brand{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:14px;letter-spacing:6px;color:var(--gold);text-transform:uppercase}
-  h1{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:clamp(30px,4.2vw,44px);color:var(--emerald-deep);margin-top:8px;letter-spacing:.5px}
-  .tagline{color:var(--muted);margin-top:8px;font-size:14px;letter-spacing:.5px}
-  .ornament{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:14px;color:var(--gold)}
-  .ornament span{height:1px;width:50px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
-  .ornament svg{width:14px;height:14px;fill:var(--gold)}
+/* ================= DESIGN STUDIO PAGE — page-specific ================= */
+.studio-tabs{display:flex;gap:8px;margin-bottom:30px;flex-wrap:wrap;}
+.studio-tab-panel{display:none;}
+.studio-tab-panel.active{display:block;animation:fadeUp .4s var(--ease);}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
 
-  .tabs{display:flex;gap:6px;margin:28px 0 18px;flex-wrap:wrap;justify-content:center}
-  .tab{
-    padding:12px 22px;border:1px solid var(--line);background:var(--ivory);
-    font-family:'Cormorant Garamond',serif;font-size:17px;letter-spacing:.5px;
-    color:var(--emerald-deep);cursor:pointer;border-radius:999px;transition:all .25s ease;
-  }
-  .tab:hover{border-color:var(--gold-soft)}
-  .tab.active{background:var(--emerald);color:var(--ivory);border-color:var(--emerald);box-shadow:var(--shadow)}
+.studio-layout{display:grid;grid-template-columns:1fr 1fr;gap:36px;align-items:start;margin-bottom:70px;}
+@media (max-width:980px){.studio-layout{grid-template-columns:1fr;}}
 
-  .panel{background:var(--ivory);border:1px solid var(--line);border-radius:16px;padding:28px;box-shadow:var(--shadow);display:none}
-  .panel.active{display:block;animation:fade .35s ease}
-  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.studio-block{margin-bottom:26px;}
+.studio-block h3{font-size:15px;margin-bottom:12px;}
 
-  .panel h2{font-family:'Cormorant Garamond',serif;color:var(--emerald-deep);font-weight:600;font-size:26px;margin-bottom:6px}
-  .panel .sub{color:var(--muted);font-size:13.5px;margin-bottom:22px}
+.illus-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px;}
+.illus-card{border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--bg);cursor:pointer;padding:12px 8px 10px;text-align:center;transition:all .2s;}
+.illus-card:hover{border-color:var(--primary);transform:translateY(-2px);}
+.illus-card.active{background:var(--primary-light);border-color:var(--primary);box-shadow:0 0 0 1px var(--primary);}
+.illus-card svg{width:100%;height:60px;display:block;margin-bottom:6px;}
+.illus-card .name{font-size:11.5px;font-weight:600;color:var(--ink);}
 
-  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
-  label{display:block;font-size:12.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
-  select,input[type=number],input[type=text],input[type=color],textarea{
-    width:100%;padding:12px 14px;border:1px solid var(--line);background:#fff;
-    border-radius:10px;font-family:inherit;font-size:14.5px;color:var(--ink);
-    transition:border-color .2s, box-shadow .2s;
-  }
-  select:focus,input:focus,textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,169,97,.18)}
-  textarea{min-height:80px;resize:vertical}
-  input[type=color]{height:50px;padding:6px;cursor:pointer}
+.pill-group{display:flex;gap:8px;flex-wrap:wrap;}
+.pill-opt{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:9px 16px;font-size:12.8px;font-weight:600;cursor:pointer;color:var(--ink-soft);transition:all .2s;}
+.pill-opt:hover{border-color:var(--primary);}
+.pill-opt.active{background:var(--ink);color:var(--bg);border-color:var(--ink);}
 
-  .chart-select{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
-  .chip{
-    padding:8px 16px;border:1px solid var(--line);border-radius:999px;
-    background:#fff;font-size:13px;cursor:pointer;color:var(--emerald-deep);
-    transition:all .2s;
-  }
-  .chip:hover{border-color:var(--gold-soft)}
-  .chip.active{background:var(--emerald-deep);color:var(--ivory);border-color:var(--emerald-deep)}
+.studio-preview{background:var(--bg-alt);border:1px solid var(--line);border-radius:var(--radius);padding:30px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:sticky;top:88px;}
+.studio-preview svg{width:100%;max-width:280px;height:auto;}
+.preview-label{margin-top:14px;font-size:16px;font-weight:600;color:var(--ink);text-align:center;}
+.preview-summary{margin-top:6px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--ink-soft);text-align:center;}
+.preview-actions{display:flex;gap:10px;margin-top:22px;width:100%;}
 
-  .btn{
-    display:inline-flex;align-items:center;gap:8px;padding:12px 22px;border:none;
-    border-radius:999px;cursor:pointer;font-family:inherit;font-size:14px;
-    letter-spacing:.5px;transition:all .2s;
-  }
-  .btn-primary{background:var(--emerald);color:var(--ivory)}
-  .btn-primary:hover{background:var(--emerald-deep);transform:translateY(-1px);box-shadow:var(--shadow)}
-  .btn-gold{background:var(--gold);color:var(--emerald-deep)}
-  .btn-gold:hover{background:#b8964d;color:#fff}
-  .btn-ghost{background:transparent;color:var(--emerald-deep);border:1px solid var(--line)}
-  .btn-ghost:hover{border-color:var(--emerald)}
-  .btn-danger{background:transparent;color:var(--danger);border:1px solid var(--line)}
-  .btn-danger:hover{border-color:var(--danger)}
-  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
+/* Cloth Selection guidance */
+.occasion-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:56px;}
+.occasion-card{border:1px solid var(--line);border-radius:var(--radius);padding:22px;background:var(--bg-alt);}
+.occasion-card h3{font-size:16px;margin-bottom:8px;}
+.occasion-card p{font-size:13.3px;color:var(--ink-soft);margin-bottom:10px;}
+.occasion-card .tags{display:flex;gap:6px;flex-wrap:wrap;}
 
-  .results{margin-top:26px;padding:24px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,#fff, var(--ivory));display:none}
-  .results.show{display:block;animation:fade .35s ease}
-  .results h3{font-family:'Cormorant Garamond',serif;color:var(--emerald-deep);font-size:22px;margin-bottom:4px}
-  .results .meta{color:var(--muted);font-size:13px;margin-bottom:16px}
-  table.measure{width:100%;border-collapse:collapse;font-size:14px}
-  table.measure th, table.measure td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line)}
-  table.measure th{font-weight:500;color:var(--muted);font-size:12px;letter-spacing:.6px;text-transform:uppercase;background:#fbf7ee}
-  table.measure td.val{font-weight:500;color:var(--emerald-deep);text-align:right}
-  table.measure tr:last-child td{border-bottom:none}
-  .note{margin-top:14px;font-size:12.5px;color:var(--muted);font-style:italic;border-left:2px solid var(--gold);padding-left:12px}
+.fabric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;margin-bottom:56px;}
+.fabric-card{border:1px solid var(--line);border-radius:var(--radius);padding:20px;background:var(--bg);}
+.fabric-card .swatch{width:100%;height:44px;border-radius:var(--radius-sm);margin-bottom:14px;}
+.fabric-card h3{font-size:15px;margin-bottom:6px;}
+.fabric-card p{font-size:12.8px;color:var(--ink-soft);margin-bottom:10px;}
+.fabric-meta{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-soft);border-top:1px dashed var(--line);padding-top:10px;}
 
-  /* DESIGN STUDIO */
-  .studio-layout{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:20px}
-  @media(max-width:900px){.studio-layout{grid-template-columns:1fr}}
-  .studio-controls{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px}
-  .studio-preview{background:linear-gradient(180deg,#fff,var(--ivory));border:1px solid var(--line);border-radius:14px;padding:20px;min-height:500px;display:flex;flex-direction:column;align-items:center;justify-content:center}
-  .studio-preview svg{max-width:100%;height:auto}
-  .studio-section{margin-bottom:18px}
-  .studio-section h4{font-family:'Cormorant Garamond',serif;color:var(--emerald-deep);font-size:16px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
-  .option-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
-  .option-card{
-    padding:10px 12px;border:1px solid var(--line);border-radius:10px;
-    background:#fff;cursor:pointer;text-align:center;font-size:13px;
-    transition:all .2s;
-  }
-  .option-card:hover{border-color:var(--gold-soft);transform:translateY(-1px)}
-  .option-card.active{background:var(--emerald);color:var(--ivory);border-color:var(--emerald)}
-  .color-swatch{width:100%;height:50px;border-radius:8px;border:2px solid var(--line);cursor:pointer;transition:transform .2s}
-  .color-swatch:hover{transform:scale(1.05)}
-  .color-swatch.active{border-color:var(--emerald);box-shadow:0 0 0 3px rgba(15,76,58,.2)}
-  .color-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(60px,1fr));gap:8px}
-  .design-summary{margin-top:18px;padding:14px;background:var(--cream);border-radius:10px;font-size:13px}
-  .design-summary strong{color:var(--emerald-deep)}
-
-  .saved-list{display:grid;gap:12px;margin-top:18px}
-  .saved-item{padding:16px;border:1px solid var(--line);border-radius:12px;background:#fff;display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap}
-  .saved-item .info{flex:1;min-width:200px}
-  .saved-item .info strong{color:var(--emerald-deep);font-family:'Cormorant Garamond',serif;font-size:19px}
-  .saved-item .info small{color:var(--muted);display:block;margin-top:2px}
-  .saved-item .tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-  .saved-item .tag{font-size:11.5px;padding:3px 10px;border-radius:999px;background:var(--cream);color:var(--emerald-deep);border:1px solid var(--line)}
-  .saved-item .ctrl{display:flex;gap:6px;flex-wrap:wrap}
-  .empty{text-align:center;padding:40px 20px;color:var(--muted);font-style:italic}
-
-  footer{text-align:center;margin-top:40px;color:var(--muted);font-size:12.5px;letter-spacing:.5px}
-  footer .line{display:block;width:80px;height:1px;background:var(--gold);margin:10px auto}
-
-  @media print{
-    body{background:#fff}
-    .tabs,.actions,.saved-item .ctrl,header.hero::before,header.hero::after{display:none}
-    .panel{box-shadow:none;border:none}
-  }
-  @media (max-width:600px){
-    .wrap{padding:16px 12px 60px}
-    .panel{padding:20px}
-    .tab{padding:10px 16px;font-size:15px}
-  }
+.color-family-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:56px;}
+.color-family-card{border:1px solid var(--line);border-radius:var(--radius);padding:18px;background:var(--bg-alt);}
+.color-family-card h3{font-size:14.5px;margin-bottom:10px;}
+.swatch-row{display:flex;gap:6px;margin-bottom:10px;}
+.swatch-row span{width:28px;height:28px;border-radius:50%;border:1px solid rgba(0,0,0,.08);display:inline-block;}
+.color-family-card p{font-size:12.5px;color:var(--ink-soft);}
 </style>
 </head>
 <body>
-<div class="wrap">
 
-  <header class="hero">
-    <div class="brand">Atelier · Studio</div>
-    <h1>Boutique Sizing & Design Studio</h1>
-    <div class="tagline">Precise measurements · Custom designs · Crafted by our designers</div>
-    <div class="ornament">
-      <span></span>
-      <svg viewBox="0 0 24 24"><path d="M12 2l2.39 7.36H22l-6.2 4.5 2.39 7.36L12 16.72 5.81 21.22l2.39-7.36L2 9.36h7.61z"/></svg>
-      <span></span>
+<header class="site">
+  <div class="nav-inner">
+    <a class="brand" href="index.html">
+      <img src="assets/logo.png" alt="Tifl Little Wear" class="brand-logo">
+      <span class="sub">Lahore</span>
+    </a>
+    <nav class="tabs" id="navTabs">
+      <a href="index.html">Home</a>
+      <a href="measurements.html">Measurements</a>
+      <a href="booking.html">Booking</a>
+      <a href="shop.html">Shop</a>
+      <a href="live-sell.html">Live Sale</a>
+      <a href="design-studio.html" aria-current="page">Design Studio</a>
+      <a href="blog.html">Blog</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+    <div class="nav-right">
+      <a class="btn btn-ghost btn-sm" href="account.html" style="margin-right:4px;">Account</a>
+      <a class="cart-btn" href="shop.html" aria-label="View cart">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        <span class="cart-badge" id="cartBadge" style="display:none;">0</span>
+      </a>
+      <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
     </div>
-  </header>
+  </div>
+</header>
 
-  <div class="tabs" role="tablist">
-    <button class="tab active" data-tab="age">By Age</button>
-    <button class="tab" data-tab="calc">By Height & Weight</button>
-    <button class="tab" data-tab="match">Find Size</button>
-    <button class="tab" data-tab="women">Women's Sizing</button>
-    <button class="tab" data-tab="studio">Design Studio</button>
-    <button class="tab" data-tab="saved">Saved Records</button>
+<main class="wrap">
+  <div class="section-head">
+    <div class="eyebrow">Studio</div>
+    <h1>Sketch your outfit before you book.</h1>
+    <p class="lede">Mix any top with any bottom to explore a shape, then check the Cloth Selection guide for how to choose fabric, color, and quality once you're ready for a fitting.</p>
   </div>
 
-  <!-- PANEL: BY AGE -->
-  <section class="panel active" id="panel-age">
-    <h2>Browse by Age</h2>
-    <p class="sub">Select an age range to view standard cutting, frock, or pant measurements from our atelier charts.</p>
+  <div class="studio-tabs chip-row" id="studioTabs">
+    <button class="chip active" data-panel="studio">Design Studio</button>
+    <button class="chip" data-panel="cloth">Cloth Selection</button>
+  </div>
 
-    <div class="chart-select" id="ageChartChips">
-      <div class="chip active" data-chart="cutting">Cutting Chart</div>
-      <div class="chip" data-chart="frock">Lawn Frock</div>
-      <div class="chip" data-chart="pant">Girls Pant</div>
-    </div>
-
-    <div class="grid">
-      <div>
-        <label for="ageSelect">Age Range</label>
-        <select id="ageSelect"></select>
-      </div>
-    </div>
-
-    <div class="results" id="ageResults">
-      <h3 id="ageTitle">—</h3>
-      <div class="meta" id="ageMeta"></div>
-      <table class="measure" id="ageTable"><tbody></tbody></table>
-    </div>
-
-    <div class="actions">
-      <button class="btn btn-primary" onclick="downloadPDF('age')">⬇ Download PDF</button>
-      <button class="btn btn-gold" onclick="openSaveModal('age')">✦ Save Record</button>
-      <button class="btn btn-ghost" onclick="window.print()">🖨 Print</button>
-    </div>
-  </section>
-
-  <!-- PANEL: BY HEIGHT/WEIGHT -->
-  <section class="panel" id="panel-calc">
-    <h2>Calculate by Height & Weight</h2>
-    <p class="sub">Enter the child's height and weight — our algorithm estimates the closest size across all three charts.</p>
-
-    <div class="grid">
-      <div>
-        <label for="calcHeight">Height</label>
-        <div style="display:flex;gap:8px">
-          <input type="number" id="calcHeight" placeholder="e.g. 38" step="0.1" min="20" max="72" />
-          <select id="calcHeightUnit" style="max-width:90px">
-            <option value="in">inches</option>
-            <option value="cm">cm</option>
-          </select>
-        </div>
-      </div>
-      <div>
-        <label for="calcWeight">Weight (optional)</label>
-        <div style="display:flex;gap:8px">
-          <input type="number" id="calcWeight" placeholder="e.g. 28" step="0.1" min="5" max="80" />
-          <select id="calcWeightUnit" style="max-width:90px">
-            <option value="lb">lb</option>
-            <option value="kg">kg</option>
-          </select>
-        </div>
-      </div>
-    </div>
-
-    <div class="actions">
-      <button class="btn btn-primary" onclick="calculateByHW()">Calculate Sizes</button>
-      <button class="btn btn-ghost" onclick="clearCalc()">Clear</button>
-    </div>
-
-    <div class="results" id="calcResults">
-      <h3 id="calcTitle">Estimated Sizes</h3>
-      <div class="meta" id="calcMeta"></div>
-      <div id="calcTables"></div>
-      <div class="note">Estimates are based on standard pediatric growth ratios. For a perfect fit, our designers recommend a final fitting session.</div>
-    </div>
-
-    <div class="actions" id="calcActions" style="display:none">
-      <button class="btn btn-primary" onclick="downloadPDF('calc')"> Download PDF</button>
-      <button class="btn btn-gold" onclick="openSaveModal('calc')">✦ Save Record</button>
-    </div>
-  </section>
-
-  <!-- PANEL: FIND FROM MEASUREMENTS -->
-  <section class="panel" id="panel-match">
-    <h2>Find Size from Body Measurements</h2>
-    <p class="sub">Enter the child's actual body measurements — we'll match the closest size in each chart.</p>
-
-    <div class="grid">
-      <div><label>Chest (in)</label><input type="number" id="mChest" step="0.1" placeholder="e.g. 22"></div>
-      <div><label>Waist (in)</label><input type="number" id="mWaist" step="0.1" placeholder="e.g. 21"></div>
-      <div><label>Height (in)</label><input type="number" id="mHeight" step="0.1" placeholder="e.g. 38"></div>
-      <div><label>Hip (in, optional)</label><input type="number" id="mHip" step="0.1" placeholder="e.g. 25"></div>
-    </div>
-
-    <div class="actions">
-      <button class="btn btn-primary" onclick="matchMeasurements()">Find Best Size</button>
-      <button class="btn btn-ghost" onclick="clearMatch()">Clear</button>
-    </div>
-
-    <div class="results" id="matchResults">
-      <h3>Best Match</h3>
-      <div class="meta" id="matchMeta"></div>
-      <div id="matchTables"></div>
-    </div>
-
-    <div class="actions" id="matchActions" style="display:none">
-      <button class="btn btn-primary" onclick="downloadPDF('match')">⬇ Download PDF</button>
-      <button class="btn btn-gold" onclick="openSaveModal('match')">✦ Save Record</button>
-    </div>
-  </section>
-
-  <!-- PANEL: WOMEN'S SIZING -->
-  <section class="panel" id="panel-women">
-    <h2>Women's Sizing Chart</h2>
-    <p class="sub">Standard Pakistani boutique measurements for adult women's garments (kameez, shalwar, dupatta).</p>
-
-    <div class="chart-select" id="womenChartChips">
-      <div class="chip active" data-chart="women-cutting">Cutting Chart</div>
-      <div class="chip" data-chart="women-kameez">Kameez Length</div>
-      <div class="chip" data-chart="women-shalwar">Shalwar Chart</div>
-    </div>
-
-    <div class="grid">
-      <div>
-        <label for="womenSizeSelect">Size</label>
-        <select id="womenSizeSelect"></select>
-      </div>
-    </div>
-
-    <div class="results" id="womenResults">
-      <h3 id="womenTitle">—</h3>
-      <div class="meta" id="womenMeta"></div>
-      <table class="measure" id="womenTable"><tbody></tbody></table>
-    </div>
-
-    <div class="actions">
-      <button class="btn btn-primary" onclick="downloadPDF('women')">⬇ Download PDF</button>
-      <button class="btn btn-gold" onclick="openSaveModal('women')">✦ Save Record</button>
-      <button class="btn btn-ghost" onclick="window.print()">🖨 Print</button>
-    </div>
-  </section>
-
-  <!-- PANEL: DESIGN STUDIO -->
-  <section class="panel" id="panel-studio">
-    <h2>Design Studio</h2>
-    <p class="sub">Create your custom outfit — select style, fabric, color, and details. See a live preview of your design.</p>
-
+  <!-- ================= DESIGN STUDIO ================= -->
+  <section class="studio-tab-panel active" id="panel-studio">
     <div class="studio-layout">
-      <div class="studio-controls">
-        <div class="studio-section">
-          <h4>1. Outfit Type</h4>
-          <div class="option-grid" id="outfitTypeGrid">
-            <div class="option-card active" data-type="shalwar-kameez">Shalwar Kameez</div>
-            <div class="option-card" data-type="frock">Frock</div>
-            <div class="option-card" data-type="kurta">Kurta</div>
-            <div class="option-card" data-type="anarkali">Anarkali</div>
-            <div class="option-card" data-type="lehenga">Lehenga</div>
-            <div class="option-card" data-type="gharara">Gharara</div>
+      <div>
+        <div class="studio-block">
+          <h3>Outfit Upper</h3>
+          <div class="illus-grid" id="upperGrid"></div>
+        </div>
+        <div class="studio-block">
+          <h3>Outfit Lower</h3>
+          <div class="illus-grid" id="lowerGrid"></div>
+        </div>
+        <div class="studio-block">
+          <h3>Sleeve Length</h3>
+          <div class="pill-group" id="sleeveGrid">
+            <div class="pill-opt" data-sleeve="sleeveless">Sleeveless</div>
+            <div class="pill-opt" data-sleeve="short">Short</div>
+            <div class="pill-opt active" data-sleeve="three-quarter">3/4 Sleeve</div>
+            <div class="pill-opt" data-sleeve="full">Full Sleeve</div>
           </div>
         </div>
-
-        <div class="studio-section">
-          <h4>2. Fabric</h4>
-          <select id="fabricSelect">
-            <option value="lawn">Lawn (Summer)</option>
-            <option value="chiffon">Chiffon</option>
-            <option value="silk">Silk</option>
-            <option value="cotton">Cotton</option>
-            <option value="organza">Organza</option>
-            <option value="velvet">Velvet (Winter)</option>
-            <option value="net">Net</option>
-          </select>
-        </div>
-
-        <div class="studio-section">
-          <h4>3. Main Color</h4>
-          <div class="color-grid" id="mainColorGrid">
-            <div class="color-swatch active" data-color="#0f4c3a" style="background:#0f4c3a" title="Emerald"></div>
-            <div class="color-swatch" data-color="#8b0000" style="background:#8b0000" title="Maroon"></div>
-            <div class="color-swatch" data-color="#1e3a5f" style="background:#1e3a5f" title="Navy"></div>
-            <div class="color-swatch" data-color="#4a0e4e" style="background:#4a0e4e" title="Purple"></div>
-            <div class="color-swatch" data-color="#c9a961" style="background:#c9a961" title="Gold"></div>
-            <div class="color-swatch" data-color="#2c2c2c" style="background:#2c2c2c" title="Black"></div>
-            <div class="color-swatch" data-color="#f5f5dc" style="background:#f5f5dc" title="Cream"></div>
-            <div class="color-swatch" data-color="#ff6b9d" style="background:#ff6b9d" title="Pink"></div>
+        <div class="studio-block">
+          <h3>Upper Length</h3>
+          <div class="pill-group" id="lengthGrid">
+            <div class="pill-opt" data-length="short">Short (Hip)</div>
+            <div class="pill-opt active" data-length="regular">Regular (Knee)</div>
+            <div class="pill-opt" data-length="long">Long (Ankle)</div>
           </div>
-        </div>
-
-        <div class="studio-section">
-          <h4>4. Accent/Dupatta Color</h4>
-          <div class="color-grid" id="accentColorGrid">
-            <div class="color-swatch active" data-color="#c9a961" style="background:#c9a961" title="Gold"></div>
-            <div class="color-swatch" data-color="#ffffff" style="background:#ffffff;border:1px solid #ddd" title="White"></div>
-            <div class="color-swatch" data-color="#f5f5dc" style="background:#f5f5dc" title="Cream"></div>
-            <div class="color-swatch" data-color="#0f4c3a" style="background:#0f4c3a" title="Emerald"></div>
-          </div>
-        </div>
-
-        <div class="studio-section">
-          <h4>5. Neckline Style</h4>
-          <div class="option-grid" id="necklineGrid">
-            <div class="option-card active" data-neck="round">Round</div>
-            <div class="option-card" data-neck="v">V-Neck</div>
-            <div class="option-card" data-neck="square">Square</div>
-            <div class="option-card" data-neck="keyhole">Keyhole</div>
-            <div class="option-card" data-neck="high">High Neck</div>
-          </div>
-        </div>
-
-        <div class="studio-section">
-          <h4>6. Sleeve Length</h4>
-          <div class="option-grid" id="sleeveGrid">
-            <div class="option-card" data-sleeve="sleeveless">Sleeveless</div>
-            <div class="option-card" data-sleeve="short">Short</div>
-            <div class="option-card active" data-sleeve="three-quarter">3/4 Sleeve</div>
-            <div class="option-card" data-sleeve="full">Full Sleeve</div>
-          </div>
-        </div>
-
-        <div class="studio-section" id="lengthSection">
-          <h4>7. Kameez Length</h4>
-          <div class="option-grid" id="lengthGrid">
-            <div class="option-card" data-length="short">Short (Hip)</div>
-            <div class="option-card active" data-length="regular">Regular (Knee)</div>
-            <div class="option-card" data-length="long">Long (Ankle)</div>
-          </div>
-        </div>
-
-        <div class="studio-section" id="bottomSection">
-          <h4>8. Bottom Style</h4>
-          <div class="option-grid" id="bottomGrid">
-            <div class="option-card active" data-bottom="shalwar">Shalwar</div>
-            <div class="option-card" data-bottom="churidar">Churidar</div>
-            <div class="option-card" data-bottom="straight">Straight Pant</div>
-            <div class="option-card" data-bottom="palazzo">Palazzo</div>
-          </div>
-        </div>
-
-        <div class="design-summary" id="designSummary">
-          <strong>Your Design:</strong><br>
-          <span id="summaryText">Shalwar Kameez in Lawn, Emerald with Gold accent, Round neck, 3/4 sleeve, Regular length, Shalwar bottom</span>
-        </div>
-
-        <div class="actions">
-          <button class="btn btn-primary" onclick="saveDesign()">✦ Save Design</button>
-          <button class="btn btn-gold" onclick="downloadDesignPDF()">⬇ Download PDF</button>
-          <button class="btn btn-ghost" onclick="resetDesign()">↺ Reset</button>
         </div>
       </div>
 
-      <div class="studio-preview" id="studioPreview">
-        <svg id="outfitSVG" viewBox="0 0 300 500" width="300" height="500">
-          <!-- Dynamic SVG content will be inserted here -->
-        </svg>
-        <div style="margin-top:16px;text-align:center;font-family:'Cormorant Garamond',serif;color:var(--emerald-deep);font-size:18px" id="previewLabel">Shalwar Kameez Preview</div>
+      <div class="studio-preview">
+        <svg id="outfitSVG" viewBox="0 0 300 420"></svg>
+        <div class="preview-label" id="previewLabel">Kameez + Shalwar</div>
+        <div class="preview-summary" id="summaryText">3/4 sleeve · Regular length</div>
+        <div class="preview-actions">
+          <button class="btn btn-ghost btn-sm" id="resetDesignBtn" style="flex:1;">Reset</button>
+          <button class="btn btn-primary btn-sm" id="downloadDesignBtn" style="flex:1;">Download PDF</button>
+        </div>
+        <a class="btn btn-primary btn-block" href="booking.html" id="bookDesignBtn" style="margin-top:10px;">Book this design →</a>
       </div>
     </div>
   </section>
 
-  <!-- PANEL: SAVED -->
-  <section class="panel" id="panel-saved">
-    <h2>Saved Records</h2>
-    <p class="sub">Your saved measurement records and designs are stored locally in this browser.</p>
-    <div class="saved-list" id="savedList"></div>
-    <div class="actions">
-      <button class="btn btn-ghost" onclick="exportAllSaved()"> Export All (JSON)</button>
-      <button class="btn btn-danger" onclick="clearAllSaved()">Clear All</button>
+  <!-- ================= CLOTH SELECTION ================= -->
+  <section class="studio-tab-panel" id="panel-cloth">
+
+    <div class="eyebrow">By occasion</div>
+    <h2 style="font-size:24px;margin-bottom:20px;">Start with what it's for.</h2>
+    <div class="occasion-grid">
+      <div class="occasion-card">
+        <h3>Everyday wear</h3>
+        <p>Needs to survive running, sitting on the floor, and daily washing. Prioritize comfort and easy care over how it photographs.</p>
+        <div class="tags"><span class="garment-tag">Cotton</span><span class="garment-tag">Lawn</span></div>
+      </div>
+      <div class="occasion-card">
+        <h3>Eid &amp; festive</h3>
+        <p>Worn for a full day of visiting relatives — breathable fabric matters as much as the print or embroidery.</p>
+        <div class="tags"><span class="garment-tag">Lawn</span><span class="garment-tag">Cotton Silk</span></div>
+      </div>
+      <div class="occasion-card">
+        <h3>Wedding-side events</h3>
+        <p>A few hours, indoors, under photography — this is where a heavier, more structured fabric earns its keep.</p>
+        <div class="tags"><span class="garment-tag">Silk</span><span class="garment-tag">Organza</span><span class="garment-tag">Net</span></div>
+      </div>
+      <div class="occasion-card">
+        <h3>Winter &amp; school</h3>
+        <p>Needs warmth without bulk under a jacket, and fabric that holds its shape through a school week.</p>
+        <div class="tags"><span class="garment-tag">Velvet</span><span class="garment-tag">Cotton</span></div>
+      </div>
+    </div>
+
+    <hr class="seam" style="margin-bottom:40px;">
+
+    <div class="eyebrow">Fabric types</div>
+    <h2 style="font-size:24px;margin-bottom:20px;">Know the fabric before you pick the print.</h2>
+    <div class="fabric-grid">
+      <div class="fabric-card">
+        <div class="swatch" style="background:#F4EFD8;"></div>
+        <h3>Lawn</h3>
+        <p>Light, breathable cotton weave — the everyday summer fabric for a reason. Softens with each wash.</p>
+        <div class="fabric-meta"><span>Season: Summer</span><span>Care: Machine wash</span></div>
+      </div>
+      <div class="fabric-card">
+        <div class="swatch" style="background:#EDEDED;"></div>
+        <h3>Cotton</h3>
+        <p>Sturdier than lawn, holds up to daily wear and repeated washing without losing shape.</p>
+        <div class="fabric-meta"><span>Season: All year</span><span>Care: Machine wash</span></div>
+      </div>
+      <div class="fabric-card">
+        <div class="swatch" style="background:#F0DCC7;"></div>
+        <h3>Silk</h3>
+        <p>Has a natural sheen and drapes well — the go-to for occasion wear that needs to photograph nicely.</p>
+        <div class="fabric-meta"><span>Season: Any, indoor</span><span>Care: Dry clean</span></div>
+      </div>
+      <div class="fabric-card">
+        <div class="swatch" style="background:#E4EEF9;"></div>
+        <h3>Chiffon</h3>
+        <p>Very light and slightly sheer, usually layered over a lining. Floaty movement, delicate to handle.</p>
+        <div class="fabric-meta"><span>Season: Summer, occasion</span><span>Care: Dry clean</span></div>
+      </div>
+      <div class="fabric-card">
+        <div class="swatch" style="background:#F5E6EC;"></div>
+        <h3>Organza</h3>
+        <p>Crisp and semi-transparent, holds structure well — common for dupattas and layered occasion pieces.</p>
+        <div class="fabric-meta"><span>Season: Occasion</span><span>Care: Dry clean</span></div>
+      </div>
+      <div class="fabric-card">
+        <div class="swatch" style="background:#2A2438;"></div>
+        <h3>Velvet</h3>
+        <p>Heavy and warm with a soft pile — built for winter, especially occasion wear that needs presence.</p>
+        <div class="fabric-meta"><span>Season: Winter</span><span>Care: Dry clean</span></div>
+      </div>
+    </div>
+
+    <hr class="seam" style="margin-bottom:40px;">
+
+    <div class="eyebrow">Colour</div>
+    <h2 style="font-size:24px;margin-bottom:20px;">Choosing colour by occasion, not just preference.</h2>
+    <div class="color-family-grid">
+      <div class="color-family-card">
+        <h3>Everyday &amp; school</h3>
+        <div class="swatch-row">
+          <span style="background:#4A93E8;"></span><span style="background:#8FB7E8;"></span><span style="background:#EDEDED;"></span><span style="background:#1F2A3D;"></span>
+        </div>
+        <p>Practical, low-maintenance tones that don't show marks quickly and mix easily across a wardrobe.</p>
+      </div>
+      <div class="color-family-card">
+        <h3>Eid &amp; festive</h3>
+        <div class="swatch-row">
+          <span style="background:#F7C6C2;"></span><span style="background:#F4EFD8;"></span><span style="background:#C9A961;"></span><span style="background:#FFFFFF;border:1px solid #ddd;"></span>
+        </div>
+        <p>Softer pastels and gold accents read well in daylight and in the flood of Eid-day photos.</p>
+      </div>
+      <div class="color-family-card">
+        <h3>Wedding-side events</h3>
+        <div class="swatch-row">
+          <span style="background:#8B0000;"></span><span style="background:#1E3A5F;"></span><span style="background:#4A0E4E;"></span><span style="background:#2C2C2C;"></span>
+        </div>
+        <p>Deeper jewel tones hold up better under indoor lighting and photograph richer than pastels do.</p>
+      </div>
+    </div>
+
+    <hr class="seam" style="margin-bottom:40px;">
+
+    <div class="eyebrow">Quality checklist</div>
+    <h2 style="font-size:24px;margin-bottom:8px;">What to actually check before you buy fabric.</h2>
+    <p class="lede" style="margin-bottom:22px;">The same five checks our tailors use before cutting anything.</p>
+    <div class="faq-list">
+      <div class="faq-item">
+        <h3>Hold it up to the light</h3>
+        <p>A tighter, more even weave lets less light through unevenly. Patchy light spots usually mean a looser, weaker weave that won't hold up to repeated wear.</p>
+      </div>
+      <div class="faq-item">
+        <h3>Rub a damp white cloth across it</h3>
+        <p>If colour transfers onto the cloth, the dye isn't fully set — it will bleed in the wash and fade faster than it should.</p>
+      </div>
+      <div class="faq-item">
+        <h3>Check the weight for the season</h3>
+        <p>Heavier fabric (measured in GSM) suits winter and structured occasion pieces; lighter weight suits summer and everyday wear. The wrong weight for the season is the most common regret.</p>
+      </div>
+      <div class="faq-item">
+        <h3>Ask about shrinkage</h3>
+        <p>Natural fibres like cotton and lawn shrink slightly on first wash. A good tailor builds this into the cut — ask whether that's already accounted for before stitching.</p>
+      </div>
+      <div class="faq-item">
+        <h3>Look at the finishing, not just the fabric</h3>
+        <p>Even excellent fabric looks cheap with poor stitching. Check seam edges are enclosed (not fraying), embroidery threads are secure, and hems sit flat — the same standard we hold ourselves to on every piece.</p>
+      </div>
+    </div>
+
+    <div style="margin-top:40px;">
+      <a class="btn btn-primary" href="booking.html">Bring your questions to a fitting →</a>
     </div>
   </section>
+</main>
 
-  <footer>
-    <div class="line"></div>
-    Crafted with care · For our boutique designers & stitchers
-  </footer>
-</div>
-
-<!-- SAVE MODAL -->
-<div id="modal" style="display:none;position:fixed;inset:0;background:rgba(10,53,40,.5);z-index:99;align-items:center;justify-content:center;padding:20px">
-  <div style="background:var(--ivory);border-radius:16px;padding:28px;max-width:440px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25)">
-    <h3 style="font-family:'Cormorant Garamond',serif;color:var(--emerald-deep);font-size:24px;margin-bottom:6px">Save Record</h3>
-    <p style="color:var(--muted);font-size:13px;margin-bottom:18px">Add a customer name and notes for your records.</p>
-    <label>Customer Name</label>
-    <input type="text" id="saveName" placeholder="e.g. Ayesha Khan" style="margin-bottom:12px">
-    <label>Notes</label>
-    <textarea id="saveNotes" placeholder="Fabric choice, design notes, etc."></textarea>
-    <div class="actions" style="margin-top:18px;justify-content:flex-end">
-      <button class="btn btn-ghost" onclick="closeSaveModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="confirmSave()">Save</button>
+<footer class="site">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <img src="assets/logo.png" alt="Tifl Little Wear" style="height:34px;width:auto;">
+        <p style="color:var(--ink-soft);font-size:13.5px;margin-top:12px;max-width:260px;">A made-to-measure kidswear studio working out of Gulberg, Lahore. Measured by hand, stitched by hand.</p>
+      </div>
+      <div>
+        <h5>Studio</h5>
+        <a href="index.html">Home</a>
+        <a href="measurements.html">Our process</a>
+        <a href="booking.html">Book a fitting</a>
+      </div>
+      <div>
+        <h5>Shop</h5>
+        <a href="shop.html">Ready pieces</a>
+        <a href="live-sell.html">Live sale</a>
+        <a href="blog.html">Blog</a>
+        <a href="design-studio.html">Design studio</a>
+      </div>
+      <div>
+        <h5>Contact</h5>
+        <a href="tel:+924212345678">+92 42 1234 5678</a>
+        <a href="mailto:studio@tiflwear.pk">studio@tiflwear.pk</a>
+        <a href="contact.html">Contact form</a>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 Tifl Little Wear, Lahore.</span>
+      <span>Made-to-measure kidswear, stitched in Lahore</span>
     </div>
   </div>
-</div>
+</footer>
 
+<a class="whatsapp-float" href="https://wa.me/924212345678" target="_blank" rel="noopener" aria-label="Chat with us on WhatsApp">
+  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.6 15L2 22l5.2-1.4A10 10 0 1012 2zm5.7 14.2c-.2.6-1.3 1.2-1.8 1.3-.5.1-1 .2-3.3-.7-2.8-1.1-4.6-3.9-4.7-4.1-.1-.2-1.1-1.5-1.1-2.9 0-1.4.7-2 1-2.3.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5.2.5.7 1.8.8 1.9.1.2.1.3 0 .5-.1.2-.2.3-.3.5-.2.2-.3.3-.5.5-.2.2-.3.4-.2.6.3.5.9 1.5 1.9 2.4 1.3 1.2 2.4 1.5 2.7 1.7.3.2.5.1.7-.1.2-.2.8-.9 1-1.2.2-.3.4-.2.7-.1.3.1 1.8.9 2.1 1 .3.1.5.2.6.3.1.2.1.7-.1 1.3z"/></svg>
+</a>
+<span class="whatsapp-tip">Chat with us</span>
+
+<div class="toast" id="toast"></div>
+<script src="rudderstack.js"></script>
+<script src="script.js"></script>
 <script>
-/* ============================================================
-   DATA — All charts including Women's
-   ============================================================ */
-const cuttingChart = [
-  { age:'6–9M',    length:16.5, shoulder:4.375, armhole:5.75, chest:5.75, waist:5.75, neckW:1.875, neckD:2.5,  sleeve:10, sleeveOpen:3.5,   heightMid:26, weightMid:15 },
-  { age:'9–1Y',    length:18.5, shoulder:4.5,   armhole:5.5,  chest:6,    waist:6,    neckW:2,     neckD:2.75, sleeve:11, sleeveOpen:3.625, heightMid:29, weightMid:20 },
-  { age:'1–1.5Y',  length:20.5, shoulder:4.625, armhole:4.625,chest:6.25, waist:6.25, neckW:2.05,  neckD:3,    sleeve:12, sleeveOpen:3.75,  heightMid:31, weightMid:22 },
-  { age:'1.5–2Y',  length:22.5, shoulder:4.75,  armhole:5.7,  chest:6.5,  waist:6.5,  neckW:2.1,   neckD:3.25, sleeve:13, sleeveOpen:3.875, heightMid:34, weightMid:25 },
-  { age:'2–3Y',    length:23.5, shoulder:4.875, armhole:5.8,  chest:6.75, waist:6.63, neckW:2.2,   neckD:3.5,  sleeve:14, sleeveOpen:4,     heightMid:36, weightMid:28 },
-  { age:'3–4Y',    length:25.5, shoulder:5,     armhole:6,    chest:7,    waist:6.9,  neckW:2.25,  neckD:3.75, sleeve:15, sleeveOpen:4.125, heightMid:38, weightMid:31 },
-  { age:'4–5Y',    length:27.5, shoulder:5.125, armhole:6.2,  chest:7.25, waist:7.1,  neckW:2.3,   neckD:4,    sleeve:16, sleeveOpen:4.25,  heightMid:41, weightMid:35 },
-  { age:'5–6Y',    length:29.5, shoulder:5.25,  armhole:6.4,  chest:7.5,  waist:7.4,  neckW:2.4,   neckD:4.25, sleeve:17, sleeveOpen:4.375, heightMid:44, weightMid:39 },
-  { age:'6–7Y',    length:31.5, shoulder:5.375, armhole:6.5,  chest:7.75, waist:7.6,  neckW:2.45,  neckD:4.5,  sleeve:18, sleeveOpen:4.5,   heightMid:46, weightMid:43 },
-  { age:'7–8Y',    length:33.5, shoulder:5.5,   armhole:6.8,  chest:8,    waist:7.9,  neckW:2.5,   neckD:4.75, sleeve:19, sleeveOpen:4.625, heightMid:49, weightMid:48 },
-  { age:'8–9Y',    length:35.5, shoulder:5.625, armhole:6.8,  chest:8.25, waist:8.1,  neckW:2.55,  neckD:5,    sleeve:20, sleeveOpen:4.75,  heightMid:51, weightMid:54 },
-  { age:'9–10Y',   length:37.5, shoulder:5.75,  armhole:7,    chest:8.5,  waist:8.4,  neckW:2.6,   neckD:5.25, sleeve:21, sleeveOpen:4.875, heightMid:54, weightMid:60 }
-];
-
-const frockChart = [
-  { age:'2 Years',   waistCirc:'23–24',    dressLen:'19–20½',   backWaist:'8–8½',     bodyWaist:'18–19½',   napeKnee:'18–19½',  heightMid:34 },
-  { age:'3 Years',   waistCirc:'24–24½',   dressLen:'20½–22',   backWaist:'8½–9',     bodyWaist:'19½–20½',  napeKnee:'19½–21',  heightMid:37 },
-  { age:'4 Years',   waistCirc:'24½–25',   dressLen:'22–23½',   backWaist:'9–9½',     bodyWaist:'20½–21½',  napeKnee:'21–23',   heightMid:40 },
-  { age:'5 Years',   waistCirc:'25–26',    dressLen:'23½–25½',  backWaist:'9½–10',    bodyWaist:'21½–22½',  napeKnee:'23–25',   heightMid:43 },
-  { age:'4–5 Years', waistCirc:'—',        dressLen:'—',        backWaist:'9½–10½',   bodyWaist:'21½–22½',  napeKnee:'22–24½',  heightMid:41 },
-  { age:'6–7 Years', waistCirc:'—',        dressLen:'—',        backWaist:'10½–11½',  bodyWaist:'22½–23',   napeKnee:'25–27',   heightMid:46 },
-  { age:'8–10 Years',waistCirc:'—',        dressLen:'—',        backWaist:'12–13½',   bodyWaist:'23½–25',   napeKnee:'28–31',   heightMid:52 }
-];
-
-const pantChart = [
-  { age:'2 Years',     waist:21,   hip:23,     crotch:6.625, inseam:12.5,  outseam:18.5,  heightMid:34 },
-  { age:'3 Years',     waist:21.5, hip:24,     crotch:7.125, inseam:14.5,  outseam:21.0,  heightMid:37 },
-  { age:'4 Years',     waist:22,   hip:25,     crotch:7.625, inseam:16.5,  outseam:23.5,  heightMid:40 },
-  { age:'5 Years',     waist:22.5, hip:26,     crotch:7.875, inseam:18.5,  outseam:25.5,  heightMid:43 },
-  { age:'6/6X Years',  waist:23,   hip:27,     crotch:8.125, inseam:20.0,  outseam:27.5,  heightMid:45 },
-  { age:'7–8 Years',   waist:24,   hip:28.75,  crotch:8.75,  inseam:22.25, outseam:30.25, heightMid:49 },
-  { age:'9–10 Years',  waist:25,   hip:31.25,  crotch:9.25,  inseam:24.75, outseam:33.25, heightMid:54 },
-  { age:'11–12 Years', waist:26.5, hip:33.75,  crotch:9.75,  inseam:27.25, outseam:36.25, heightMid:57 },
-  { age:'13–14 Years', waist:28,   hip:36.25,  crotch:10.25, inseam:29.25, outseam:38.75, heightMid:61 }
-];
-
-// Women's sizing chart (Pakistani boutique standard)
-const womenCuttingChart = [
-  { size:'XS (32)', bust:32, waist:26, hip:34, shoulder:14, armhole:8.5, sleeve:22, kameezLen:40, neckW:3, neckD:4 },
-  { size:'S (34)',  bust:34, waist:28, hip:36, shoulder:14.5, armhole:9, sleeve:22.5, kameezLen:41, neckW:3.2, neckD:4.2 },
-  { size:'M (36)',  bust:36, waist:30, hip:38, shoulder:15, armhole:9.5, sleeve:23, kameezLen:42, neckW:3.4, neckD:4.4 },
-  { size:'L (38)',  bust:38, waist:32, hip:40, shoulder:15.5, armhole:10, sleeve:23.5, kameezLen:43, neckW:3.6, neckD:4.6 },
-  { size:'XL (40)', bust:40, waist:34, hip:42, shoulder:16, armhole:10.5, sleeve:24, kameezLen:44, neckW:3.8, neckD:4.8 },
-  { size:'XXL (42)',bust:42, waist:36, hip:44, shoulder:16.5, armhole:11, sleeve:24.5, kameezLen:45, neckW:4, neckD:5 }
-];
-
-const womenKameezChart = [
-  { size:'XS (32)', frontLen:40, backLen:41, shoulder:14, chest:32, waist:26, hip:34, sleeve:22, armhole:8.5 },
-  { size:'S (34)',  frontLen:41, backLen:42, shoulder:14.5, chest:34, waist:28, hip:36, sleeve:22.5, armhole:9 },
-  { size:'M (36)',  frontLen:42, backLen:43, shoulder:15, chest:36, waist:30, hip:38, sleeve:23, armhole:9.5 },
-  { size:'L (38)',  frontLen:43, backLen:44, shoulder:15.5, chest:38, waist:32, hip:40, sleeve:23.5, armhole:10 },
-  { size:'XL (40)', frontLen:44, backLen:45, shoulder:16, chest:40, waist:34, hip:42, sleeve:24, armhole:10.5 },
-  { size:'XXL (42)',frontLen:45, backLen:46, shoulder:16.5, chest:42, waist:36, hip:44, sleeve:24.5, armhole:11 }
-];
-
-const womenShalwarChart = [
-  { size:'XS (32)', waist:26, hip:34, crotch:11, inseam:30, outseam:41, bottom:14 },
-  { size:'S (34)',  waist:28, hip:36, crotch:11.5, inseam:30.5, outseam:42, bottom:15 },
-  { size:'M (36)',  waist:30, hip:38, crotch:12, inseam:31, outseam:43, bottom:16 },
-  { size:'L (38)',  waist:32, hip:40, crotch:12.5, inseam:31.5, outseam:44, bottom:17 },
-  { size:'XL (40)', waist:34, hip:42, crotch:13, inseam:32, outseam:45, bottom:18 },
-  { size:'XXL (42)',waist:36, hip:44, crotch:13.5, inseam:32.5, outseam:46, bottom:19 }
-];
-
-/* ============================================================
-   TABS
-   ============================================================ */
-document.querySelectorAll('.tab').forEach(t=>{
-  t.addEventListener('click',()=>{
-    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
-    t.classList.add('active');
-    document.getElementById('panel-'+t.dataset.tab).classList.add('active');
-    if(t.dataset.tab==='saved') renderSaved();
-    if(t.dataset.tab==='studio') updateOutfitPreview();
+/* ================= TOP-LEVEL TAB SWITCH ================= */
+document.querySelectorAll('#studioTabs .chip').forEach(chip=>{
+  chip.addEventListener('click', ()=>{
+    document.querySelectorAll('#studioTabs .chip').forEach(c=>c.classList.remove('active'));
+    chip.classList.add('active');
+    document.querySelectorAll('.studio-tab-panel').forEach(p=>p.classList.remove('active'));
+    document.getElementById('panel-'+chip.dataset.panel).classList.add('active');
   });
 });
 
-/* ============================================================
-   AGE PANEL
-   ============================================================ */
-let currentAgeChart = 'cutting';
-const ageSelect = document.getElementById('ageSelect');
+/* ================= DESIGN STUDIO ================= */
+const BRAND_BLUE = '#4A93E8';
+const BRAND_LINE = '#3576C9';
 
-function populateAgeSelect(){
-  ageSelect.innerHTML = '';
-  let data;
-  if(currentAgeChart==='cutting') data = cuttingChart;
-  else if(currentAgeChart==='frock') data = frockChart;
-  else data = pantChart;
-  data.forEach((r,i)=>{
-    const o=document.createElement('option');
-    o.value=i; o.textContent=r.age;
-    ageSelect.appendChild(o);
-  });
-  renderAgeResult();
-}
-document.querySelectorAll('#ageChartChips .chip').forEach(c=>{
-  c.addEventListener('click',()=>{
-    document.querySelectorAll('#ageChartChips .chip').forEach(x=>x.classList.remove('active'));
-    c.classList.add('active');
-    currentAgeChart = c.dataset.chart;
-    populateAgeSelect();
-  });
-});
-ageSelect.addEventListener('change', renderAgeResult);
+const UPPER_TYPES = [
+  { id:'kameez',    name:'Kameez',    hasDupatta:true,  bottomY:{short:170, regular:220, long:270} },
+  { id:'kurta',     name:'Kurta',     hasDupatta:false, bottomY:{short:160, regular:195, long:235} },
+  { id:'shirt',     name:'Shirt',     hasDupatta:false, bottomY:{short:130, regular:150, long:175} },
+  { id:'choli',     name:'Choli',     hasDupatta:true,  bottomY:{short:155, regular:155, long:155} },
+  { id:'waistcoat', name:'Waistcoat', hasDupatta:false, bottomY:{short:155, regular:175, long:195} }
+];
+const LOWER_TYPES = [
+  { id:'shalwar',  name:'Shalwar' },
+  { id:'churidar', name:'Churidar' },
+  { id:'straight', name:'Straight Pant' },
+  { id:'palazzo',  name:'Palazzo' },
+  { id:'lehenga',  name:'Lehenga Skirt' },
+  { id:'gharara',  name:'Gharara' }
+];
 
-function renderAgeResult(){
-  const i = +ageSelect.value;
-  const res = document.getElementById('ageResults');
-  const tbody = document.querySelector('#ageTable tbody');
-  tbody.innerHTML = '';
-  let rows = [];
-  let title = '';
-  if(currentAgeChart==='cutting'){
-    const r = cuttingChart[i];
-    title = 'Cutting Measurements — ' + r.age;
-    rows = [
-      ['Length', r.length+' in'],['Shoulder', r.shoulder+' in'],
-      ['Armhole', r.armhole+' in'],['Chest', r.chest+' in'],
-      ['Waist', r.waist+' in'],['Neck Width', r.neckW+' in'],
-      ['Neck Depth', r.neckD+' in'],['Sleeve', r.sleeve+' in'],
-      ['Sleeve Opening', r.sleeveOpen+' in']
-    ];
-  } else if(currentAgeChart==='frock'){
-    const r = frockChart[i];
-    title = 'Lawn Frock — ' + r.age;
-    rows = [
-      ['Finished Waist Circumference', r.waistCirc+' in'],
-      ['Finished Dress Length', r.dressLen+' in'],
-      ['Back Waist Length', r.backWaist+' in'],
-      ['Body Waist Circumference', r.bodyWaist+' in'],
-      ['Nape to Below-Knee', r.napeKnee+' in']
-    ];
-  } else {
-    const r = pantChart[i];
-    title = 'Girls Pant — ' + r.age;
-    rows = [
-      ['Waist (finished)', r.waist+' in'],
-      ['Hip (finished)', r.hip+' in'],
-      ['Crotch Depth', r.crotch+' in'],
-      ['Inseam Length', r.inseam+' in'],
-      ['Outseam (Side)', r.outseam+' in']
-    ];
-  }
-  document.getElementById('ageTitle').textContent = title;
-  document.getElementById('ageMeta').textContent = 'All measurements in inches · Ease included where noted';
-  rows.forEach(([k,v])=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML = `<td>${k}</td><td class="val">${v}</td>`;
-    tbody.appendChild(tr);
-  });
-  res.classList.add('show');
-}
-populateAgeSelect();
+let currentDesign = { upper:'kameez', lower:'shalwar', sleeve:'three-quarter', length:'regular' };
 
-/* ============================================================
-   HEIGHT/WEIGHT CALCULATOR
-   ============================================================ */
-function toInches(v,u){ return u==='cm' ? v/2.54 : v; }
-function toLb(v,u){ return u==='kg' ? v*2.205 : v; }
-
-function estimateAgeFromHeight(hIn){
-  if(hIn <= cuttingChart[0].heightMid) return { idx:0, frac:0 };
-  if(hIn >= cuttingChart[cuttingChart.length-1].heightMid) return { idx:cuttingChart.length-2, frac:1 };
-  for(let i=0;i<cuttingChart.length-1;i++){
-    const a=cuttingChart[i].heightMid, b=cuttingChart[i+1].heightMid;
-    if(hIn>=a && hIn<=b){ return { idx:i, frac:(hIn-a)/(b-a) }; }
-  }
-  return { idx:0, frac:0 };
-}
-function lerp(a,b,t){ return a+(b-a)*t; }
-
-function interpolateCutting(hIn){
-  const {idx,frac} = estimateAgeFromHeight(hIn);
-  const a=cuttingChart[idx], b=cuttingChart[idx+1];
-  return {
-    age: `~${frac<0.5?a.age:b.age}`,
-    length: lerp(a.length,b.length,frac).toFixed(2),
-    shoulder: lerp(a.shoulder,b.shoulder,frac).toFixed(2),
-    armhole: lerp(a.armhole,b.armhole,frac).toFixed(2),
-    chest: lerp(a.chest,b.chest,frac).toFixed(2),
-    waist: lerp(a.waist,b.waist,frac).toFixed(2),
-    neckW: lerp(a.neckW,b.neckW,frac).toFixed(2),
-    neckD: lerp(a.neckD,b.neckD,frac).toFixed(2),
-    sleeve: lerp(a.sleeve,b.sleeve,frac).toFixed(2),
-    sleeveOpen: lerp(a.sleeveOpen,b.sleeveOpen,frac).toFixed(2)
+function garmentIcon(kind, id){
+  const line = BRAND_LINE, fill = '#E6F1FD';
+  const upperIcons = {
+    kameez: `<path d="M30 8 L60 8 L68 78 L22 78 Z" fill="${fill}" stroke="${line}" stroke-width="2"/><path d="M30 8 L14 26 L22 34 L32 18 Z" fill="${fill}" stroke="${line}" stroke-width="1.5"/><path d="M60 8 L76 26 L68 34 L58 18 Z" fill="${fill}" stroke="${line}" stroke-width="1.5"/><path d="M38 8 Q45 16 52 8" fill="none" stroke="${line}" stroke-width="2"/>`,
+    kurta: `<path d="M32 8 L58 8 L64 70 L26 70 Z" fill="${fill}" stroke="${line}" stroke-width="2"/><path d="M32 8 L18 24 L26 32 L34 18 Z" fill="${fill}" stroke="${line}" stroke-width="1.5"/><path d="M58 8 L72 24 L64 32 L56 18 Z" fill="${fill}" stroke="${line}" stroke-width="1.5"/><line x1="45" y1="8" x2="45" y2="30" stroke="${line}" stroke-width="1.5"/>`,
+    shirt: `<path d="M33 10 L57 10 L62 58 L28 58 Z" fill="${fill}" stroke="${line}" stroke-width="2"/><path d="M33 10 L20 22 L27 30 L35 20 Z" fill="${fill}" stroke="${line}" stroke-width="1.5"/><path d="M57 10 L70 22 L63 30 L55 20 Z" fill="${fill}" stroke="${line}" stroke-width="1.5"/><path d="M38 10 L45 20 L52 10" fill="none" stroke="${line}" stroke-width="1.5"/><line x1="45" y1="20" x2="45" y2="55" stroke="${line}" stroke-width="1.2"/>`,
+    choli: `<path d="M35 10 L55 10 L58 48 L32 48 Z" fill="${fill}" stroke="${line}" stroke-width="2"/><path d="M35 10 L24 20 L30 28 L37 18 Z" fill="${fill}" stroke="${line}" stroke-width="1.5"/><path d="M55 10 L66 20 L60 28 L53 18 Z" fill="${fill}" stroke="${line}" stroke-width="1.5"/><path d="M38 10 Q45 20 52 10" fill="none" stroke="${line}" stroke-width="2"/>`,
+    waistcoat: `<path d="M32 10 L45 10 L45 68 L26 68 L30 22 Z" fill="${fill}" stroke="${line}" stroke-width="2"/><path d="M58 10 L45 10 L45 68 L64 68 L60 22 Z" fill="${fill}" stroke="${line}" stroke-width="2"/><rect x="40" y="12" width="10" height="52" fill="#fff" stroke="${line}" stroke-width="1"/>`
   };
-}
-
-function closestFrock(hIn){
-  let best=frockChart[0], diff=Infinity;
-  frockChart.forEach(r=>{ const d=Math.abs(r.heightMid-hIn); if(d<diff){diff=d;best=r;} });
-  return best;
-}
-function closestPant(hIn){
-  let best=pantChart[0], diff=Infinity;
-  pantChart.forEach(r=>{ const d=Math.abs(r.heightMid-hIn); if(d<diff){diff=d;best=r;} });
-  return best;
-}
-
-let lastCalc = null;
-function calculateByHW(){
-  const hRaw = parseFloat(document.getElementById('calcHeight').value);
-  const wRaw = parseFloat(document.getElementById('calcWeight').value);
-  if(!hRaw){ alert('Please enter height.'); return; }
-  const hIn = toInches(hRaw, document.getElementById('calcHeightUnit').value);
-  let wLb = null;
-  if(wRaw) wLb = toLb(wRaw, document.getElementById('calcWeightUnit').value);
-
-  const cut = interpolateCutting(hIn);
-  const frock = closestFrock(hIn);
-  const pant = closestPant(hIn);
-
-  lastCalc = { hIn, wLb, cut, frock, pant };
-
-  const container = document.getElementById('calcTables');
-  container.innerHTML = '';
-  container.appendChild(buildTable('Cutting Measurements (interpolated)', [
-    ['Length', cut.length+' in'],['Shoulder', cut.shoulder+' in'],
-    ['Armhole', cut.armhole+' in'],['Chest', cut.chest+' in'],
-    ['Waist', cut.waist+' in'],['Neck Width', cut.neckW+' in'],
-    ['Neck Depth', cut.neckD+' in'],['Sleeve', cut.sleeve+' in'],
-    ['Sleeve Opening', cut.sleeveOpen+' in']
-  ]));
-  container.appendChild(buildTable('Lawn Frock — closest size: '+frock.age, [
-    ['Finished Waist Circumference', frock.waistCirc+' in'],
-    ['Finished Dress Length', frock.dressLen+' in'],
-    ['Back Waist Length', frock.backWaist+' in'],
-    ['Body Waist Circumference', frock.bodyWaist+' in'],
-    ['Nape to Below-Knee', frock.napeKnee+' in']
-  ]));
-  container.appendChild(buildTable('Girls Pant — closest size: '+pant.age, [
-    ['Waist (finished)', pant.waist+' in'],
-    ['Hip (finished)', pant.hip+' in'],
-    ['Crotch Depth', pant.crotch+' in'],
-    ['Inseam Length', pant.inseam+' in'],
-    ['Outseam (Side)', pant.outseam+' in']
-  ]));
-
-  document.getElementById('calcMeta').textContent =
-    `Height: ${hIn.toFixed(1)} in` + (wLb?` · Weight: ${wLb.toFixed(1)} lb`:'') +
-    ` · Estimated age group: ${cut.age}`;
-  document.getElementById('calcResults').classList.add('show');
-  document.getElementById('calcActions').style.display = 'flex';
-}
-function clearCalc(){
-  document.getElementById('calcHeight').value='';
-  document.getElementById('calcWeight').value='';
-  document.getElementById('calcResults').classList.remove('show');
-  document.getElementById('calcActions').style.display='none';
-  lastCalc=null;
-}
-
-function buildTable(title, rows){
-  const wrap = document.createElement('div');
-  wrap.style.marginTop = '18px';
-  wrap.innerHTML = `<h4 style="font-family:'Cormorant Garamond',serif;color:var(--emerald-deep);font-size:18px;margin-bottom:8px">${title}</h4>`;
-  const t = document.createElement('table');
-  t.className = 'measure';
-  let html = '<tbody>';
-  rows.forEach(([k,v])=> html += `<tr><td>${k}</td><td class="val">${v}</td></tr>`);
-  html += '</tbody>';
-  t.innerHTML = html;
-  wrap.appendChild(t);
-  return wrap;
-}
-
-/* ============================================================
-   MATCH FROM MEASUREMENTS
-   ============================================================ */
-let lastMatch = null;
-function matchMeasurements(){
-  const chest = parseFloat(document.getElementById('mChest').value);
-  const waist = parseFloat(document.getElementById('mWaist').value);
-  const height = parseFloat(document.getElementById('mHeight').value);
-  const hip = parseFloat(document.getElementById('mHip').value);
-  if(!waist && !chest && !height){ alert('Please enter at least one measurement.'); return; }
-
-  let bestCut=null, bestScore=Infinity;
-  cuttingChart.forEach(r=>{
-    let s=0, n=0;
-    if(chest){ s+=Math.pow(chest-r.chest,2); n++; }
-    if(waist){ s+=Math.pow(waist-r.waist,2); n++; }
-    if(height){ s+=Math.pow(height-r.heightMid,2)*0.3; n++; }
-    const avg = n? s/n : Infinity;
-    if(avg<bestScore){ bestScore=avg; bestCut=r; }
-  });
-
-  let bestFrock=null, bestFS=Infinity;
-  frockChart.forEach(r=>{
-    if(!waist) return;
-    const [lo,hi] = r.bodyWaist.split('–').map(x=>parseFloat(x.trim().replace('½','.5')));
-    if(isNaN(lo)) return;
-    const mid = (lo+hi)/2;
-    const d = Math.abs(waist-mid);
-    if(d<bestFS){ bestFS=d; bestFrock=r; }
-  });
-
-  let bestPant=null, bestPS=Infinity;
-  pantChart.forEach(r=>{
-    let s=0,n=0;
-    if(waist){ s+=Math.pow(waist-r.waist,2); n++; }
-    if(hip){ s+=Math.pow(hip-r.hip,2); n++; }
-    const avg = n? s/n : Infinity;
-    if(avg<bestPS){ bestPS=avg; bestPant=r; }
-  });
-
-  lastMatch = { chest, waist, height, hip, bestCut, bestFrock, bestPant };
-
-  const container = document.getElementById('matchTables');
-  container.innerHTML = '';
-  if(bestCut){
-    container.appendChild(buildTable('Cutting — Best Match: '+bestCut.age, [
-      ['Length', bestCut.length+' in'],['Shoulder', bestCut.shoulder+' in'],
-      ['Armhole', bestCut.armhole+' in'],['Chest', bestCut.chest+' in'],
-      ['Waist', bestCut.waist+' in'],['Neck Width', bestCut.neckW+' in'],
-      ['Neck Depth', bestCut.neckD+' in'],['Sleeve', bestCut.sleeve+' in'],
-      ['Sleeve Opening', bestCut.sleeveOpen+' in']
-    ]));
-  }
-  if(bestFrock){
-    container.appendChild(buildTable('Lawn Frock — Best Match: '+bestFrock.age, [
-      ['Finished Waist Circumference', bestFrock.waistCirc+' in'],
-      ['Finished Dress Length', bestFrock.dressLen+' in'],
-      ['Back Waist Length', bestFrock.backWaist+' in'],
-      ['Body Waist Circumference', bestFrock.bodyWaist+' in'],
-      ['Nape to Below-Knee', bestFrock.napeKnee+' in']
-    ]));
-  }
-  if(bestPant){
-    container.appendChild(buildTable('Girls Pant — Best Match: '+bestPant.age, [
-      ['Waist (finished)', bestPant.waist+' in'],
-      ['Hip (finished)', bestPant.hip+' in'],
-      ['Crotch Depth', bestPant.crotch+' in'],
-      ['Inseam Length', bestPant.inseam+' in'],
-      ['Outseam (Side)', bestPant.outseam+' in']
-    ]));
-  }
-
-  const parts=[];
-  if(chest) parts.push('Chest '+chest+' in');
-  if(waist) parts.push('Waist '+waist+' in');
-  if(height) parts.push('Height '+height+' in');
-  if(hip) parts.push('Hip '+hip+' in');
-  document.getElementById('matchMeta').textContent = 'Input: ' + parts.join(' · ');
-  document.getElementById('matchResults').classList.add('show');
-  document.getElementById('matchActions').style.display = 'flex';
-}
-function clearMatch(){
-  ['mChest','mWaist','mHeight','mHip'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('matchResults').classList.remove('show');
-  document.getElementById('matchActions').style.display='none';
-  lastMatch=null;
-}
-
-/* ============================================================
-   WOMEN'S SIZING PANEL
-   ============================================================ */
-let currentWomenChart = 'women-cutting';
-const womenSizeSelect = document.getElementById('womenSizeSelect');
-
-function populateWomenSizeSelect(){
-  womenSizeSelect.innerHTML = '';
-  let data;
-  if(currentWomenChart==='women-cutting') data = womenCuttingChart;
-  else if(currentWomenChart==='women-kameez') data = womenKameezChart;
-  else data = womenShalwarChart;
-  data.forEach((r,i)=>{
-    const o=document.createElement('option');
-    o.value=i; o.textContent=r.size;
-    womenSizeSelect.appendChild(o);
-  });
-  renderWomenResult();
-}
-document.querySelectorAll('#womenChartChips .chip').forEach(c=>{
-  c.addEventListener('click',()=>{
-    document.querySelectorAll('#womenChartChips .chip').forEach(x=>x.classList.remove('active'));
-    c.classList.add('active');
-    currentWomenChart = c.dataset.chart;
-    populateWomenSizeSelect();
-  });
-});
-womenSizeSelect.addEventListener('change', renderWomenResult);
-
-function renderWomenResult(){
-  const i = +womenSizeSelect.value;
-  const res = document.getElementById('womenResults');
-  const tbody = document.querySelector('#womenTable tbody');
-  tbody.innerHTML = '';
-  let rows = [];
-  let title = '';
-  if(currentWomenChart==='women-cutting'){
-    const r = womenCuttingChart[i];
-    title = 'Women\'s Cutting — ' + r.size;
-    rows = [
-      ['Bust', r.bust+' in'],['Waist', r.waist+' in'],
-      ['Hip', r.hip+' in'],['Shoulder', r.shoulder+' in'],
-      ['Armhole', r.armhole+' in'],['Sleeve Length', r.sleeve+' in'],
-      ['Kameez Length', r.kameezLen+' in'],
-      ['Neck Width', r.neckW+' in'],['Neck Depth', r.neckD+' in']
-    ];
-  } else if(currentWomenChart==='women-kameez'){
-    const r = womenKameezChart[i];
-    title = 'Kameez Measurements — ' + r.size;
-    rows = [
-      ['Front Length', r.frontLen+' in'],['Back Length', r.backLen+' in'],
-      ['Shoulder', r.shoulder+' in'],['Chest', r.chest+' in'],
-      ['Waist', r.waist+' in'],['Hip', r.hip+' in'],
-      ['Sleeve', r.sleeve+' in'],['Armhole', r.armhole+' in']
-    ];
-  } else {
-    const r = womenShalwarChart[i];
-    title = 'Shalwar Measurements — ' + r.size;
-    rows = [
-      ['Waist', r.waist+' in'],['Hip', r.hip+' in'],
-      ['Crotch Depth', r.crotch+' in'],['Inseam', r.inseam+' in'],
-      ['Outseam', r.outseam+' in'],['Bottom Width', r.bottom+' in']
-    ];
-  }
-  document.getElementById('womenTitle').textContent = title;
-  document.getElementById('womenMeta').textContent = 'All measurements in inches · Standard Pakistani boutique sizing';
-  rows.forEach(([k,v])=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML = `<td>${k}</td><td class="val">${v}</td>`;
-    tbody.appendChild(tr);
-  });
-  res.classList.add('show');
-}
-populateWomenSizeSelect();
-
-/* ============================================================
-   DESIGN STUDIO
-   ============================================================ */
-let currentDesign = {
-  type: 'shalwar-kameez',
-  fabric: 'lawn',
-  mainColor: '#0f4c3a',
-  accentColor: '#c9a961',
-  neckline: 'round',
-  sleeve: 'three-quarter',
-  length: 'regular',
-  bottom: 'shalwar'
-};
-
-// Setup studio controls
-document.querySelectorAll('#outfitTypeGrid .option-card').forEach(card=>{
-  card.addEventListener('click',()=>{
-    document.querySelectorAll('#outfitTypeGrid .option-card').forEach(x=>x.classList.remove('active'));
-    card.classList.add('active');
-    currentDesign.type = card.dataset.type;
-    updateOutfitPreview();
-  });
-});
-document.getElementById('fabricSelect').addEventListener('change',e=>{
-  currentDesign.fabric = e.target.value;
-  updateOutfitPreview();
-});
-document.querySelectorAll('#mainColorGrid .color-swatch').forEach(s=>{
-  s.addEventListener('click',()=>{
-    document.querySelectorAll('#mainColorGrid .color-swatch').forEach(x=>x.classList.remove('active'));
-    s.classList.add('active');
-    currentDesign.mainColor = s.dataset.color;
-    updateOutfitPreview();
-  });
-});
-document.querySelectorAll('#accentColorGrid .color-swatch').forEach(s=>{
-  s.addEventListener('click',()=>{
-    document.querySelectorAll('#accentColorGrid .color-swatch').forEach(x=>x.classList.remove('active'));
-    s.classList.add('active');
-    currentDesign.accentColor = s.dataset.color;
-    updateOutfitPreview();
-  });
-});
-document.querySelectorAll('#necklineGrid .option-card').forEach(card=>{
-  card.addEventListener('click',()=>{
-    document.querySelectorAll('#necklineGrid .option-card').forEach(x=>x.classList.remove('active'));
-    card.classList.add('active');
-    currentDesign.neckline = card.dataset.neck;
-    updateOutfitPreview();
-  });
-});
-document.querySelectorAll('#sleeveGrid .option-card').forEach(card=>{
-  card.addEventListener('click',()=>{
-    document.querySelectorAll('#sleeveGrid .option-card').forEach(x=>x.classList.remove('active'));
-    card.classList.add('active');
-    currentDesign.sleeve = card.dataset.sleeve;
-    updateOutfitPreview();
-  });
-});
-document.querySelectorAll('#lengthGrid .option-card').forEach(card=>{
-  card.addEventListener('click',()=>{
-    document.querySelectorAll('#lengthGrid .option-card').forEach(x=>x.classList.remove('active'));
-    card.classList.add('active');
-    currentDesign.length = card.dataset.length;
-    updateOutfitPreview();
-  });
-});
-document.querySelectorAll('#bottomGrid .option-card').forEach(card=>{
-  card.addEventListener('click',()=>{
-    document.querySelectorAll('#bottomGrid .option-card').forEach(x=>x.classList.remove('active'));
-    card.classList.add('active');
-    currentDesign.bottom = card.dataset.bottom;
-    updateOutfitPreview();
-  });
-});
-
-function updateOutfitPreview(){
-  const svg = document.getElementById('outfitSVG');
-  const label = document.getElementById('previewLabel');
-  const summary = document.getElementById('summaryText');
-  
-  const typeNames = {
-    'shalwar-kameez': 'Shalwar Kameez',
-    'frock': 'Frock',
-    'kurta': 'Kurta',
-    'anarkali': 'Anarkali',
-    'lehenga': 'Lehenga',
-    'gharara': 'Gharara'
+  const lowerIcons = {
+    shalwar: `<path d="M28 6 L62 6 L70 40 L54 44 L50 20 L40 20 L36 44 L20 40 Z" fill="${fill}" stroke="${line}" stroke-width="2"/><path d="M20 40 L16 78 L38 78 L36 44 Z" fill="${fill}" stroke="${line}" stroke-width="1.5"/><path d="M70 40 L74 78 L52 78 L54 44 Z" fill="${fill}" stroke="${line}" stroke-width="1.5"/>`,
+    churidar: `<path d="M30 6 L60 6 L64 36 L52 40 L49 20 L41 20 L38 40 L26 36 Z" fill="${fill}" stroke="${line}" stroke-width="2"/><path d="M26 36 L24 78 L38 78 L38 40 Z" fill="${fill}" stroke="${line}" stroke-width="1.5"/><path d="M64 36 L66 78 L52 78 L52 40 Z" fill="${fill}" stroke="${line}" stroke-width="1.5"/>`,
+    straight: `<path d="M28 6 L62 6 L60 36 L50 36 L48 20 L42 20 L40 36 L30 36 Z" fill="${fill}" stroke="${line}" stroke-width="2"/><path d="M30 36 L28 78 L42 78 L42 36 Z" fill="${fill}" stroke="${line}" stroke-width="1.5"/><path d="M60 36 L62 78 L48 78 L48 36 Z" fill="${fill}" stroke="${line}" stroke-width="1.5"/>`,
+    palazzo: `<path d="M26 6 L64 6 L62 34 L48 34 L47 20 L43 20 L42 34 L28 34 Z" fill="${fill}" stroke="${line}" stroke-width="2"/><path d="M28 34 L18 78 L44 78 L42 34 Z" fill="${fill}" stroke="${line}" stroke-width="1.5"/><path d="M62 34 L72 78 L46 78 L48 34 Z" fill="${fill}" stroke="${line}" stroke-width="1.5"/>`,
+    lehenga: `<path d="M36 6 L54 6 L58 30 L82 78 L8 78 L32 30 Z" fill="${fill}" stroke="${line}" stroke-width="2"/><path d="M36 30 Q45 24 54 30" fill="none" stroke="${line}" stroke-width="1.5"/>`,
+    gharara: `<path d="M30 6 L60 6 L66 32 L50 34 L48 20 L42 20 L40 34 L24 32 Z" fill="${fill}" stroke="${line}" stroke-width="2"/><path d="M24 32 L10 78 L42 78 L40 34 Z" fill="${fill}" stroke="${line}" stroke-width="1.5"/><path d="M66 32 L80 78 L48 78 L50 34 Z" fill="${fill}" stroke="${line}" stroke-width="1.5"/>`
   };
-  
-  label.textContent = typeNames[currentDesign.type] + ' Preview';
-  summary.textContent = `${typeNames[currentDesign.type]} in ${currentDesign.fabric}, ${getColorName(currentDesign.mainColor)} with ${getColorName(currentDesign.accentColor)} accent, ${currentDesign.neckline} neck, ${currentDesign.sleeve} sleeve, ${currentDesign.length} length, ${currentDesign.bottom} bottom`;
-  
-  // Generate SVG based on outfit type
-  svg.innerHTML = generateOutfitSVG(currentDesign);
+  const body = kind==='upper' ? upperIcons[id] : lowerIcons[id];
+  return `<svg viewBox="0 0 90 90">${body}</svg>`;
 }
 
-function getColorName(hex){
-  const names = {'#0f4c3a':'Emerald','#8b0000':'Maroon','#1e3a5f':'Navy','#4a0e4e':'Purple','#c9a961':'Gold','#2c2c2c':'Black','#f5f5dc':'Cream','#ff6b9d':'Pink','#ffffff':'White'};
-  return names[hex] || hex;
+function renderPickerGrid(containerId, list, kind, activeId){
+  const grid = document.getElementById(containerId);
+  grid.innerHTML = list.map(item => `
+    <div class="illus-card ${item.id===activeId?'active':''}" data-${kind}="${item.id}">
+      ${garmentIcon(kind, item.id)}
+      <div class="name">${item.name}</div>
+    </div>`).join('');
+  grid.querySelectorAll('.illus-card').forEach(card=>{
+    card.addEventListener('click', ()=>{
+      grid.querySelectorAll('.illus-card').forEach(x=>x.classList.remove('active'));
+      card.classList.add('active');
+      currentDesign[kind] = card.dataset[kind];
+      updateOutfitPreview();
+    });
+  });
 }
+renderPickerGrid('upperGrid', UPPER_TYPES, 'upper', currentDesign.upper);
+renderPickerGrid('lowerGrid', LOWER_TYPES, 'lower', currentDesign.lower);
 
-function generateOutfitSVG(design){
-  const { type, mainColor, accentColor, neckline, sleeve, length, bottom } = design;
-  
-  // Base figure
-  let svg = `<defs>
-    <linearGradient id="fabricGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:${mainColor};stop-opacity:1" />
-      <stop offset="100%" style="stop-color:${mainColor};stop-opacity:0.85" />
-    </linearGradient>
-  </defs>`;
-  
-  // Head
-  svg += `<circle cx="150" cy="60" r="25" fill="#f4d4b8" stroke="#d4a574" stroke-width="1"/>`;
-  svg += `<path d="M 125 60 Q 125 40 150 40 Q 175 40 175 60 Q 175 75 150 80 Q 125 75 125 60" fill="#2c1810" opacity="0.9"/>`;
-  
-  // Neck
-  svg += `<rect x="140" y="80" width="20" height="15" fill="#f4d4b8"/>`;
-  
-  if(type === 'shalwar-kameez' || type === 'kurta'){
-    // Kameez body
-    const kameezBottom = length === 'short' ? 200 : length === 'regular' ? 260 : 320;
-    svg += `<path d="M 110 95 L 190 95 L 200 ${kameezBottom} L 100 ${kameezBottom} Z" fill="url(#fabricGrad)" stroke="${accentColor}" stroke-width="2"/>`;
-    
-    // Neckline
-    if(neckline === 'v'){
-      svg += `<path d="M 135 95 L 150 120 L 165 95" fill="none" stroke="${accentColor}" stroke-width="2"/>`;
-    } else if(neckline === 'square'){
-      svg += `<rect x="135" y="95" width="30" height="15" fill="none" stroke="${accentColor}" stroke-width="2"/>`;
-    } else if(neckline === 'keyhole'){
-      svg += `<circle cx="150" cy="105" r="8" fill="${accentColor}"/>`;
-    } else if(neckline === 'high'){
-      svg += `<rect x="135" y="90" width="30" height="20" fill="url(#fabricGrad)" stroke="${accentColor}" stroke-width="1"/>`;
-    } else {
-      svg += `<path d="M 135 95 Q 150 105 165 95" fill="none" stroke="${accentColor}" stroke-width="2"/>`;
-    }
-    
-    // Sleeves
-    const sleeveEnd = sleeve === 'sleeveless' ? 100 : sleeve === 'short' ? 130 : sleeve === 'three-quarter' ? 160 : 190;
-    if(sleeve !== 'sleeveless'){
-      svg += `<path d="M 110 95 L 90 ${sleeveEnd} L 105 ${sleeveEnd+10} L 115 105 Z" fill="url(#fabricGrad)" stroke="${accentColor}" stroke-width="1.5"/>`;
-      svg += `<path d="M 190 95 L 210 ${sleeveEnd} L 195 ${sleeveEnd+10} L 185 105 Z" fill="url(#fabricGrad)" stroke="${accentColor}" stroke-width="1.5"/>`;
-    }
-    
-    // Bottom (shalwar/pants)
-    if(bottom === 'shalwar'){
-      svg += `<path d="M 110 ${kameezBottom} L 100 380 L 130 380 L 140 ${kameezBottom+20} L 160 ${kameezBottom+20} L 170 380 L 200 380 L 190 ${kameezBottom} Z" fill="#f5f5dc" stroke="#d4d4d4" stroke-width="1.5"/>`;
-    } else if(bottom === 'churidar'){
-      svg += `<path d="M 115 ${kameezBottom} L 110 380 L 135 380 L 145 ${kameezBottom+20} L 155 ${kameezBottom+20} L 165 380 L 190 380 L 185 ${kameezBottom} Z" fill="#f5f5dc" stroke="#d4d4d4" stroke-width="1.5"/>`;
-    } else if(bottom === 'straight'){
-      svg += `<path d="M 115 ${kameezBottom} L 110 380 L 140 380 L 145 ${kameezBottom+20} L 155 ${kameezBottom+20} L 160 380 L 190 380 L 185 ${kameezBottom} Z" fill="#f5f5dc" stroke="#d4d4d4" stroke-width="1.5"/>`;
-    } else {
-      svg += `<path d="M 110 ${kameezBottom} L 95 380 L 135 380 L 145 ${kameezBottom+20} L 155 ${kameezBottom+20} L 165 380 L 205 380 L 190 ${kameezBottom} Z" fill="#f5f5dc" stroke="#d4d4d4" stroke-width="1.5"/>`;
-    }
-    
-    // Dupatta
-    svg += `<path d="M 120 95 Q 80 150 90 280 L 110 280 Q 100 180 130 110 Z" fill="${accentColor}" opacity="0.6" stroke="${accentColor}" stroke-width="1"/>`;
-    
-  } else if(type === 'frock' || type === 'anarkali'){
-    // Frock/Anarkali dress
-    const dressBottom = length === 'short' ? 220 : length === 'regular' ? 280 : 340;
-    const flare = type === 'anarkali' ? 60 : 40;
-    svg += `<path d="M 110 95 L 190 95 L ${190+flare} ${dressBottom} L ${110-flare} ${dressBottom} Z" fill="url(#fabricGrad)" stroke="${accentColor}" stroke-width="2"/>`;
-    
-    // Neckline
-    if(neckline === 'v'){
-      svg += `<path d="M 135 95 L 150 120 L 165 95" fill="none" stroke="${accentColor}" stroke-width="2"/>`;
-    } else if(neckline === 'square'){
-      svg += `<rect x="135" y="95" width="30" height="15" fill="none" stroke="${accentColor}" stroke-width="2"/>`;
-    } else {
-      svg += `<path d="M 135 95 Q 150 105 165 95" fill="none" stroke="${accentColor}" stroke-width="2"/>`;
-    }
-    
-    // Sleeves
-    const sleeveEnd = sleeve === 'sleeveless' ? 100 : sleeve === 'short' ? 130 : sleeve === 'three-quarter' ? 160 : 190;
-    if(sleeve !== 'sleeveless'){
-      svg += `<path d="M 110 95 L 90 ${sleeveEnd} L 105 ${sleeveEnd+10} L 115 105 Z" fill="url(#fabricGrad)" stroke="${accentColor}" stroke-width="1.5"/>`;
-      svg += `<path d="M 190 95 L 210 ${sleeveEnd} L 195 ${sleeveEnd+10} L 185 105 Z" fill="url(#fabricGrad)" stroke="${accentColor}" stroke-width="1.5"/>`;
-    }
-    
-    // Legs
-    svg += `<path d="M 130 ${dressBottom} L 125 400 L 145 400 L 150 ${dressBottom} Z" fill="#f4d4b8"/>`;
-    svg += `<path d="M 150 ${dressBottom} L 155 400 L 175 400 L 170 ${dressBottom} Z" fill="#f4d4b8"/>`;
-    
-    // Dupatta
-    svg += `<path d="M 120 95 Q 80 150 90 280 L 110 280 Q 100 180 130 110 Z" fill="${accentColor}" opacity="0.6" stroke="${accentColor}" stroke-width="1"/>`;
-    
-  } else if(type === 'lehenga'){
-    // Lehenga skirt
-    svg += `<path d="M 110 180 L 190 180 L 220 380 L 80 380 Z" fill="url(#fabricGrad)" stroke="${accentColor}" stroke-width="2"/>`;
-    
-    // Choli (blouse)
-    svg += `<path d="M 120 95 L 180 95 L 185 180 L 115 180 Z" fill="url(#fabricGrad)" stroke="${accentColor}" stroke-width="2"/>`;
-    
-    // Neckline
-    if(neckline === 'v'){
-      svg += `<path d="M 135 95 L 150 115 L 165 95" fill="none" stroke="${accentColor}" stroke-width="2"/>`;
-    } else {
-      svg += `<path d="M 135 95 Q 150 105 165 95" fill="none" stroke="${accentColor}" stroke-width="2"/>`;
-    }
-    
-    // Sleeves
-    const sleeveEnd = sleeve === 'sleeveless' ? 100 : sleeve === 'short' ? 120 : sleeve === 'three-quarter' ? 140 : 160;
-    if(sleeve !== 'sleeveless'){
-      svg += `<path d="M 120 95 L 100 ${sleeveEnd} L 115 ${sleeveEnd+8} L 125 105 Z" fill="url(#fabricGrad)" stroke="${accentColor}" stroke-width="1.5"/>`;
-      svg += `<path d="M 180 95 L 200 ${sleeveEnd} L 185 ${sleeveEnd+8} L 175 105 Z" fill="url(#fabricGrad)" stroke="${accentColor}" stroke-width="1.5"/>`;
-    }
-    
-    // Midriff
-    svg += `<rect x="130" y="165" width="40" height="15" fill="#f4d4b8"/>`;
-    
-    // Legs
-    svg += `<path d="M 130 380 L 125 420 L 145 420 L 150 380 Z" fill="#f4d4b8"/>`;
-    svg += `<path d="M 150 380 L 155 420 L 175 420 L 170 380 Z" fill="#f4d4b8"/>`;
-    
-    // Dupatta
-    svg += `<path d="M 130 95 Q 100 140 110 250 L 130 250 Q 120 170 140 110 Z" fill="${accentColor}" opacity="0.6" stroke="${accentColor}" stroke-width="1"/>`;
-    
-  } else if(type === 'gharara'){
-    // Kameez
-    const kameezBottom = length === 'short' ? 180 : length === 'regular' ? 220 : 260;
-    svg += `<path d="M 110 95 L 190 95 L 200 ${kameezBottom} L 100 ${kameezBottom} Z" fill="url(#fabricGrad)" stroke="${accentColor}" stroke-width="2"/>`;
-    
-    // Neckline
-    if(neckline === 'v'){
-      svg += `<path d="M 135 95 L 150 120 L 165 95" fill="none" stroke="${accentColor}" stroke-width="2"/>`;
-    } else {
-      svg += `<path d="M 135 95 Q 150 105 165 95" fill="none" stroke="${accentColor}" stroke-width="2"/>`;
-    }
-    
-    // Sleeves
-    const sleeveEnd = sleeve === 'sleeveless' ? 100 : sleeve === 'short' ? 130 : sleeve === 'three-quarter' ? 160 : 190;
-    if(sleeve !== 'sleeveless'){
-      svg += `<path d="M 110 95 L 90 ${sleeveEnd} L 105 ${sleeveEnd+10} L 115 105 Z" fill="url(#fabricGrad)" stroke="${accentColor}" stroke-width="1.5"/>`;
-      svg += `<path d="M 190 95 L 210 ${sleeveEnd} L 195 ${sleeveEnd+10} L 185 105 Z" fill="url(#fabricGrad)" stroke="${accentColor}" stroke-width="1.5"/>`;
-    }
-    
-    // Gharara (flared pants)
-    svg += `<path d="M 110 ${kameezBottom} L 90 280 L 140 280 L 145 ${kameezBottom+10} L 155 ${kameezBottom+10} L 160 280 L 210 280 L 190 ${kameezBottom} Z" fill="#f5f5dc" stroke="#d4d4d4" stroke-width="1.5"/>`;
-    svg += `<path d="M 90 280 L 85 380 L 145 380 L 140 280 Z" fill="#f5f5dc" stroke="#d4d4d4" stroke-width="1.5"/>`;
-    svg += `<path d="M 210 280 L 215 380 L 155 380 L 160 280 Z" fill="#f5f5dc" stroke="#d4d4d4" stroke-width="1.5"/>`;
-    
-    // Dupatta
-    svg += `<path d="M 120 95 Q 80 150 90 280 L 110 280 Q 100 180 130 110 Z" fill="${accentColor}" opacity="0.6" stroke="${accentColor}" stroke-width="1"/>`;
+document.querySelectorAll('#sleeveGrid .pill-opt').forEach(el=>{
+  el.addEventListener('click', ()=>{
+    document.querySelectorAll('#sleeveGrid .pill-opt').forEach(x=>x.classList.remove('active'));
+    el.classList.add('active');
+    currentDesign.sleeve = el.dataset.sleeve;
+    updateOutfitPreview();
+  });
+});
+document.querySelectorAll('#lengthGrid .pill-opt').forEach(el=>{
+  el.addEventListener('click', ()=>{
+    document.querySelectorAll('#lengthGrid .pill-opt').forEach(x=>x.classList.remove('active'));
+    el.classList.add('active');
+    currentDesign.length = el.dataset.length;
+    updateOutfitPreview();
+  });
+});
+
+function upperMeta(id){ return UPPER_TYPES.find(u=>u.id===id); }
+function lowerMeta(id){ return LOWER_TYPES.find(l=>l.id===id); }
+
+function sleevePath(sleeve){
+  if(sleeve === 'sleeveless') return '';
+  const sleeveEnd = sleeve === 'short' ? 100 : sleeve === 'three-quarter' ? 125 : 150;
+  return `<path d="M 110 75 L 92 ${sleeveEnd} L 104 ${sleeveEnd+8} L 113 85 Z" fill="${BRAND_BLUE}" opacity="0.85" stroke="${BRAND_LINE}" stroke-width="1.3"/>
+          <path d="M 190 75 L 208 ${sleeveEnd} L 196 ${sleeveEnd+8} L 187 85 Z" fill="${BRAND_BLUE}" opacity="0.85" stroke="${BRAND_LINE}" stroke-width="1.3"/>`;
+}
+function dupattaPath(){
+  return `<path d="M 122 75 Q 86 125 94 235 L 112 235 Q 104 150 132 90 Z" fill="${BRAND_BLUE}" opacity="0.35" stroke="${BRAND_LINE}" stroke-width="1"/>`;
+}
+function drawUpper(upperId, bottomY){
+  let svg = '';
+  if(upperId === 'waistcoat'){
+    svg += `<path d="M 112 75 L 188 75 L 193 ${bottomY} L 107 ${bottomY} Z" fill="#F2F8FE" stroke="#D8E4F2" stroke-width="1.3"/>`;
+    svg += sleevePath(currentDesign.sleeve);
+    svg += `<path d="M 115 73 L 148 73 L 145 ${bottomY} L 109 ${bottomY} Z" fill="${BRAND_BLUE}" opacity="0.9" stroke="${BRAND_LINE}" stroke-width="1.6"/>`;
+    svg += `<path d="M 185 73 L 152 73 L 155 ${bottomY} L 191 ${bottomY} Z" fill="${BRAND_BLUE}" opacity="0.9" stroke="${BRAND_LINE}" stroke-width="1.6"/>`;
+    return svg;
   }
-  
-  // Add embroidery details
-  svg += `<path d="M 130 100 Q 150 110 170 100" fill="none" stroke="${accentColor}" stroke-width="1" stroke-dasharray="3,2"/>`;
-  svg += `<circle cx="150" cy="150" r="3" fill="${accentColor}" opacity="0.5"/>`;
-  svg += `<circle cx="140" cy="170" r="2" fill="${accentColor}" opacity="0.5"/>`;
-  svg += `<circle cx="160" cy="170" r="2" fill="${accentColor}" opacity="0.5"/>`;
-  
+  svg += `<path d="M 110 75 L 190 75 L 190 ${bottomY} L 110 ${bottomY} Z" fill="${BRAND_BLUE}" opacity="0.88" stroke="${BRAND_LINE}" stroke-width="1.6"/>`;
+  svg += `<path d="M 136 75 Q 150 86 164 75" fill="none" stroke="${BRAND_LINE}" stroke-width="1.6"/>`;
+  svg += sleevePath(currentDesign.sleeve);
+  if(upperId === 'shirt'){
+    svg += `<path d="M 139 75 L 150 88 L 161 75" fill="none" stroke="${BRAND_LINE}" stroke-width="1.3"/>`;
+    svg += `<line x1="150" y1="88" x2="150" y2="${bottomY-8}" stroke="${BRAND_LINE}" stroke-width="1"/>`;
+  }
   return svg;
 }
-
-function resetDesign(){
-  currentDesign = {
-    type: 'shalwar-kameez',
-    fabric: 'lawn',
-    mainColor: '#0f4c3a',
-    accentColor: '#c9a961',
-    neckline: 'round',
-    sleeve: 'three-quarter',
-    length: 'regular',
-    bottom: 'shalwar'
+function drawLower(lowerId, topY){
+  if(lowerId === 'lehenga'){
+    return `<path d="M 112 ${topY} L 188 ${topY} L 222 350 L 78 350 Z" fill="#E6F1FD" stroke="${BRAND_LINE}" stroke-width="1.6"/>`;
+  }
+  const bands = {
+    shalwar:  `M 110 ${topY} L 100 340 L 130 340 L 138 ${topY+18} L 162 ${topY+18} L 170 340 L 200 340 L 190 ${topY} Z`,
+    churidar: `M 115 ${topY} L 110 340 L 135 340 L 143 ${topY+18} L 157 ${topY+18} L 165 340 L 190 340 L 185 ${topY} Z`,
+    straight: `M 115 ${topY} L 110 340 L 140 340 L 145 ${topY+18} L 155 ${topY+18} L 160 340 L 190 340 L 185 ${topY} Z`,
+    palazzo:  `M 110 ${topY} L 90 345 L 140 345 L 145 ${topY+18} L 155 ${topY+18} L 165 345 L 210 345 L 190 ${topY} Z`,
+    gharara:  `M 110 ${topY} L 85 270 L 145 270 L 150 ${topY+14} L 160 ${topY+14} L 165 270 L 225 270 L 190 ${topY} Z M 85 270 L 78 345 L 148 345 L 145 270 Z M 225 270 L 232 345 L 162 345 L 165 270 Z`
   };
-  document.querySelectorAll('#outfitTypeGrid .option-card').forEach(x=>x.classList.remove('active'));
-  document.querySelector('#outfitTypeGrid .option-card[data-type="shalwar-kameez"]').classList.add('active');
-  document.getElementById('fabricSelect').value = 'lawn';
-  document.querySelectorAll('#mainColorGrid .color-swatch').forEach(x=>x.classList.remove('active'));
-  document.querySelector('#mainColorGrid .color-swatch[data-color="#0f4c3a"]').classList.add('active');
-  document.querySelectorAll('#accentColorGrid .color-swatch').forEach(x=>x.classList.remove('active'));
-  document.querySelector('#accentColorGrid .color-swatch[data-color="#c9a961"]').classList.add('active');
-  document.querySelectorAll('#necklineGrid .option-card').forEach(x=>x.classList.remove('active'));
-  document.querySelector('#necklineGrid .option-card[data-neck="round"]').classList.add('active');
-  document.querySelectorAll('#sleeveGrid .option-card').forEach(x=>x.classList.remove('active'));
-  document.querySelector('#sleeveGrid .option-card[data-sleeve="three-quarter"]').classList.add('active');
-  document.querySelectorAll('#lengthGrid .option-card').forEach(x=>x.classList.remove('active'));
-  document.querySelector('#lengthGrid .option-card[data-length="regular"]').classList.add('active');
-  document.querySelectorAll('#bottomGrid .option-card').forEach(x=>x.classList.remove('active'));
-  document.querySelector('#bottomGrid .option-card[data-bottom="shalwar"]').classList.add('active');
+  return `<path d="${bands[lowerId]}" fill="#F2F8FE" stroke="#C9D8EA" stroke-width="1.4"/>`;
+}
+function generateOutfitSVG(design){
+  const upperData = upperMeta(design.upper);
+  const bottomY = upperData.bottomY[design.length];
+  let svg = '';
+  svg += `<circle cx="150" cy="45" r="20" fill="#F4D4B8" stroke="#D4A574" stroke-width="1"/>`;
+  svg += `<path d="M 132 45 Q 132 28 150 28 Q 168 28 168 45 Q 168 58 150 62 Q 132 58 132 45" fill="#2C1810" opacity="0.9"/>`;
+  svg += `<rect x="142" y="62" width="16" height="13" fill="#F4D4B8"/>`;
+  svg += drawLower(design.lower, bottomY);
+  if(design.upper === 'choli'){
+    svg += `<rect x="132" y="${bottomY-2}" width="36" height="12" fill="#F4D4B8"/>`;
+  }
+  if(design.lower === 'lehenga'){
+    svg += `<path d="M 132 350 L 128 375 L 145 375 L 149 350 Z" fill="#F4D4B8"/>`;
+    svg += `<path d="M 149 350 L 153 375 L 170 375 L 166 350 Z" fill="#F4D4B8"/>`;
+  }
+  svg += drawUpper(design.upper, bottomY);
+  if(upperData.hasDupatta) svg += dupattaPath();
+  return svg;
+}
+function updateOutfitPreview(){
+  document.getElementById('outfitSVG').innerHTML = generateOutfitSVG(currentDesign);
+  const upperName = upperMeta(currentDesign.upper).name;
+  const lowerName = lowerMeta(currentDesign.lower).name;
+  document.getElementById('previewLabel').textContent = `${upperName} + ${lowerName}`;
+  document.getElementById('summaryText').textContent = `${currentDesign.sleeve.replace('-',' ')} sleeve · ${currentDesign.length} length`;
+}
+updateOutfitPreview();
+
+document.getElementById('resetDesignBtn').addEventListener('click', ()=>{
+  currentDesign = { upper:'kameez', lower:'shalwar', sleeve:'three-quarter', length:'regular' };
+  renderPickerGrid('upperGrid', UPPER_TYPES, 'upper', currentDesign.upper);
+  renderPickerGrid('lowerGrid', LOWER_TYPES, 'lower', currentDesign.lower);
+  document.querySelectorAll('#sleeveGrid .pill-opt').forEach(x=>x.classList.remove('active'));
+  document.querySelector('#sleeveGrid .pill-opt[data-sleeve="three-quarter"]').classList.add('active');
+  document.querySelectorAll('#lengthGrid .pill-opt').forEach(x=>x.classList.remove('active'));
+  document.querySelector('#lengthGrid .pill-opt[data-length="regular"]').classList.add('active');
   updateOutfitPreview();
-}
+});
 
-function saveDesign(){
-  const name = prompt('Enter customer name for this design:');
-  if(!name) return;
-  const notes = prompt('Add notes (optional):') || '';
-  const rec = {
-    id: Date.now(),
-    date: new Date().toISOString(),
-    name, notes,
-    mode: 'design',
-    title: 'Custom Design: ' + currentDesign.type,
-    data: { ...currentDesign }
-  };
-  const arr = getRecords();
-  arr.unshift(rec);
-  setRecords(arr);
-  alert('Design saved ✓');
-}
-
-function downloadDesignPDF(){
+document.getElementById('downloadDesignBtn').addEventListener('click', ()=>{
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit:'pt', format:'a4' });
   const pageW = doc.internal.pageSize.getWidth();
-  
-  doc.setFillColor(15,76,58);
-  doc.rect(0,0,pageW,70,'F');
-  doc.setTextColor(250,246,239);
-  doc.setFont('times','bold');
-  doc.setFontSize(22);
-  doc.text('Custom Design Specification', pageW/2, 32, { align:'center' });
-  doc.setFont('times','italic');
-  doc.setFontSize(11);
-  doc.text('Boutique Design Studio', pageW/2, 52, { align:'center' });
-  
-  doc.setTextColor(30,40,35);
-  doc.setFont('helvetica','normal');
-  doc.setFontSize(10);
-  doc.text('Date: ' + new Date().toLocaleDateString(), 40, 95);
-  
-  const typeNames = {'shalwar-kameez':'Shalwar Kameez','frock':'Frock','kurta':'Kurta','anarkali':'Anarkali','lehenga':'Lehenga','gharara':'Gharara'};
-  
-  doc.autoTable({
-    startY:115,
-    head:[['Design Element','Specification']],
+  doc.setFillColor(74,147,232);
+  doc.rect(0,0,pageW,64,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFont('helvetica','bold'); doc.setFontSize(18);
+  doc.text('Tifl Little Wear — Design Sketch', pageW/2, 30, { align:'center' });
+  doc.setFont('helvetica','normal'); doc.setFontSize(10);
+  doc.text(new Date().toLocaleDateString(), pageW/2, 48, { align:'center' });
+  doc.setTextColor(31,42,61);
+  doc.autoTable ? doc.autoTable({
+    startY:90,
+    head:[['Element','Choice']],
     body:[
-      ['Outfit Type', typeNames[currentDesign.type]],
-      ['Fabric', currentDesign.fabric],
-      ['Main Color', getColorName(currentDesign.mainColor)],
-      ['Accent Color', getColorName(currentDesign.accentColor)],
-      ['Neckline', currentDesign.neckline],
+      ['Outfit Upper', upperMeta(currentDesign.upper).name],
+      ['Outfit Lower', lowerMeta(currentDesign.lower).name],
       ['Sleeve Length', currentDesign.sleeve],
-      ['Kameez Length', currentDesign.length],
-      ['Bottom Style', currentDesign.bottom]
+      ['Upper Length', currentDesign.length]
     ],
     theme:'plain',
-    headStyles:{ fillColor:[15,76,58], textColor:[250,246,239], fontStyle:'bold' },
-    styles:{ fontSize:10, cellPadding:6 },
-    columnStyles:{ 1:{ halign:'right', fontStyle:'bold' } }
-  });
-  
-  const pageH = doc.internal.pageSize.getHeight();
-  doc.setFont('helvetica','italic');
-  doc.setFontSize(9);
-  doc.setTextColor(120,130,125);
-  doc.text('Generated by Boutique Design Studio', pageW/2, pageH-25, { align:'center' });
-  
-  doc.save('design-spec-'+Date.now()+'.pdf');
-}
-
-/* ============================================================
-   PDF DOWNLOAD (existing functions enhanced)
-   ============================================================ */
-function downloadPDF(mode){
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit:'pt', format:'a4' });
-  const pageW = doc.internal.pageSize.getWidth();
-
-  doc.setFillColor(15,76,58);
-  doc.rect(0,0,pageW,70,'F');
-  doc.setTextColor(250,246,239);
-  doc.setFont('times','bold');
-  doc.setFontSize(22);
-  doc.text('Boutique Sizing Report', pageW/2, 32, { align:'center' });
-  doc.setFont('times','italic');
-  doc.setFontSize(11);
-  doc.text('Measurement Record · Atelier Studio', pageW/2, 52, { align:'center' });
-
-  doc.setTextColor(30,40,35);
-  doc.setFont('helvetica','normal');
-  doc.setFontSize(10);
-  doc.text('Date: ' + new Date().toLocaleDateString(), 40, 95);
-
-  let y = 115;
-
-  if(mode==='age'){
-    const i = +ageSelect.value;
-    doc.setFont('times','bold'); doc.setFontSize(14);
-    doc.setTextColor(15,76,58);
-    doc.text(currentAgeChart==='cutting'?'Cutting Measurements':currentAgeChart==='frock'?'Lawn Frock':'Girls Pant', 40, y);
-    y+=18;
-    const rows = getAgeRows(i);
-    doc.autoTable({
-      startY:y, head:[['Measurement','Value']], body:rows,
-      theme:'plain', headStyles:{ fillColor:[15,76,58], textColor:[250,246,239], fontStyle:'bold' },
-      styles:{ fontSize:10, cellPadding:6 },
-      columnStyles:{ 1:{ halign:'right', fontStyle:'bold' } }
+    headStyles:{ fillColor:[74,147,232], textColor:[255,255,255] },
+    styles:{ fontSize:11, cellPadding:7 }
+  }) : (()=>{
+    doc.setFontSize(12);
+    let y = 100;
+    [['Outfit Upper', upperMeta(currentDesign.upper).name],
+     ['Outfit Lower', lowerMeta(currentDesign.lower).name],
+     ['Sleeve Length', currentDesign.sleeve],
+     ['Upper Length', currentDesign.length]].forEach(([k,v])=>{
+      doc.text(k+': '+v, 40, y); y += 20;
     });
-  }
-  else if(mode==='calc' && lastCalc){
-    doc.setFont('times','bold'); doc.setFontSize(13); doc.setTextColor(15,76,58);
-    doc.text('Input: Height '+lastCalc.hIn.toFixed(1)+' in' + (lastCalc.wLb?(' · Weight '+lastCalc.wLb.toFixed(1)+' lb'):''), 40, y);
-    y+=18;
-    doc.autoTable({
-      startY:y, head:[['Cutting (interpolated)','Value']],
-      body:[
-        ['Length',lastCalc.cut.length+' in'],['Shoulder',lastCalc.cut.shoulder+' in'],
-        ['Armhole',lastCalc.cut.armhole+' in'],['Chest',lastCalc.cut.chest+' in'],
-        ['Waist',lastCalc.cut.waist+' in'],['Neck Width',lastCalc.cut.neckW+' in'],
-        ['Neck Depth',lastCalc.cut.neckD+' in'],['Sleeve',lastCalc.cut.sleeve+' in'],
-        ['Sleeve Opening',lastCalc.cut.sleeveOpen+' in']
-      ],
-      theme:'plain', headStyles:{ fillColor:[15,76,58], textColor:[250,246,239] },
-      styles:{ fontSize:10, cellPadding:5 }, columnStyles:{ 1:{ halign:'right' } }
-    });
-    y = doc.lastAutoTable.finalY + 16;
-    doc.autoTable({
-      startY:y, head:[['Lawn Frock — '+lastCalc.frock.age,'Value']],
-      body:[
-        ['Finished Waist Circ.',lastCalc.frock.waistCirc+' in'],
-        ['Dress Length',lastCalc.frock.dressLen+' in'],
-        ['Back Waist Length',lastCalc.frock.backWaist+' in'],
-        ['Body Waist Circ.',lastCalc.frock.bodyWaist+' in'],
-        ['Nape to Below-Knee',lastCalc.frock.napeKnee+' in']
-      ],
-      theme:'plain', headStyles:{ fillColor:[15,76,58], textColor:[250,246,239] },
-      styles:{ fontSize:10, cellPadding:5 }, columnStyles:{ 1:{ halign:'right' } }
-    });
-    y = doc.lastAutoTable.finalY + 16;
-    doc.autoTable({
-      startY:y, head:[['Girls Pant — '+lastCalc.pant.age,'Value']],
-      body:[
-        ['Waist',lastCalc.pant.waist+' in'],['Hip',lastCalc.pant.hip+' in'],
-        ['Crotch Depth',lastCalc.pant.crotch+' in'],
-        ['Inseam',lastCalc.pant.inseam+' in'],['Outseam',lastCalc.pant.outseam+' in']
-      ],
-      theme:'plain', headStyles:{ fillColor:[15,76,58], textColor:[250,246,239] },
-      styles:{ fontSize:10, cellPadding:5 }, columnStyles:{ 1:{ halign:'right' } }
-    });
-  }
-  else if(mode==='match' && lastMatch){
-    doc.setFont('times','bold'); doc.setFontSize(12); doc.setTextColor(15,76,58);
-    const parts=[];
-    if(lastMatch.chest) parts.push('Chest '+lastMatch.chest);
-    if(lastMatch.waist) parts.push('Waist '+lastMatch.waist);
-    if(lastMatch.height) parts.push('Height '+lastMatch.height);
-    if(lastMatch.hip) parts.push('Hip '+lastMatch.hip);
-    doc.text('Input: '+parts.join(' · ')+' (inches)', 40, y);
-    y+=18;
-    if(lastMatch.bestCut){
-      doc.autoTable({
-        startY:y, head:[['Cutting — '+lastMatch.bestCut.age,'Value']],
-        body:[
-          ['Length',lastMatch.bestCut.length+' in'],['Shoulder',lastMatch.bestCut.shoulder+' in'],
-          ['Armhole',lastMatch.bestCut.armhole+' in'],['Chest',lastMatch.bestCut.chest+' in'],
-          ['Waist',lastMatch.bestCut.waist+' in'],['Neck Width',lastMatch.bestCut.neckW+' in'],
-          ['Neck Depth',lastMatch.bestCut.neckD+' in'],['Sleeve',lastMatch.bestCut.sleeve+' in'],
-          ['Sleeve Opening',lastMatch.bestCut.sleeveOpen+' in']
-        ],
-        theme:'plain', headStyles:{ fillColor:[15,76,58], textColor:[250,246,239] },
-        styles:{ fontSize:10, cellPadding:5 }, columnStyles:{ 1:{ halign:'right' } }
-      });
-      y = doc.lastAutoTable.finalY + 12;
-    }
-    if(lastMatch.bestFrock){
-      doc.autoTable({
-        startY:y, head:[['Frock — '+lastMatch.bestFrock.age,'Value']],
-        body:[
-          ['Waist Circ.',lastMatch.bestFrock.waistCirc+' in'],
-          ['Dress Length',lastMatch.bestFrock.dressLen+' in'],
-          ['Back Waist',lastMatch.bestFrock.backWaist+' in'],
-          ['Body Waist',lastMatch.bestFrock.bodyWaist+' in'],
-          ['Nape-Knee',lastMatch.bestFrock.napeKnee+' in']
-        ],
-        theme:'plain', headStyles:{ fillColor:[15,76,58], textColor:[250,246,239] },
-        styles:{ fontSize:10, cellPadding:5 }, columnStyles:{ 1:{ halign:'right' } }
-      });
-      y = doc.lastAutoTable.finalY + 12;
-    }
-    if(lastMatch.bestPant){
-      doc.autoTable({
-        startY:y, head:[['Pant — '+lastMatch.bestPant.age,'Value']],
-        body:[
-          ['Waist',lastMatch.bestPant.waist+' in'],['Hip',lastMatch.bestPant.hip+' in'],
-          ['Crotch',lastMatch.bestPant.crotch+' in'],
-          ['Inseam',lastMatch.bestPant.inseam+' in'],['Outseam',lastMatch.bestPant.outseam+' in']
-        ],
-        theme:'plain', headStyles:{ fillColor:[15,76,58], textColor:[250,246,239] },
-        styles:{ fontSize:10, cellPadding:5 }, columnStyles:{ 1:{ halign:'right' } }
-      });
-    }
-  }
-  else if(mode==='women'){
-    const i = +womenSizeSelect.value;
-    doc.setFont('times','bold'); doc.setFontSize(14);
-    doc.setTextColor(15,76,58);
-    doc.text(currentWomenChart==='women-cutting'?'Women\'s Cutting':currentWomenChart==='women-kameez'?'Kameez Measurements':'Shalwar Measurements', 40, y);
-    y+=18;
-    const rows = getWomenRows(i);
-    doc.autoTable({
-      startY:y, head:[['Measurement','Value']], body:rows,
-      theme:'plain', headStyles:{ fillColor:[15,76,58], textColor:[250,246,239], fontStyle:'bold' },
-      styles:{ fontSize:10, cellPadding:6 },
-      columnStyles:{ 1:{ halign:'right', fontStyle:'bold' } }
-    });
-  }
+  })();
+  doc.save('tifl-design-sketch-'+Date.now()+'.pdf');
+});
 
-  const pageH = doc.internal.pageSize.getHeight();
-  doc.setFont('helvetica','italic'); doc.setFontSize(9); doc.setTextColor(120,130,125);
-  doc.text('Generated by Boutique Sizing Studio · For internal atelier use', pageW/2, pageH-25, { align:'center' });
-
-  doc.save('sizing-report-'+Date.now()+'.pdf');
-}
-
-function getAgeRows(i){
-  if(currentAgeChart==='cutting'){
-    const r=cuttingChart[i];
-    return [
-      ['Length',r.length+' in'],['Shoulder',r.shoulder+' in'],
-      ['Armhole',r.armhole+' in'],['Chest',r.chest+' in'],
-      ['Waist',r.waist+' in'],['Neck Width',r.neckW+' in'],
-      ['Neck Depth',r.neckD+' in'],['Sleeve',r.sleeve+' in'],
-      ['Sleeve Opening',r.sleeveOpen+' in']
-    ];
-  }
-  if(currentAgeChart==='frock'){
-    const r=frockChart[i];
-    return [
-      ['Finished Waist Circ.',r.waistCirc+' in'],
-      ['Dress Length',r.dressLen+' in'],
-      ['Back Waist Length',r.backWaist+' in'],
-      ['Body Waist Circ.',r.bodyWaist+' in'],
-      ['Nape to Below-Knee',r.napeKnee+' in']
-    ];
-  }
-  const r=pantChart[i];
-  return [
-    ['Waist',r.waist+' in'],['Hip',r.hip+' in'],
-    ['Crotch Depth',r.crotch+' in'],
-    ['Inseam',r.inseam+' in'],['Outseam',r.outseam+' in']
-  ];
-}
-
-function getWomenRows(i){
-  if(currentWomenChart==='women-cutting'){
-    const r=womenCuttingChart[i];
-    return [
-      ['Bust',r.bust+' in'],['Waist',r.waist+' in'],
-      ['Hip',r.hip+' in'],['Shoulder',r.shoulder+' in'],
-      ['Armhole',r.armhole+' in'],['Sleeve Length',r.sleeve+' in'],
-      ['Kameez Length',r.kameezLen+' in'],
-      ['Neck Width',r.neckW+' in'],['Neck Depth',r.neckD+' in']
-    ];
-  }
-  if(currentWomenChart==='women-kameez'){
-    const r=womenKameezChart[i];
-    return [
-      ['Front Length',r.frontLen+' in'],['Back Length',r.backLen+' in'],
-      ['Shoulder',r.shoulder+' in'],['Chest',r.chest+' in'],
-      ['Waist',r.waist+' in'],['Hip',r.hip+' in'],
-      ['Sleeve',r.sleeve+' in'],['Armhole',r.armhole+' in']
-    ];
-  }
-  const r=womenShalwarChart[i];
-  return [
-    ['Waist',r.waist+' in'],['Hip',r.hip+' in'],
-    ['Crotch Depth',r.crotch+' in'],
-    ['Inseam',r.inseam+' in'],['Outseam',r.outseam+' in'],
-    ['Bottom Width',r.bottom+' in']
-  ];
-}
-
-/* ============================================================
-   SAVE / LOAD (localStorage)
-   ============================================================ */
-const STORAGE_KEY = 'boutique_sizing_records_v1';
-function getRecords(){
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
-  catch(e){ return []; }
-}
-function setRecords(arr){ localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }
-
-let saveContext = null;
-function openSaveModal(mode){
-  saveContext = { mode };
-  if(mode==='age'){
-    saveContext.data = { chart: currentAgeChart, age: cuttingChart[+ageSelect.value]?.age || frockChart[+ageSelect.value]?.age || pantChart[+ageSelect.value]?.age, rows: getAgeRows(+ageSelect.value) };
-    saveContext.title = document.getElementById('ageTitle').textContent;
-  } else if(mode==='calc' && lastCalc){
-    saveContext.data = lastCalc;
-    saveContext.title = 'Height/Weight Calculation';
-  } else if(mode==='match' && lastMatch){
-    saveContext.data = lastMatch;
-    saveContext.title = 'Measurement Match';
-  } else if(mode==='women'){
-    saveContext.data = { chart: currentWomenChart, size: womenCuttingChart[+womenSizeSelect.value]?.size, rows: getWomenRows(+womenSizeSelect.value) };
-    saveContext.title = document.getElementById('womenTitle').textContent;
-  } else {
-    alert('Please generate results before saving.');
-    return;
-  }
-  document.getElementById('saveName').value='';
-  document.getElementById('saveNotes').value='';
-  document.getElementById('modal').style.display='flex';
-}
-function closeSaveModal(){ document.getElementById('modal').style.display='none'; }
-function confirmSave(){
-  const name = document.getElementById('saveName').value.trim() || 'Unnamed';
-  const notes = document.getElementById('saveNotes').value.trim();
-  const rec = {
-    id: Date.now(),
-    date: new Date().toISOString(),
-    name, notes,
-    mode: saveContext.mode,
-    title: saveContext.title,
-    data: saveContext.data
-  };
-  const arr = getRecords();
-  arr.unshift(rec);
-  setRecords(arr);
-  closeSaveModal();
-  alert('Record saved ✓');
-}
-
-function renderSaved(){
-  const list = document.getElementById('savedList');
-  const arr = getRecords();
-  if(!arr.length){ list.innerHTML = '<div class="empty">No saved records yet.</div>'; return; }
-  list.innerHTML = '';
-  arr.forEach(r=>{
-    const div = document.createElement('div');
-    div.className = 'saved-item';
-    const d = new Date(r.date);
-    div.innerHTML = `
-      <div class="info">
-        <strong>${escapeHtml(r.name)}</strong>
-        <small>${d.toLocaleDateString()} · ${d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})} · ${r.title}</small>
-        <div class="tags">
-          <span class="tag">${r.mode==='age'?'By Age':r.mode==='calc'?'By Height/Weight':r.mode==='match'?'By Measurements':r.mode==='women'?'Women\'s Sizing':'Design'}</span>
-          ${r.notes?`<span class="tag">📝 ${escapeHtml(r.notes).slice(0,40)}</span>`:''}
-        </div>
-      </div>
-      <div class="ctrl">
-        <button class="btn btn-ghost" onclick="viewSaved(${r.id})">View</button>
-        <button class="btn btn-primary" onclick="pdfSaved(${r.id})">PDF</button>
-        <button class="btn btn-danger" onclick="deleteSaved(${r.id})">Delete</button>
-      </div>`;
-    list.appendChild(div);
-  });
-}
-function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-
-function viewSaved(id){
-  const r = getRecords().find(x=>x.id===id);
-  if(!r) return;
-  alert(`${r.name}\n${new Date(r.date).toLocaleString()}\n\n${r.title}\n\nNotes: ${r.notes||'—'}\n\n(Use PDF button to download full report)`);
-}
-function pdfSaved(id){
-  const r = getRecords().find(x=>x.id===id);
-  if(!r) return;
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit:'pt', format:'a4' });
-  const pageW = doc.internal.pageSize.getWidth();
-  doc.setFillColor(15,76,58); doc.rect(0,0,pageW,70,'F');
-  doc.setTextColor(250,246,239);
-  doc.setFont('times','bold'); doc.setFontSize(20);
-  doc.text('Sizing Report — '+r.name, pageW/2, 32, { align:'center' });
-  doc.setFont('times','italic'); doc.setFontSize(11);
-  doc.text(new Date(r.date).toLocaleString(), pageW/2, 52, { align:'center' });
-  doc.setTextColor(30,40,35); doc.setFont('helvetica','normal'); doc.setFontSize(10);
-  let y = 100;
-  if(r.notes){ doc.text('Notes: '+r.notes, 40, y); y+=18; }
-  doc.setFont('times','bold'); doc.setFontSize(14); doc.setTextColor(15,76,58);
-  doc.text(r.title, 40, y); y+=14;
-
-  let rows = [];
-  if(r.mode==='age' || r.mode==='women'){
-    rows = r.data.rows;
-  } else if(r.mode==='calc'){
-    const c = r.data.cut;
-    rows = [
-      ['[Cutting] Length',c.length+' in'],['Shoulder',c.shoulder+' in'],['Armhole',c.armhole+' in'],
-      ['Chest',c.chest+' in'],['Waist',c.waist+' in'],['Neck Width',c.neckW+' in'],
-      ['Neck Depth',c.neckD+' in'],['Sleeve',c.sleeve+' in'],['Sleeve Opening',c.sleeveOpen+' in'],
-      ['[Frock '+r.data.frock.age+'] Waist Circ.',r.data.frock.waistCirc+' in'],
-      ['Dress Length',r.data.frock.dressLen+' in'],['Back Waist',r.data.frock.backWaist+' in'],
-      ['[Pant '+r.data.pant.age+'] Waist',r.data.pant.waist+' in'],
-      ['Hip',r.data.pant.hip+' in'],['Crotch',r.data.pant.crotch+' in'],
-      ['Inseam',r.data.pant.inseam+' in'],['Outseam',r.data.pant.outseam+' in']
-    ];
-  } else if(r.mode==='match'){
-    if(r.data.bestCut){
-      const c=r.data.bestCut;
-      rows.push(['[Cutting '+c.age+'] Length',c.length+' in'],['Shoulder',c.shoulder+' in'],
-        ['Chest',c.chest+' in'],['Waist',c.waist+' in']);
-    }
-    if(r.data.bestFrock){
-      const f=r.data.bestFrock;
-      rows.push(['[Frock '+f.age+'] Waist Circ.',f.waistCirc+' in'],['Dress Length',f.dressLen+' in']);
-    }
-    if(r.data.bestPant){
-      const p=r.data.bestPant;
-      rows.push(['[Pant '+p.age+'] Waist',p.waist+' in'],['Hip',p.hip+' in'],['Inseam',p.inseam+' in']);
-    }
-  } else if(r.mode==='design'){
-    const d = r.data;
-    const typeNames = {'shalwar-kameez':'Shalwar Kameez','frock':'Frock','kurta':'Kurta','anarkali':'Anarkali','lehenga':'Lehenga','gharara':'Gharara'};
-    rows = [
-      ['Outfit Type', typeNames[d.type]],
-      ['Fabric', d.fabric],
-      ['Main Color', getColorName(d.mainColor)],
-      ['Accent Color', getColorName(d.accentColor)],
-      ['Neckline', d.neckline],
-      ['Sleeve', d.sleeve],
-      ['Length', d.length],
-      ['Bottom', d.bottom]
-    ];
-  }
-  doc.autoTable({
-    startY:y, head:[['Measurement','Value']], body:rows,
-    theme:'plain', headStyles:{ fillColor:[15,76,58], textColor:[250,246,239] },
-    styles:{ fontSize:10, cellPadding:5 }, columnStyles:{ 1:{ halign:'right' } }
-  });
-  doc.save('sizing-'+r.name.replace(/\s+/g,'-')+'-'+r.id+'.pdf');
-}
-function deleteSaved(id){
-  if(!confirm('Delete this record?')) return;
-  setRecords(getRecords().filter(r=>r.id!==id));
-  renderSaved();
-}
-function clearAllSaved(){
-  if(!confirm('Delete ALL saved records?')) return;
-  setRecords([]);
-  renderSaved();
-}
-function exportAllSaved(){
-  const arr = getRecords();
-  if(!arr.length){ alert('No records to export.'); return; }
-  const blob = new Blob([JSON.stringify(arr,null,2)], { type:'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'boutique-sizing-records-'+Date.now()+'.json';
-  a.click();
-  URL.revokeObjectURL(url);
-}
+document.getElementById('bookDesignBtn').addEventListener('click', ()=>{
+  const upperName = upperMeta(currentDesign.upper).name;
+  const lowerName = lowerMeta(currentDesign.lower).name;
+  const note = `Design studio sketch: ${upperName} + ${lowerName}, ${currentDesign.sleeve.replace('-',' ')} sleeve, ${currentDesign.length} length.`;
+  try{ sessionStorage.setItem('tifl_design_note', note); }catch(e){}
+});
 </script>
 </body>
 </html>
