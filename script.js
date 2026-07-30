@@ -290,10 +290,8 @@ function wireCartDrawer(){
   document.getElementById('cartOpenBtn')?.addEventListener('click', (e)=>{ e.preventDefault(); openCartDrawer(); });
   document.getElementById('drawerCloseBtn')?.addEventListener('click', closeCartDrawer);
   document.getElementById('overlay')?.addEventListener('click', closeCartDrawer);
-  document.getElementById('checkoutLink')?.addEventListener('click', ()=>{
-    fireBeginCheckout(Store.get('tifl_cart', []));
-    // no preventDefault — this is a real link to checkout.html
-  });
+  // begin_checkout fires once, on checkout.html itself when it loads —
+  // not here, or it double-fires (once on click, once on page arrival).
   updateCartUI();
 }
 
