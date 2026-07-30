@@ -955,7 +955,7 @@ async function placeLiveOrder(product, buyer){
   const payload = Object.assign({
     payment_method: 'Cash on delivery',
     notes: 'Live sale — instant buy',
-    items: [{id:product.id, name:product.name, brand:product.brand, price:product.price, qty:1}],
+    items: [{id:product.id, name:product.name, brand:product.brand, price:product.price, qty:1, image_url:product.image_url}],
     subtotal: product.price, shipping_fee: 0, total: product.price, currency:'PKR',
     anonymous_id: rsGetAnonymousId(), attribution: rsGetAttribution()
   }, buyer);
@@ -1231,7 +1231,7 @@ function initCheckoutPage(){
       country: document.getElementById('coCountry')?.value || 'Pakistan',
       payment_method: document.getElementById('coPayment')?.value || 'Cash on delivery',
       notes: document.getElementById('coNotes')?.value || null,
-      items: currentCart.map(c=>({id:c.id, name:c.name, brand:c.brand, price:c.price, qty:c.qty})),
+      items: currentCart.map(c=>({id:c.id, name:c.name, brand:c.brand, price:c.price, qty:c.qty, image_url:c.image_url})),
       subtotal, shipping_fee: shippingFee, total: subtotal+shippingFee, currency:'PKR',
       anonymous_id: rsGetAnonymousId(), attribution: rsGetAttribution()
     };
