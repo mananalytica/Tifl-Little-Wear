@@ -200,13 +200,24 @@
   <section class="studio-tab-panel" id="panel-cloth">
 
     <div class="eyebrow">Find my fabric</div>
-    <h2 style="font-size:26px;margin-bottom:8px;">Not sure where to start? Answer three questions.</h2>
-    <p class="lede" style="margin-bottom:24px;">We'll match you to the fabric our tailors would actually recommend, not just the most popular one.</p>
+    <h2 style="font-size:26px;margin-bottom:8px;">Not sure where to start? Answer a few questions.</h2>
+    <p class="lede" style="margin-bottom:24px;">We'll match you to the fabric our tailors would actually recommend — for any age from newborn through the teen years.</p>
 
     <div class="wizard-card">
       <div class="wizard-progress"><div class="wizard-progress-fill" id="wizardProgressFill"></div></div>
 
       <div class="wizard-step active" data-step="1">
+        <div class="wizard-q">How old is the child?</div>
+        <div class="wizard-opts">
+          <div class="wizard-opt" data-q="age" data-v="infant"><span class="emoji">👶</span><span class="label">Under 3 years</span></div>
+          <div class="wizard-opt" data-q="age" data-v="young"><span class="emoji">🧒</span><span class="label">4 – 6 years</span></div>
+          <div class="wizard-opt" data-q="age" data-v="child"><span class="emoji">🎈</span><span class="label">7 – 9 years</span></div>
+          <div class="wizard-opt" data-q="age" data-v="preteen"><span class="emoji">🎒</span><span class="label">10 – 13 years</span></div>
+          <div class="wizard-opt" data-q="age" data-v="teen"><span class="emoji">🌟</span><span class="label">14 – 20 years</span></div>
+        </div>
+      </div>
+
+      <div class="wizard-step" data-step="2">
         <div class="wizard-q">What's the outfit for?</div>
         <div class="wizard-opts">
           <div class="wizard-opt" data-q="occasion" data-v="everyday"><span class="emoji">🎒</span><span class="label">Everyday wear</span></div>
@@ -214,25 +225,36 @@
           <div class="wizard-opt" data-q="occasion" data-v="wedding"><span class="emoji">💍</span><span class="label">Wedding-side event</span></div>
           <div class="wizard-opt" data-q="occasion" data-v="school"><span class="emoji">❄️</span><span class="label">Winter &amp; school</span></div>
         </div>
+        <button class="btn btn-ghost btn-sm wizard-back" data-back="1">← Back</button>
       </div>
 
-      <div class="wizard-step" data-step="2">
+      <div class="wizard-step" data-step="3">
         <div class="wizard-q">How active will they be in it?</div>
         <div class="wizard-opts">
           <div class="wizard-opt" data-q="activity" data-v="active"><span class="emoji">🏃</span><span class="label">Running around all day</span></div>
           <div class="wizard-opt" data-q="activity" data-v="mixed"><span class="emoji">🚶</span><span class="label">A bit of both</span></div>
           <div class="wizard-opt" data-q="activity" data-v="still"><span class="emoji">📸</span><span class="label">Mostly sitting, photos</span></div>
         </div>
-        <button class="btn btn-ghost btn-sm wizard-back" data-back="1">← Back</button>
+        <button class="btn btn-ghost btn-sm wizard-back" data-back="2">← Back</button>
       </div>
 
-      <div class="wizard-step" data-step="3">
+      <div class="wizard-step" data-step="4">
         <div class="wizard-q">Machine-wash easy, or happy to dry clean for the right look?</div>
         <div class="wizard-opts">
           <div class="wizard-opt" data-q="care" data-v="easy"><span class="emoji">🧺</span><span class="label">Easiest care possible</span></div>
           <div class="wizard-opt" data-q="care" data-v="dryclean"><span class="emoji">✨</span><span class="label">Dry clean is fine</span></div>
         </div>
-        <button class="btn btn-ghost btn-sm wizard-back" data-back="2">← Back</button>
+        <button class="btn btn-ghost btn-sm wizard-back" data-back="3">← Back</button>
+      </div>
+
+      <div class="wizard-step" data-step="5">
+        <div class="wizard-q">Where should we send your recommendation?</div>
+        <p style="color:var(--ink-soft);font-size:13px;margin-bottom:16px;margin-top:-8px;">We'll also email you a copy so you don't lose it before your fitting.</p>
+        <form id="wizardEmailForm" style="display:flex;gap:10px;flex-wrap:wrap;">
+          <input type="email" id="wizardEmail" required placeholder="you@example.com" style="flex:1;min-width:220px;border:1px solid var(--line);border-radius:var(--radius-sm);padding:11px 14px;font-size:14px;">
+          <button type="submit" class="btn btn-primary">Show my match →</button>
+        </form>
+        <button class="btn btn-ghost btn-sm wizard-back" data-back="4" style="margin-top:14px;">← Back</button>
       </div>
 
       <div class="wizard-result" id="wizardResult">
@@ -662,32 +684,42 @@ document.getElementById('bookDesignBtn').addEventListener('click', ()=>{
 
 /* ================= FIND MY FABRIC WIZARD ================= */
 const FABRIC_DATA = [
-  { id:'lawn',     name:'Lawn',     swatch:'#F4EFD8', occasion:['everyday','festive'],          activity:['active','mixed'],        care:['easy'],     desc:'Light, breathable cotton weave — softens with every wash, forgiving for active kids.' },
-  { id:'cotton',   name:'Cotton',   swatch:'#EDEDED', occasion:['everyday','school'],            activity:['active','mixed'],        care:['easy'],     desc:'Sturdier than lawn, holds up to daily wear and repeated washing without losing shape.' },
-  { id:'silk',     name:'Silk',     swatch:'#F0DCC7', occasion:['wedding','festive'],            activity:['still','mixed'],         care:['dryclean'], desc:'Natural sheen and drape — the classic pick for occasion wear that needs to photograph well.' },
-  { id:'chiffon',  name:'Chiffon',  swatch:'#E4EEF9', occasion:['festive','wedding'],            activity:['still','mixed'],         care:['dryclean'], desc:'Very light and floaty, usually layered over a lining — delicate, built for sitting and photos, not running around.' },
-  { id:'organza',  name:'Organza',  swatch:'#F5E6EC', occasion:['wedding'],                      activity:['still'],                 care:['dryclean'], desc:'Crisp and structured, holds its shape — common for dupattas and layered occasion pieces.' },
-  { id:'velvet',   name:'Velvet',   swatch:'#2A2438', occasion:['school','wedding'],             activity:['mixed','still'],         care:['dryclean'], desc:'Heavy and warm with a soft pile — built for winter, especially occasion wear that needs presence.' }
+  { id:'lawn',     name:'Lawn',     swatch:'#F4EFD8', occasion:['everyday','festive'],          activity:['active','mixed'],        care:['easy'],     ageBoost:{infant:2, young:2, child:1, preteen:0, teen:0},    desc:'Light, breathable cotton weave — softens with every wash, forgiving for active kids.' },
+  { id:'cotton',   name:'Cotton',   swatch:'#EDEDED', occasion:['everyday','school'],            activity:['active','mixed'],        care:['easy'],     ageBoost:{infant:3, young:2, child:1, preteen:0, teen:0},    desc:'Sturdier than lawn, holds up to daily wear and repeated washing without losing shape — gentle on younger, more sensitive skin too.' },
+  { id:'silk',     name:'Silk',     swatch:'#F0DCC7', occasion:['wedding','festive'],            activity:['still','mixed'],         care:['dryclean'], ageBoost:{infant:-2, young:-1, child:0, preteen:1, teen:2},  desc:'Natural sheen and drape — the classic pick for occasion wear that needs to photograph well.' },
+  { id:'chiffon',  name:'Chiffon',  swatch:'#E4EEF9', occasion:['festive','wedding'],            activity:['still','mixed'],         care:['dryclean'], ageBoost:{infant:-2, young:-1, child:0, preteen:1, teen:2},  desc:'Very light and floaty, usually layered over a lining — delicate, built for sitting and photos, not running around.' },
+  { id:'organza',  name:'Organza',  swatch:'#F5E6EC', occasion:['wedding'],                      activity:['still'],                 care:['dryclean'], ageBoost:{infant:-2, young:-1, child:0, preteen:1, teen:1},  desc:'Crisp and structured, holds its shape — common for dupattas and layered occasion pieces.' },
+  { id:'velvet',   name:'Velvet',   swatch:'#2A2438', occasion:['school','wedding'],             activity:['mixed','still'],         care:['dryclean'], ageBoost:{infant:-1, young:0, child:1, preteen:1, teen:1},   desc:'Heavy and warm with a soft pile — built for winter, especially occasion wear that needs presence.' }
 ];
+const AGE_LABELS = {infant:'under 3 years', young:'4–6 years', child:'7–9 years', preteen:'10–13 years', teen:'14–20 years'};
+const OCCASION_LABELS = {everyday:'everyday wear', festive:'Eid & festive', wedding:'a wedding-side event', school:'winter & school'};
 
 const wizardAnswers = {};
 let wizardCurrentStep = 1;
+const WIZARD_TOTAL_STEPS = 5;
+let wizardStarted = false;
+
+function quizTrack(eventName, props){
+  const payload = Object.assign({quiz_name:'find_my_fabric'}, props || {});
+  dataLayer.push(Object.assign({event:eventName}, payload));
+  if(typeof rsTrack === 'function') rsTrack(eventName, payload);
+}
 
 function goToWizardStep(step){
   document.querySelectorAll('.wizard-step').forEach(s=>s.classList.remove('active'));
   document.querySelector(`.wizard-step[data-step="${step}"]`).classList.add('active');
   wizardCurrentStep = step;
-  document.getElementById('wizardProgressFill').style.width = (step/3*100)+'%';
+  document.getElementById('wizardProgressFill').style.width = (step/WIZARD_TOTAL_STEPS*100)+'%';
 }
 
 document.querySelectorAll('.wizard-opt').forEach(opt=>{
   opt.addEventListener('click', ()=>{
+    if(!wizardStarted){ wizardStarted = true; quizTrack('quiz_started', {}); }
     const q = opt.dataset.q, v = opt.dataset.v;
     wizardAnswers[q] = v;
-    if(wizardCurrentStep < 3){
+    quizTrack('quiz_step_answered', {step:wizardCurrentStep, question:q, answer:v});
+    if(wizardCurrentStep < WIZARD_TOTAL_STEPS){
       goToWizardStep(wizardCurrentStep+1);
-    } else {
-      showWizardResult();
     }
   });
 });
@@ -695,11 +727,19 @@ document.querySelectorAll('.wizard-back').forEach(btn=>{
   btn.addEventListener('click', ()=> goToWizardStep(+btn.dataset.back));
 });
 
+document.getElementById('wizardEmailForm').addEventListener('submit', (e)=>{
+  e.preventDefault();
+  wizardAnswers.email = document.getElementById('wizardEmail').value.trim();
+  quizTrack('quiz_email_submitted', {});
+  showWizardResult();
+});
+
 function scoreFabric(f){
   let score = 0;
   if(f.occasion.includes(wizardAnswers.occasion)) score += 3;
   if(f.activity.includes(wizardAnswers.activity)) score += 2;
   if(f.care.includes(wizardAnswers.care)) score += 2;
+  score += f.ageBoost[wizardAnswers.age] || 0;
   return score;
 }
 
@@ -710,9 +750,10 @@ function showWizardResult(){
   const ranked = FABRIC_DATA.map(f=>({...f, score:scoreFabric(f)})).sort((a,b)=>b.score-a.score);
   const top = ranked.slice(0,2);
 
-  const occasionLabel = {everyday:'everyday wear', festive:'Eid & festive', wedding:'a wedding-side event', school:'winter & school'}[wizardAnswers.occasion];
+  const occasionLabel = OCCASION_LABELS[wizardAnswers.occasion];
+  const ageLabel = AGE_LABELS[wizardAnswers.age];
   document.getElementById('wizardResultTitle').textContent = 'Best matches for ' + occasionLabel;
-  document.getElementById('wizardResultSub').textContent = "Based on how active they'll be and your care preference.";
+  document.getElementById('wizardResultSub').textContent = `For a child ${ageLabel}, based on activity level and care preference.`;
 
   document.getElementById('wizardResultGrid').innerHTML = top.map((f,i)=>`
     <div class="wizard-match-card ${i===1?'second':''}">
@@ -724,16 +765,38 @@ function showWizardResult(){
 
   const bookBtn = document.getElementById('wizardBookBtn');
   bookBtn.onclick = ()=>{
-    const note = `Fabric guide match: ${top[0].name}${top[1] ? ' or '+top[1].name : ''}, for ${occasionLabel}.`;
+    const note = `Fabric guide match: ${top[0].name}${top[1] ? ' or '+top[1].name : ''}, for ${occasionLabel} (age ${ageLabel}).`;
     try{ sessionStorage.setItem('tifl_design_note', note); }catch(e){}
   };
 
   document.getElementById('wizardResult').classList.add('active');
+
+  quizTrack('quiz_completed', {
+    age_band: wizardAnswers.age, occasion: wizardAnswers.occasion,
+    activity: wizardAnswers.activity, care: wizardAnswers.care,
+    recommended: top[0].name, email: wizardAnswers.email
+  });
+
+  // Persist the lead server-side too, not just client-side tracking.
+  fetch('/api/quiz-leads', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      email: wizardAnswers.email,
+      age_band: wizardAnswers.age,
+      occasion: wizardAnswers.occasion,
+      activity: wizardAnswers.activity,
+      care: wizardAnswers.care,
+      recommended: top[0].name,
+      anonymous_id: (typeof rsGetAnonymousId === 'function') ? rsGetAnonymousId() : null
+    })
+  }).catch(()=>{ /* lead is still tracked client-side even if this fails */ });
 }
 
 document.getElementById('wizardRetakeBtn').addEventListener('click', ()=>{
   Object.keys(wizardAnswers).forEach(k=>delete wizardAnswers[k]);
+  wizardStarted = false;
   document.getElementById('wizardResult').classList.remove('active');
+  document.getElementById('wizardEmailForm').reset();
   goToWizardStep(1);
 });
 
