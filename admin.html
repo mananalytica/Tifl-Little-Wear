@@ -50,7 +50,7 @@
       <h3>Bulk upload (CSV or XML)</h3>
       <p style="margin-bottom:16px;">Upload a Google Shopping-style feed file to add or update many products at once. Matching is done by <b>SKU</b> — if a row's SKU matches an existing product, that product is updated instead of duplicated, so it's safe to re-upload the same file later.</p>
       <p style="font-size:12.5px;color:var(--ink-soft);margin-bottom:14px;">
-        Expected columns (CSV header row, or XML <code>&lt;item&gt;</code> tags): <code>id, title, description, link, image_link, price, sale_price, availability, brand, condition, gtin, mpn, google_product_category, product_type, color, size, gender, age_group, item_group_id</code>.
+        Expected columns (CSV header row, or XML <code>&lt;item&gt;</code> tags): <code>id, title, description, link, image_link, price, sale_price, availability, brand, condition, gtin, mpn, google_product_category, product_type, color, size, material, gender, age_group, item_group_id</code>.
         <code>id</code> is used as the SKU. Missing columns are fine — only <code>title</code> and <code>price</code> are required.
       </p>
       <input type="file" id="bulkFile" accept=".csv,.xml" style="margin-bottom:12px;">
@@ -119,6 +119,7 @@
             </div>
             <div class="field"><label for="apColorAttr">Colour</label><input id="apColorAttr" type="text" placeholder="e.g. Forest Green"></div>
             <div class="field"><label for="apSize">Size</label><input id="apSize" type="text" placeholder="e.g. 4-5Y"></div>
+            <div class="field"><label for="apMaterial">Material</label><input id="apMaterial" type="text" placeholder="e.g. 100% Cotton"></div>
             <div class="field"><label for="apGender">Gender</label>
               <select id="apGender">
                 <option value="">—</option>
@@ -158,6 +159,7 @@
 
 <div class="toast" id="toast"></div>
 <script src="rudderstack.js"></script>
+<script src="consent.js"></script>
 <script src="script.js"></script>
 <script>
   document.getElementById('feedXmlLink').href = window.location.origin + '/api/products/feed.xml';

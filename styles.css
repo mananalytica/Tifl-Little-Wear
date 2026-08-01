@@ -324,6 +324,15 @@ footer.site{border-top:1px solid var(--line);padding:52px 0 40px;margin-top:60px
 .pd-meta-list{margin-top:24px;display:flex;flex-direction:column;gap:8px;}
 .pd-meta-list p{font-size:13px;color:var(--ink-soft);}
 
+.pd-details-section{margin-top:36px;padding-top:28px;border-top:1px solid var(--line);}
+.pd-details-section h2{font-size:16px;margin-bottom:16px;}
+.pd-detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;}
+.pd-detail-item{border:1px solid var(--line);border-radius:var(--radius-sm);padding:14px 16px;background:var(--bg-alt);}
+.pd-detail-item .label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:6px;}
+.pd-detail-item .value{font-size:14px;font-weight:600;color:var(--ink);}
+.pd-sizing-link{display:inline-flex;align-items:center;gap:6px;margin-top:16px;color:var(--primary-dark);font-size:13px;font-weight:600;text-decoration:none;}
+.pd-sizing-link:hover{text-decoration:underline;}
+
 /* =============== ADMIN =============== */
 .admin-list{display:flex;flex-direction:column;gap:10px;}
 .admin-row{display:flex;align-items:center;gap:14px;border:1px solid var(--line);border-radius:var(--radius-sm);padding:12px;background:var(--bg);}

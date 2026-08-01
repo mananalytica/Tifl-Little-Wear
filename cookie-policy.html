@@ -3,13 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Checkout — Tifl Little Wear</title>
-<meta name="robots" content="noindex, nofollow">
-<meta name="description" content="Complete your order at Tifl Little Wear.">
+<title>Cookie Policy — Tifl Little Wear</title>
+<meta name="description" content="What cookies and local storage Tifl Little Wear uses, and how to control them.">
+<link rel="canonical" href="https://www.tifllittlewear.com/cookie-policy.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
+<style>
+.cookie-table{width:100%;border-collapse:collapse;margin:20px 0 32px;font-size:13.5px;}
+.cookie-table th{text-align:left;font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);padding:10px 12px;border-bottom:1px solid var(--line);}
+.cookie-table td{padding:12px;border-bottom:1px solid var(--line);vertical-align:top;}
+.cookie-table code{font-family:'IBM Plex Mono',monospace;font-size:12px;background:var(--bg-alt);padding:2px 6px;border-radius:4px;}
+.cookie-tag{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:var(--primary-light);color:var(--primary-dark);}
+.cookie-tag.optional{background:#FDF0E6;color:#B4682F;}
+</style>
 </head>
 <body>
 
@@ -43,63 +51,49 @@
 </header>
 
 <main class="wrap">
-  <div class="section-head" style="padding:36px 0 8px;">
-    <div class="eyebrow">Checkout</div>
-    <h1>Complete your order.</h1>
-    <p class="lede">Cash on delivery or bank transfer — we'll confirm by phone once it's placed.</p>
+  <div class="article-head">
+    <div class="eyebrow">Legal</div>
+    <h1>Cookie Policy</h1>
+    <p class="article-meta">Last updated: 1 August 2026</p>
   </div>
 
-  <div class="booking-grid" style="padding-bottom:80px;">
-    <form class="book-form" id="checkoutForm">
-      <div class="eyebrow" style="margin-bottom:6px;">Contact</div>
-      <div class="form-grid">
-        <div class="field"><label for="coName">Full name</label><input required type="text" id="coName"></div>
-        <div class="field"><label for="coPhone">Phone</label><input required type="tel" id="coPhone" placeholder="03xx-xxxxxxx"></div>
-        <div class="field full"><label for="coEmail">Email (optional)</label><input type="email" id="coEmail"></div>
-      </div>
+  <article class="article-body">
+    <p>We use browser storage (technically <code>localStorage</code>, not traditional cookies, but covered by the same rules) to run the site and, with your permission, to understand how it's used. Here's exactly what we store and why.</p>
 
-      <div class="eyebrow" style="margin:26px 0 6px;">Delivery address</div>
-      <div class="form-grid">
-        <div class="field full"><label for="coAddress">Street address</label><input required type="text" id="coAddress" placeholder="House / street"></div>
-        <div class="field full"><label for="coAddress2">Apartment, unit, etc. (optional)</label><input type="text" id="coAddress2"></div>
-        <div class="field"><label for="coCity">City</label><input required type="text" id="coCity" value="Lahore"></div>
-        <div class="field"><label for="coState">State / Province (optional)</label><input type="text" id="coState" value="Punjab"></div>
-        <div class="field"><label for="coPostal">Postal code</label><input type="text" id="coPostal" placeholder="e.g. 54000"></div>
-        <div class="field"><label for="coCountry">Country</label><input required type="text" id="coCountry" value="Pakistan"></div>
-      </div>
-
-      <div class="eyebrow" style="margin:26px 0 6px;">Payment</div>
-      <div class="form-grid">
-        <div class="field full"><label for="coPayment">Payment method</label>
-          <select id="coPayment">
-            <option>Cash on delivery</option>
-            <option>Bank transfer</option>
-          </select>
-        </div>
-        <div class="field full"><label for="coNotes">Order notes (optional)</label><textarea id="coNotes" rows="2" placeholder="Delivery instructions, gift note, etc."></textarea></div>
-      </div>
-
-      <button type="submit" class="btn btn-primary btn-block" style="margin-top:22px;">Place order</button>
-    </form>
-
-    <div>
-      <div class="side-card">
-        <h3>Order summary</h3>
-        <div id="checkoutItems" style="margin-top:10px;"></div>
-        <hr class="seam" style="margin:16px 0;">
-        <div style="display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:14px;margin-bottom:8px;">
-          <span>Subtotal</span><span id="checkoutSubtotal">PKR 0</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:600;">
-          <span>Total</span><span id="checkoutTotal">PKR 0</span>
-        </div>
-      </div>
-      <div class="side-card">
-        <h3>Need something custom instead?</h3>
-        <p>Ready-to-wear not quite right? <a href="booking.html" style="color:var(--primary-dark);">Book a made-to-measure fitting</a> instead.</p>
-      </div>
+    <div style="margin:24px 0;">
+      <a class="btn btn-primary btn-sm" href="#" data-open-consent>Manage my cookie preferences</a>
     </div>
-  </div>
+
+    <h2>Strictly necessary — always on</h2>
+    <p>These make the site work. There's no option to disable them, since doing so would break basic functionality like your cart.</p>
+    <table class="cookie-table">
+      <thead><tr><th>Name</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td><code>tifl_cart</code></td><td>Remembers what's in your shopping cart as you browse between pages.</td></tr>
+        <tr><td><code>tifl_session</code></td><td>Keeps you signed in to your account.</td></tr>
+        <tr><td><code>tifl_measurements</code></td><td>Carries measurements you've saved from the Measurements page into a booking, so you don't re-type them.</td></tr>
+        <tr><td><code>tifl_consent</code></td><td>Remembers your cookie preference choice, so we don't ask you every visit.</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Analytics — <span class="cookie-tag optional">Optional</span></h2>
+    <p>Only set if you click "Accept all" on the cookie banner. These help us understand which pages and campaigns are working, so we can improve the site. You can withdraw consent anytime using the button above.</p>
+    <table class="cookie-table">
+      <thead><tr><th>Name</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td>RudderStack identifiers</td><td>An anonymous ID used to understand browsing patterns and, if you place an order or make a booking, connect that browsing history to the transaction.</td></tr>
+        <tr><td><code>tifl_first_touch</code> / <code>tifl_last_touch</code></td><td>Records which campaign or link first brought you to the site (e.g. a Google or Meta ad), so we know which marketing is actually working. Only sent to our analytics provider if you've accepted analytics cookies.</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Third-party cookies</h2>
+    <p>If you use the WhatsApp button to message us, or click through to YouTube/Instagram/Facebook from our Live Sale page, those platforms may set their own cookies once you're on their site — governed by their own policies, not ours.</p>
+
+    <h2>How to control cookies</h2>
+    <p>Use the "Manage my cookie preferences" button above at any time to change your choice. You can also clear cookies/site data through your browser's own settings, which will reset all preferences including this one.</p>
+
+    <p style="margin-top:28px;">Questions? Email <a href="mailto:studio@tiflwear.pk" style="color:var(--primary-dark);">studio@tiflwear.pk</a>. See also our <a href="privacy-policy.html" style="color:var(--primary-dark);">Privacy Policy</a>.</p>
+  </article>
 </main>
 
 <footer class="site">

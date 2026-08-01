@@ -194,7 +194,8 @@ function normalizeProduct(p){
     size: p.size || '',
     gender: p.gender || '',
     age_group: p.age_group || 'kids',
-    item_group_id: p.item_group_id || ''
+    item_group_id: p.item_group_id || '',
+    material: p.material || ''
   };
 }
 
@@ -575,6 +576,22 @@ async function initProductPage(){
   if(p.gender) chips.push(p.gender.charAt(0).toUpperCase()+p.gender.slice(1));
   if(p.age_group) chips.push(p.age_group.charAt(0).toUpperCase()+p.age_group.slice(1));
   document.getElementById('pdAttributes').innerHTML = chips.map(c=>`<span class="garment-tag">${c}</span>`).join('');
+
+  const AGE_GROUP_LABELS = {
+    newborn: 'Newborn (0–3 months)', infant: 'Infant (3–12 months)',
+    toddler: 'Toddler (1–3 years)', kids: 'Kids (4–12 years)', adult: 'Teen / Adult'
+  };
+  const details = [
+    { label:'Material', value: p.material || 'Ask us for material details' },
+    { label:'Recommended age', value: AGE_GROUP_LABELS[p.age_group] || 'See sizing chart' },
+    { label:'Size', value: p.size || 'See sizing chart for measurements' }
+  ];
+  document.getElementById('pdDetailGrid').innerHTML = details.map(d=>`
+    <div class="pd-detail-item">
+      <div class="label">${d.label}</div>
+      <div class="value">${d.value}</div>
+    </div>`).join('');
+
   document.getElementById('pdAddBtn').addEventListener('click', ()=>{
     const qty = parseInt(document.getElementById('pdQty').value, 10) || 1;
     addToCart(p, qty);
@@ -724,6 +741,7 @@ function initAdminPage(){
     document.getElementById('apCondition').value = p.condition || 'new';
     document.getElementById('apColorAttr').value = p.color || '';
     document.getElementById('apSize').value = p.size || '';
+    document.getElementById('apMaterial').value = p.material || '';
     document.getElementById('apGender').value = p.gender || '';
     document.getElementById('apAgeGroup').value = p.age_group || 'kids';
     document.getElementById('apGoogleCategory').value = p.google_product_category || '';
@@ -758,6 +776,7 @@ function initAdminPage(){
       condition: document.getElementById('apCondition').value,
       color: document.getElementById('apColorAttr').value || null,
       size: document.getElementById('apSize').value || null,
+      material: document.getElementById('apMaterial').value || null,
       gender: document.getElementById('apGender').value || null,
       age_group: document.getElementById('apAgeGroup').value,
       google_product_category: document.getElementById('apGoogleCategory').value || null,
@@ -820,6 +839,7 @@ function initAdminPage(){
       product_type: get('product_type'),
       color: get('color'),
       size: get('size'),
+      material: get('material'),
       gender: get('gender'),
       age_group: get('age_group') || 'kids',
       item_group_id: get('item_group_id'),

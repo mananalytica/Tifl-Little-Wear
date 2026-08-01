@@ -8,6 +8,13 @@
    so it must be pure JS -- the <script> wrapper tags RudderStack's
    dashboard gives you (for pasting into an HTML <head> directly)
    are intentionally left out here.
+
+   CONSENT: the actual SDK network call (rudderanalytics.load(...))
+   is NOT fired automatically anymore — it only fires once consent.js
+   confirms the visitor has accepted analytics cookies, via
+   tiflStartAnalytics() below. Setting up the stub queue itself is
+   harmless (nothing is transmitted until .load() runs), so that part
+   still runs unconditionally.
 ============================================================= */
 !function(){"use strict";window.RudderSnippetVersion="3.2.0";var e="rudderanalytics";window[e]||(window[e]=[])
 ;var rudderanalytics=window[e];if(Array.isArray(rudderanalytics)){
@@ -29,9 +36,32 @@ if("undefined"==typeof globalThis){var e;var r=function getGlobal(){
 return"undefined"!=typeof self?self:"undefined"!=typeof window?window:null}();r&&Object.defineProperty(r,"globalThis",{
 value:r,configurable:true})}
 }(),window.rudderAnalyticsAddScript("".concat(sdkBaseUrl,"/").concat(sdkVersion,"/").concat(window.rudderAnalyticsBuildType,"/").concat(sdkFileName),"data-rsa-write-key","3Gm1kin1xBKjQnCJfuCHVDJvNsL")
-},
-"undefined"==typeof Promise||"undefined"==typeof globalThis?window.rudderAnalyticsAddScript("https://polyfill-fastly.io/v3/polyfill.min.js?version=3.111.0&features=Symbol%2CPromise&callback=rudderAnalyticsMount"):window.rudderAnalyticsMount()
-;var loadOptions={};rudderanalytics.load("3Gm1kin1xBKjQnCJfuCHVDJvNsL","https://tifllittlekzei.dataplane.eu.rudderstack.com",loadOptions)}}}();
+}}}}();
+
+/* ---------- consent gate ---------- */
+function hasAnalyticsConsent(){
+  try{
+    const c = JSON.parse(localStorage.getItem('tifl_consent') || 'null');
+    return !!(c && c.analytics === true);
+  }catch(e){ return false; }
+}
+
+let _tiflAnalyticsStarted = false;
+// Called by consent.js the moment a visitor accepts analytics cookies
+// (either on this page load, if already consented before, or right when
+// they click "Accept" on the banner). Safe to call more than once.
+function tiflStartAnalytics(){
+  if(_tiflAnalyticsStarted || !hasAnalyticsConsent()) return;
+  _tiflAnalyticsStarted = true;
+  if("undefined"==typeof Promise||"undefined"==typeof globalThis){
+    window.rudderAnalyticsAddScript("https://polyfill-fastly.io/v3/polyfill.min.js?version=3.111.0&features=Symbol%2CPromise&callback=rudderAnalyticsMount");
+  } else {
+    window.rudderAnalyticsMount();
+  }
+  window.rudderanalytics.load("3Gm1kin1xBKjQnCJfuCHVDJvNsL","https://tifllittlekzei.dataplane.eu.rudderstack.com",{});
+  rsPage();
+}
+if(hasAnalyticsConsent()) tiflStartAnalytics(); // returning visitor who already said yes
 
 /* ---------- shared context on every call ---------- */
 function rsPageContext() {
@@ -53,6 +83,10 @@ function rsPageContext() {
    Forwarded to the backend on booking/order/signup submissions so
    the Python SDK can attach it to server-side events too, and
    stitched by anonymousId so it's the same person either side.
+   Capturing into localStorage here is harmless bookkeeping (nothing
+   leaves the browser) — but the getters below only hand this data
+   out to the rest of the site if analytics consent was given, so it
+   can't be sent anywhere without consent either way.
 ============================================================= */
 function rsCaptureAttribution() {
   const params = new URLSearchParams(window.location.search);
@@ -102,9 +136,11 @@ function rsCaptureAttribution() {
 }
 rsCaptureAttribution();
 
-// Returns { first_touch: {...}, last_touch: {...} } for attaching to
-// any form submission (booking, order, signup) sent to the backend.
+// Returns { first_touch: {...}, last_touch: {...} } — only if analytics
+// consent has been given. Without consent, returns empty so no
+// attribution data leaves the browser on a booking/order submission.
 function rsGetAttribution() {
+  if(!hasAnalyticsConsent()) return { first_touch:null, last_touch:null };
   const read = (key) => {
     try { return JSON.parse(localStorage.getItem(key) || "null"); } catch (e) { return null; }
   };
@@ -113,11 +149,11 @@ function rsGetAttribution() {
   return { first_touch: firstTouch, last_touch: lastTouch };
 }
 
-// The browser-side identity RudderStack already tracks anonymous
-// visitors with — send this to the backend so server-side track()/
-// identify() calls stitch into the same identity graph instead of
-// starting a disconnected trail.
+// The browser-side identity RudderStack tracks anonymous visitors with —
+// only returned if consent was given, otherwise the backend has nothing
+// to stitch server-side events to.
 function rsGetAnonymousId() {
+  if(!hasAnalyticsConsent()) return null;
   try {
     if (window.rudderanalytics && window.rudderanalytics.getAnonymousId) {
       return window.rudderanalytics.getAnonymousId();
@@ -128,16 +164,19 @@ function rsGetAnonymousId() {
 
 /* ---------- public helpers used across script.js ---------- */
 function rsPage() {
+  if (!hasAnalyticsConsent()) return;
   if (window.rudderanalytics && window.rudderanalytics.page) {
     window.rudderanalytics.page(document.title, rsPageContext());
   }
 }
 function rsTrack(eventName, properties) {
+  if (!hasAnalyticsConsent()) return;
   if (window.rudderanalytics && window.rudderanalytics.track) {
     window.rudderanalytics.track(eventName, Object.assign({}, rsPageContext(), properties || {}));
   }
 }
 function rsIdentify(userId, traits) {
+  if (!hasAnalyticsConsent()) return;
   if (window.rudderanalytics && window.rudderanalytics.identify) {
     window.rudderanalytics.identify(userId, Object.assign({}, rsPageContext(), traits || {}));
   }
