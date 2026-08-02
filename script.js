@@ -581,8 +581,11 @@ async function initProductPage(){
     newborn: 'Newborn (0–3 months)', infant: 'Infant (3–12 months)',
     toddler: 'Toddler (1–3 years)', kids: 'Kids (4–12 years)', adult: 'Teen / Adult'
   };
+  document.getElementById('pdMaterialText').textContent = p.material
+    ? 'Made from ' + p.material + '.'
+    : 'Material details available on request — ask us via WhatsApp or at your fitting.';
+
   const details = [
-    { label:'Material', value: p.material || 'Ask us for material details' },
     { label:'Recommended age', value: AGE_GROUP_LABELS[p.age_group] || 'See sizing chart' },
     { label:'Size', value: p.size || 'See sizing chart for measurements' }
   ];
@@ -591,6 +594,16 @@ async function initProductPage(){
       <div class="label">${d.label}</div>
       <div class="value">${d.value}</div>
     </div>`).join('');
+
+  // Accordion — one panel open at a time, first one starts open.
+  document.querySelectorAll('.pd-acc-trigger').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const item = btn.closest('.pd-acc-item');
+      const wasOpen = item.classList.contains('open');
+      document.querySelectorAll('.pd-acc-item').forEach(i=>i.classList.remove('open'));
+      if(!wasOpen) item.classList.add('open');
+    });
+  });
 
   document.getElementById('pdAddBtn').addEventListener('click', ()=>{
     const qty = parseInt(document.getElementById('pdQty').value, 10) || 1;

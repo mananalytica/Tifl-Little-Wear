@@ -56,22 +56,70 @@
       <p class="pd-desc" id="pdDescription"></p>
       <div id="pdAttributes" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;"></div>
 
+      <div class="pd-feature-strip">
+        <div class="pd-feature">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 21v-6a4 4 0 014-4h8a4 4 0 014 4v6M9 11V7a3 3 0 016 0v4"/></svg>
+          <span>Hand-finished seams</span>
+        </div>
+        <div class="pd-feature">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+          <span>Cash on delivery</span>
+        </div>
+        <div class="pd-feature">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 6L9 17l-5-5"/></svg>
+          <span>Checked for fit</span>
+        </div>
+        <div class="pd-feature">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <span>Lahore-based studio</span>
+        </div>
+      </div>
+
       <div class="pd-qty-row">
         <label for="pdQty">Qty</label>
         <input type="number" id="pdQty" value="1" min="1" max="10">
       </div>
       <button class="btn btn-primary btn-block" id="pdAddBtn">Add to cart</button>
 
-      <div class="pd-meta-list">
-        <p>✓ Checked for fit and finish before listing</p>
-        <p>✓ Cash on delivery available across Lahore</p>
-        <p>✓ Need a custom size instead? <a href="booking.html" style="color:var(--primary-dark);">Book a made-to-measure fitting</a></p>
-      </div>
+      <div class="pd-accordion">
+        <div class="pd-acc-item open">
+          <button class="pd-acc-trigger" data-acc="details">
+            Details
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="pd-acc-panel">
+            <div class="pd-acc-panel-inner">
+              <p>✓ Checked for fit and finish before listing</p>
+              <p style="margin-top:6px;">✓ Need a custom size instead? <a href="booking.html" style="color:var(--primary-dark);">Book a made-to-measure fitting</a></p>
+            </div>
+          </div>
+        </div>
 
-      <div class="pd-details-section">
-        <h2>Product details</h2>
-        <div class="pd-detail-grid" id="pdDetailGrid"></div>
-        <a class="pd-sizing-link" href="measurements.html">View our full sizing chart →</a>
+        <div class="pd-acc-item">
+          <button class="pd-acc-trigger" data-acc="materials">
+            Materials &amp; Care
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="pd-acc-panel">
+            <div class="pd-acc-panel-inner">
+              <p id="pdMaterialText">Material details available on request.</p>
+              <p style="margin-top:10px;">Machine wash cold, inside out. Line dry in shade. Cool iron if needed — avoid ironing directly over embroidery.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="pd-acc-item">
+          <button class="pd-acc-trigger" data-acc="sizing">
+            Sizing
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="pd-acc-panel">
+            <div class="pd-acc-panel-inner">
+              <div class="pd-detail-grid" id="pdDetailGrid"></div>
+              <a class="pd-sizing-link" href="measurements.html">View our full sizing chart →</a>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
