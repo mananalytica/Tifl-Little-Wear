@@ -674,6 +674,101 @@ async function initProductPage(){
     relatedRoot.querySelectorAll('.p-card').forEach(card=>{
       card.addEventListener('click', ()=>{ window.location.href = 'product.html?id='+card.dataset.id; });
     });
+    document.getElementById('pdWearWithSection')?.style.setProperty('display', 'block');
+  }
+
+  /* ---------- variant B only (guarded — no-op on product.html) ---------- */
+
+  // Gallery thumbnails: main image + additional_image_link if present.
+  const thumbsRoot = document.getElementById('pdThumbs');
+  if(thumbsRoot){
+    const images = [p.image_url];
+    if(p.additional_image_link) images.push(p.additional_image_link);
+    thumbsRoot.innerHTML = images.map((img,i)=>`
+      <div class="pd-thumb ${i===0?'active':''}" data-img="${img}">
+        ${productThumbHTML(Object.assign({}, p, {image_url: img}), '70%')}
+      </div>`).join('');
+    thumbsRoot.querySelectorAll('.pd-thumb').forEach(t=>{
+      t.addEventListener('click', ()=>{
+        thumbsRoot.querySelectorAll('.pd-thumb').forEach(x=>x.classList.remove('active'));
+        t.classList.add('active');
+        document.getElementById('pdMedia').innerHTML = productThumbHTML(Object.assign({}, p, {image_url: t.dataset.img}), '55%');
+      });
+    });
+  }
+
+  // Size note (honest to the data model — one size per listing, not a
+  // selector implying variants that don't exist yet).
+  const sizeNote = document.getElementById('pdSizeNote');
+  if(sizeNote && p.size){
+    sizeNote.style.display = 'flex';
+    document.getElementById('pdSizeValue').textContent = p.size;
+  }
+
+  // Complete the set — one suggestion from a different category, so it
+  // reads as a genuine pairing rather than "more of the same."
+  const completeSetRoot = document.getElementById('pdCompleteSet');
+  if(completeSetRoot){
+    const pick = PRODUCTS.find(x=>x.id!==p.id && x.category!==p.category);
+    if(pick){
+      completeSetRoot.innerHTML = `
+        <div class="pd-cross-row" data-id="${pick.id}" style="cursor:pointer;">
+          <div class="thumb">${productThumbHTML(pick,'70%')}</div>
+          <div class="info">
+            <div class="name">${pick.name}</div>
+            <div class="meta">${pick.brand} · ${pick.category}</div>
+          </div>
+          <span class="price">PKR ${pick.price.toLocaleString()}</span>
+          <button class="btn btn-ghost btn-sm" data-add="${pick.id}">Add to cart</button>
+        </div>`;
+      completeSetRoot.querySelector('.pd-cross-row').addEventListener('click', (e)=>{
+        if(e.target.closest('[data-add]')) return;
+        window.location.href = 'product.html?id='+pick.id;
+      });
+      completeSetRoot.querySelector('[data-add]').addEventListener('click', (e)=>{
+        e.stopPropagation(); addToCart(pick, 1);
+      });
+      document.getElementById('pdCompleteSetSection').style.display = 'block';
+    }
+  }
+
+  // Broader browse strip — everything else in the shop, excluding this item.
+  const uniformStrip = document.getElementById('pdUniformStrip');
+  if(uniformStrip){
+    const others = PRODUCTS.filter(x=>x.id!==p.id).slice(0,8);
+    if(others.length){
+      uniformStrip.innerHTML = others.map(o=>`
+        <div class="p-card" data-id="${o.id}">
+          <div class="p-thumb"><span class="brand-tag">${o.brand}</span>${productThumbHTML(o)}</div>
+          <div class="p-info">
+            <div class="pname">${o.name}</div>
+            <div class="pcat">${o.category}</div>
+            <div class="prow"><span class="price">PKR ${o.price.toLocaleString()}</span></div>
+          </div>
+        </div>`).join('');
+      uniformStrip.querySelectorAll('.p-card').forEach(card=>{
+        card.addEventListener('click', ()=>{ window.location.href = 'product.html?id='+card.dataset.id; });
+      });
+      document.getElementById('pdUniformSection').style.display = 'block';
+    }
+  }
+
+  // Sticky add-to-cart bar — appears once the main Add to Cart button
+  // scrolls out of view, matching the reference's mobile-friendly pattern.
+  const stickyBar = document.getElementById('pdStickyBar');
+  if(stickyBar){
+    document.getElementById('pdStickyThumb').innerHTML = productThumbHTML(p, '70%');
+    document.getElementById('pdStickyName').textContent = p.name;
+    document.getElementById('pdStickyPrice').textContent = p.currency+' '+(p.sale_price || p.price).toLocaleString();
+    document.getElementById('pdStickyAddBtn').addEventListener('click', ()=>{
+      const qty = parseInt(document.getElementById('pdQty').value, 10) || 1;
+      addToCart(p, qty);
+    });
+    const mainAddBtn = document.getElementById('pdAddBtn');
+    const observer = new IntersectionObserver(([entry])=>{
+      stickyBar.classList.toggle('show', !entry.isIntersecting);
+    }, {threshold:0});
+    observer.observe(mainAddBtn);
   }
 }
 
