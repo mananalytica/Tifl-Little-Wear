@@ -28,6 +28,7 @@
       <a href="live-sell.html">Live Sale</a>
       <a href="design-studio.html">Design Studio</a>
       <a href="blog.html">Blog</a>
+      <a href="about-us.html">About</a>
       <a href="contact.html">Contact</a>
     </nav>
     <div class="nav-right">
@@ -47,7 +48,10 @@
   <p style="padding:20px 0 0;font-size:12.6px;"><a href="shop.html" style="color:var(--ink-soft);text-decoration:none;">← Back to shop</a></p>
 
   <div id="productDetail" class="product-detail">
-    <div class="pd-media" id="pdMedia"></div>
+    <div class="pd-gallery-wrap">
+      <div class="pd-thumbs" id="pdThumbs"></div>
+      <div class="pd-main-media" id="pdMedia"></div>
+    </div>
     <div class="pd-info">
       <div class="eyebrow" id="pdBrand">—</div>
       <h1 id="pdName">Loading…</h1>
@@ -75,11 +79,17 @@
         </div>
       </div>
 
+      <div class="pd-size-note" id="pdSizeNote" style="display:none;">
+        <span>Size: <b id="pdSizeValue">—</b></span>
+        <a href="measurements.html">Need a different size? →</a>
+      </div>
+
       <div class="pd-qty-row">
         <label for="pdQty">Qty</label>
         <input type="number" id="pdQty" value="1" min="1" max="10">
       </div>
       <button class="btn btn-primary btn-block" id="pdAddBtn">Add to cart</button>
+      <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin-top:10px;">Prefer made-to-measure instead? <a href="booking.html" style="color:var(--primary-dark);">Book a fitting →</a></p>
 
       <div class="pd-accordion">
         <div class="pd-acc-item open">
@@ -129,9 +139,22 @@
     <a class="btn btn-ghost" href="shop.html" style="margin-top:16px;">Back to shop</a>
   </div>
 
-  <div style="padding:70px 0;">
-    <div class="eyebrow">You might also like</div>
-    <div class="product-grid" id="pdRelated" style="margin-top:14px;"></div>
+  <div class="pd-cross-section" id="pdCompleteSetSection" style="display:none;">
+    <div class="eyebrow">Complete the set</div>
+    <h2>Pairs well with this piece.</h2>
+    <div id="pdCompleteSet"></div>
+  </div>
+
+  <div class="pd-cross-section" id="pdWearWithSection" style="display:none;">
+    <div class="eyebrow">Wear it with</div>
+    <h2>More from this category.</h2>
+    <div class="product-grid" id="pdRelated"></div>
+  </div>
+
+  <div class="pd-cross-section" id="pdUniformSection" style="display:none;">
+    <div class="eyebrow">Complete your collection</div>
+    <h2>Browse the rest of the shop.</h2>
+    <div class="pd-uniform-strip" id="pdUniformStrip"></div>
   </div>
 </main>
 
@@ -143,22 +166,23 @@
         <p style="color:var(--ink-soft);font-size:13.5px;margin-top:12px;max-width:260px;">A made-to-measure kidswear studio working out of Gulberg, Lahore. Measured by hand, stitched by hand.</p>
       </div>
       <div>
-        <h5>Studio</h5>
+        <p class="foot-heading">Studio</p>
         <a href="index.html">Home</a>
+        <a href="about-us.html">About us</a>
         <a href="measurements.html">Our process</a>
         <a href="booking.html">Book a fitting</a>
       </div>
       <div>
-        <h5>Shop</h5>
+        <p class="foot-heading">Shop</p>
         <a href="shop.html">Ready pieces</a>
         <a href="live-sell.html">Live sale</a>
         <a href="blog.html">Blog</a>
         <a href="design-studio.html">Design studio</a>
       </div>
       <div>
-        <h5>Contact</h5>
-        <a data-config-href="phoneHref" href="tel:+924212345678"><span data-config="phone">+92 42 1234 5678</span></a>
-        <a data-config-href="email" href="mailto:studio@tiflwear.pk"><span data-config="email">studio@tiflwear.pk</span></a>
+        <p class="foot-heading">Contact</p>
+        <a href="tel:+924212345678">+92 42 1234 5678</a>
+        <a href="mailto:studio@tiflwear.pk">studio@tiflwear.pk</a>
         <a href="contact.html">Contact form</a>
       </div>
     </div>
@@ -173,19 +197,18 @@
   </div>
 </footer>
 
-<!-- CART DRAWER -->
-<div class="overlay" id="overlay"></div>
-<aside class="drawer" id="cartDrawer">
-  <div class="drawer-head">
-    <h2>Your cart</h2>
-    <button class="drawer-close" id="drawerCloseBtn" aria-label="Close cart">&times;</button>
+<div class="pd-sticky-bar" id="pdStickyBar">
+  <div class="pd-sticky-inner">
+    <div class="info">
+      <div class="thumb" id="pdStickyThumb"></div>
+      <div>
+        <div class="name" id="pdStickyName">—</div>
+        <div class="price" id="pdStickyPrice"></div>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-sm" id="pdStickyAddBtn">Add to cart</button>
   </div>
-  <div class="drawer-items" id="drawerItems"></div>
-  <div class="drawer-foot">
-    <div class="sub-row"><span>Subtotal</span><span id="cartSubtotal">PKR 0</span></div>
-    <a class="btn btn-primary btn-block" id="checkoutLink" href="checkout.html">Begin checkout</a>
-  </div>
-</aside>
+</div>
 
 <a class="whatsapp-float" href="https://wa.me/924212345678" target="_blank" rel="noopener" aria-label="Chat with us on WhatsApp">
   <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.6 15L2 22l5.2-1.4A10 10 0 1012 2zm5.7 14.2c-.2.6-1.3 1.2-1.8 1.3-.5.1-1 .2-3.3-.7-2.8-1.1-4.6-3.9-4.7-4.1-.1-.2-1.1-1.5-1.1-2.9 0-1.4.7-2 1-2.3.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5.2.5.7 1.8.8 1.9.1.2.1.3 0 .5-.1.2-.2.3-.3.5-.2.2-.3.3-.5.5-.2.2-.3.4-.2.6.3.5.9 1.5 1.9 2.4 1.3 1.2 2.4 1.5 2.7 1.7.3.2.5.1.7-.1.2-.2.8-.9 1-1.2.2-.3.4-.2.7-.1.3.1 1.8.9 2.1 1 .3.1.5.2.6.3.1.2.1.7-.1 1.3z"/></svg>

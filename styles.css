@@ -39,6 +39,13 @@ img,svg{display:block;max-width:100%;}
 a{color:inherit;}
 button{font-family:inherit;}
 h1,h2,h3,h4{font-family:'Fredoka',sans-serif;font-weight:700;margin:0;letter-spacing:-.015em;}
+/* Footer navigation group labels ("Studio", "Shop", "Contact") — not real
+   headings. They're link-group labels inside a footer landmark, not part
+   of the page's content outline, so making them a real h1-h6 element
+   creates heading-order violations that vary page to page depending on
+   how deep that page's own content headings go. Same visual weight,
+   deliberately not a heading tag. */
+.foot-heading{font-family:'Fredoka',sans-serif;font-weight:700;font-size:14px;color:var(--ink);margin:0 0 14px;letter-spacing:-.01em;}
 p{margin:0;}
 .wrap{max-width:var(--maxw);margin:0 auto;padding:0 28px;}
 :focus-visible{outline:2px solid var(--primary);outline-offset:3px;}
@@ -171,7 +178,7 @@ main{min-height:60vh;}
 
 footer.site{border-top:1px solid var(--line);padding:52px 0 40px;margin-top:60px;}
 .foot-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:32px;}
-.foot-grid h5{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:14px;}
+.foot-grid h4{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:14px;font-weight:600;}
 .foot-grid a{display:block;font-size:14px;color:var(--ink);text-decoration:none;padding:4px 0;}
 .foot-grid a:hover{color:var(--primary);}
 .foot-bottom{display:flex;justify-content:space-between;align-items:center;margin-top:44px;padding-top:22px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink-soft);flex-wrap:wrap;gap:10px;}
