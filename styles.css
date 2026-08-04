@@ -10,6 +10,7 @@
   --ink-on-dark-soft: #9FB1CC;
   --primary:   #4A93E8;   /* logo sky blue */
   --primary-dark:#3576C9;
+  --primary-darker:#285C9E;
   --primary-light:#E6F1FD;
   --accent-pink: #F7C6C2; /* mascot's blush — sparingly */
   --star:      #E3A008;   /* rating gold, used sparingly */
@@ -69,8 +70,8 @@ p{margin:0;}
   font-family:'Inter',sans-serif;text-decoration:none;
 }
 .btn:active{transform:scale(.97);}
-.btn-primary{background:var(--primary);color:#fff;}
-.btn-primary:hover{background:var(--primary-dark);}
+.btn-primary{background:var(--primary-dark);color:#fff;}
+.btn-primary:hover{background:var(--primary-darker);}
 .btn-ghost{background:transparent;color:var(--ink);border-color:var(--ink);}
 .btn-ghost:hover{background:var(--ink);color:var(--bg);}
 .btn-ghost.on-dark{color:var(--ink-on-dark);border-color:var(--ink-on-dark-soft);}
@@ -108,7 +109,7 @@ nav.tabs a:hover:not([aria-current="page"]){color:var(--ink);}
 .cart-btn{position:relative;background:none;border:1px solid var(--line);border-radius:999px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink);text-decoration:none;}
 .cart-btn:hover{border-color:var(--primary);}
 .cart-badge{
-  position:absolute;top:-5px;right:-5px;background:var(--primary);color:#fff;
+  position:absolute;top:-5px;right:-5px;background:var(--primary-dark);color:#fff;
   font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;
   min-width:17px;height:17px;border-radius:999px;display:flex;align-items:center;justify-content:center;padding:0 3px;
 }
