@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ustad Abdul Sattar, Master Tailor — Tifl Little Wear, Lahore</title>
+<meta name="description" content="Meet Ustad Abdul Sattar, Tifl Little Wear's master tailor — 24 years cutting and hand-finishing kidswear in Lahore. See his portfolio and book a private fitting with him directly.">
+<link rel="canonical" href="https://www.tifllittlewear.com/master-tailor.html">
+<meta property="og:type" content="profile">
+<meta property="og:title" content="Ustad Abdul Sattar, Master Tailor — Tifl Little Wear">
+<meta property="og:description" content="24 years cutting and hand-finishing kidswear in Lahore. Portfolio, background, and private fitting bookings.">
+<meta property="og:url" content="https://www.tifllittlewear.com/master-tailor.html">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": "Abdul Sattar",
+  "jobTitle": "Master Tailor",
+  "worksFor": {"@type": "ClothingStore", "name": "Tifl Little Wear"},
+  "url": "https://www.tifllittlewear.com/master-tailor.html",
+  "description": "Master tailor with 24 years of experience, specialising in hand-embroidered and made-to-measure children's occasion wear."
+}
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+  /* ---- Page-specific: kept here rather than styles.css since it's a
+     one-off layout (tailor portrait mark + timeline rail) that no other
+     page reuses. Colours/fonts/radius all still pull from the shared
+     tokens in styles.css, per the design guide. ---- */
+
+  .mt-hero{position:relative;background:var(--bg-dark);border-radius:19px;overflow:hidden;padding:56px 44px;margin-top:24px;}
+  .mt-hero::before{content:"";position:absolute;inset:0;background:
+      radial-gradient(circle at 88% 12%, rgba(74,147,232,.35), transparent 42%),
+      radial-gradient(circle at 6% 92%, rgba(247,198,194,.14), transparent 38%);
+    pointer-events:none;}
+  .mt-hero-grid{position:relative;display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center;}
+  .mt-eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8FDC7E;}
+  .mt-eyebrow::before{content:"";width:22px;height:1px;background:#8FDC7E;}
+  .mt-hero h1{color:var(--ink-on-dark);font-size:clamp(30px,4vw,44px);line-height:1.08;margin-top:14px;}
+  .mt-hero h1 .accent{color:var(--primary);}
+  .mt-hero .lede{color:var(--ink-on-dark-soft);font-size:16.5px;line-height:1.6;margin-top:18px;max-width:480px;}
+  .mt-cta-row{display:flex;gap:12px;margin-top:28px;flex-wrap:wrap;}
+  .mt-stat-row{display:flex;gap:34px;margin-top:38px;flex-wrap:wrap;}
+  .mt-stat b{font-family:'Fredoka',sans-serif;font-size:28px;color:var(--ink-on-dark);display:block;}
+  .mt-stat span{font-family:'IBM Plex Mono',monospace;font-size:10.8px;letter-spacing:.06em;color:var(--ink-on-dark-soft);text-transform:uppercase;}
+
+  .mt-portrait{position:relative;aspect-ratio:1/1.05;}
+  .mt-portrait svg{width:100%;height:100%;}
+
+  .mt-timeline{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:24px;position:relative;}
+  .mt-timeline::before{content:"";position:absolute;top:11px;left:5%;right:5%;height:1px;background:var(--line);z-index:0;}
+  .mt-tl-item{position:relative;z-index:1;}
+  .mt-tl-dot{width:11px;height:11px;border-radius:50%;background:var(--primary);border:3px solid var(--bg);box-shadow:0 0 0 1px var(--primary);margin-bottom:14px;}
+  .mt-tl-year{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--primary-dark);}
+  .mt-tl-item h4{font-size:14.5px;margin:6px 0 4px;}
+  .mt-tl-item p{font-size:12.6px;color:var(--ink-soft);line-height:1.5;}
+
+  .mt-quote-strip{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:24px;}
+
+  .mt-note{background:var(--primary-light);color:var(--primary-dark);border-radius:var(--radius-sm);padding:12px 14px;font-size:12.8px;line-height:1.5;margin-top:16px;}
+
+  @media (max-width:980px){
+    .mt-hero{padding:40px 24px;}
+    .mt-hero-grid{grid-template-columns:1fr;}
+    .mt-portrait{max-width:320px;margin:0 auto;}
+    .mt-timeline{grid-template-columns:1fr 1fr;row-gap:26px;}
+    .mt-timeline::before{display:none;}
+    .mt-quote-strip{grid-template-columns:1fr;}
+  }
+  @media (max-width:560px){
+    .mt-timeline{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="nav-inner">
+    <a class="brand" href="index.html">
+      <img src="assets/logo.png" alt="Tifl Little Wear" class="brand-logo">
+      <span class="sub">Lahore</span>
+    </a>
+    <nav class="tabs" id="navTabs">
+      <a href="index.html">Home</a>
+      <a href="measurements.html">Measurements</a>
+      <a href="booking.html">Booking</a>
+      <a href="shop.html">Shop</a>
+      <a href="live-sell.html">Live Sale</a>
+      <a href="design-studio.html">Design Studio</a>
+      <a href="blog.html">Blog</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+    <div class="nav-right">
+      <a class="btn btn-ghost btn-sm" href="account.html" style="margin-right:4px;">Account</a>
+      <a class="cart-btn" href="shop.html" aria-label="View cart">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        <span class="cart-badge" id="cartBadge" style="display:none;">0</span>
+      </a>
+      <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ HERO ============ -->
+  <div class="mt-hero">
+    <div class="mt-hero-grid">
+      <div>
+        <div class="mt-eyebrow">Master Tailor · Est. 2010 at Tifl</div>
+        <h1>Ustad Abdul Sattar — <span class="accent">24 years</span> of hands that shaped this studio's stitch line.</h1>
+        <p class="lede">Every occasion piece in our in-house line passes through Ustad Sattar's hands — pattern drafted from scratch, embroidery marked by eye, seams finished the way he learned them from his father's shop in Multan. This is his page: his story, his work, and a direct line to book a fitting with him.</p>
+        <div class="mt-cta-row">
+          <a class="btn btn-primary" href="#tailorBooking">Book a private fitting</a>
+          <a class="btn btn-ghost on-dark" href="#portfolio">See his portfolio</a>
+        </div>
+        <div class="mt-stat-row">
+          <div class="mt-stat"><b>24</b><span>Years of tailoring</span></div>
+          <div class="mt-stat"><b>3,000+</b><span>Garments hand-cut</span></div>
+          <div class="mt-stat"><b>12</b><span>Apprentices trained</span></div>
+        </div>
+      </div>
+
+      <div class="mt-portrait" aria-hidden="true">
+        <svg viewBox="0 0 420 440" xmlns="http://www.w3.org/2000/svg">
+          <rect x="1" y="1" width="418" height="438" rx="19" fill="#101B2E" stroke="#233553"/>
+          <!-- thread arc, echoing the homepage measuring-tape motif -->
+          <path d="M40 360 C 60 210, 140 120, 210 120 C 280 120, 360 210, 380 360" fill="none" stroke="#4A93E8" stroke-width="6" stroke-linecap="round" stroke-dasharray="1 14"/>
+          <!-- seated tailor silhouette -->
+          <g transform="translate(120,150)" fill="#8FB7E8">
+            <circle cx="90" cy="26" r="24"/>
+            <path d="M50 58 Q90 38 130 58 L140 150 Q90 168 40 150 Z"/>
+            <rect x="14" y="70" width="22" height="72" rx="11" transform="rotate(-18 25 70)"/>
+            <rect x="146" y="68" width="22" height="66" rx="11" transform="rotate(24 157 68)"/>
+            <path d="M40 150 Q90 172 140 150 L150 230 Q90 246 30 230 Z"/>
+          </g>
+          <!-- needle + thread detail -->
+          <g stroke="#4A93E8" stroke-width="2.4" fill="none" stroke-linecap="round">
+            <line x1="255" y1="248" x2="300" y2="212"/>
+            <circle cx="304" cy="208" r="4" fill="#101B2E" stroke="#4A93E8"/>
+          </g>
+          <g font-family="IBM Plex Mono, monospace" font-size="10" fill="#8FDC7E">
+            <text x="60" y="330">est. 2010</text>
+            <text x="250" y="330">multan → lahore</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <hr class="seam">
+
+  <!-- ============ APPROACH ============ -->
+  <div style="padding:56px 0 10px;">
+    <div class="eyebrow">His approach</div>
+    <div class="craft-grid">
+      <div class="craft-card">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 21v-6a4 4 0 014-4h8a4 4 0 014 4v6M9 11V7a3 3 0 016 0v4"/></svg>
+        <h3>Hand-drafted patterns</h3>
+        <p>No size charts — every pattern for his line starts as a fresh draft from the child's own measurements, chalked and cut by hand.</p>
+      </div>
+      <div class="craft-card">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="9"/></svg>
+        <h3>A Multan training lineage</h3>
+        <p>Apprenticed under his father's shop in Multan from age 14, then twelve years cutting occasion wear before opening his own line in Lahore.</p>
+      </div>
+      <div class="craft-card">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 7L12 3 4 7l8 4 8-4z"/><path d="M4 7v10l8 4 8-4V7"/><path d="M12 11v10"/></svg>
+        <h3>Embroidery specialist</h3>
+        <p>His focus is hand-set embroidery on festive and bridal-side pieces — the lehngas and sherwanis in our shop marked "by Ustad Sattar" are his.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TIMELINE ============ -->
+  <div style="padding-top:44px;">
+    <div class="eyebrow">Career so far</div>
+    <h2 style="font-size:clamp(22px,3vw,28px);max-width:620px;">From an apprentice's stool in Multan to leading Tifl's in-house line.</h2>
+    <div class="mt-timeline">
+      <div class="mt-tl-item">
+        <div class="mt-tl-dot"></div>
+        <div class="mt-tl-year">2000</div>
+        <h4>Apprenticeship</h4>
+        <p>Started learning the trade at 14, in his father's tailoring shop in Multan.</p>
+      </div>
+      <div class="mt-tl-item">
+        <div class="mt-tl-dot"></div>
+        <div class="mt-tl-year">2008</div>
+        <h4>His own line</h4>
+        <p>Opened a small occasion-wear shop, specialising in hand embroidery for weddings.</p>
+      </div>
+      <div class="mt-tl-item">
+        <div class="mt-tl-dot"></div>
+        <div class="mt-tl-year">2010</div>
+        <h4>Joined Tifl</h4>
+        <p>Moved to Lahore to lead Tifl Little Wear's made-to-measure and occasion-wear line.</p>
+      </div>
+      <div class="mt-tl-item">
+        <div class="mt-tl-dot"></div>
+        <div class="mt-tl-year">Today</div>
+        <h4>Mentoring</h4>
+        <p>Trains the studio's newer tailors and still cuts every occasion piece personally.</p>
+      </div>
+    </div>
+  </div>
+
+  <hr class="seam" style="margin-top:50px;">
+
+  <!-- ============ PORTFOLIO ============ -->
+  <div id="portfolio" style="padding:56px 0 10px;scroll-margin-top:90px;">
+    <div class="eyebrow">Portfolio</div>
+    <h2 style="font-size:clamp(24px,3vw,32px);max-width:600px;">Pieces cut and finished by his hand.</h2>
+    <p style="color:var(--ink-soft);max-width:560px;margin-top:12px;font-size:15px;">Pulled live from the shop — every piece here is tagged to Ustad Sattar in our catalogue.</p>
+    <div class="product-grid" id="tailorPortfolioGrid" style="margin-top:28px;"></div>
+  </div>
+
+  <!-- ============ TESTIMONIALS ============ -->
+  <div style="padding-top:10px;">
+    <div class="eyebrow">What families say</div>
+    <div class="mt-quote-strip">
+      <div class="review-card">
+        <div class="stars">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.9-6.2-3.3-6.2 3.3 1.2-6.9-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.9-6.2-3.3-6.2 3.3 1.2-6.9-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.9-6.2-3.3-6.2 3.3 1.2-6.9-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.9-6.2-3.3-6.2 3.3 1.2-6.9-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.9-6.2-3.3-6.2 3.3 1.2-6.9-5-4.9 6.9-1z"/></svg>
+        </div>
+        <p class="quote">He remeasured our son's kurta himself and had it ready before the fitting even ended — the embroidery on the collar was better than anything we'd seen ready-made.</p>
+        <div class="review-who"><b>Sana R.</b><div class="wloc">Gulberg, Lahore</div></div>
+      </div>
+      <div class="review-card">
+        <div class="stars">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.9-6.2-3.3-6.2 3.3 1.2-6.9-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.9-6.2-3.3-6.2 3.3 1.2-6.9-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.9-6.2-3.3-6.2 3.3 1.2-6.9-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.9-6.2-3.3-6.2 3.3 1.2-6.9-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.9-6.2-3.3-6.2 3.3 1.2-6.9-5-4.9 6.9-1z"/></svg>
+        </div>
+        <p class="quote">Booked a private fitting for a wedding lehnga on short notice. Ustad Sattar sketched changes on the spot and it fit perfectly on the day.</p>
+        <div class="review-who"><b>Hina M.</b><div class="wloc">DHA, Lahore</div></div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="seam" style="margin-top:50px;">
+
+  <!-- ============ TAILOR-SPECIFIC BOOKING FORM ============ -->
+  <div id="tailorBooking" style="padding:56px 0 70px;scroll-margin-top:90px;">
+    <div class="section-head">
+      <div class="eyebrow">Book with him directly</div>
+      <h2 style="font-size:clamp(24px,3vw,32px);">Reserve a private fitting with Ustad Abdul Sattar.</h2>
+      <p class="lede" style="max-width:560px;">Best for occasion wear, embroidery work, or anything that needs his eye specifically. This goes straight to his schedule, not the general studio queue.</p>
+    </div>
+
+    <div class="booking-grid">
+      <form class="book-form" id="bookingForm">
+        <input type="hidden" id="bTailorName" value="Ustad Abdul Sattar">
+
+        <div class="eyebrow" style="margin-bottom:6px;">Fitting mode</div>
+        <div class="mode-grid two-col" id="modeGrid">
+          <div class="mode active" data-mode="studio">In-studio with Ustad Sattar<br><span style="font-size:11px;color:var(--ink-soft);">Gulberg, Lahore</span></div>
+          <div class="mode" data-mode="video">Video consult<br><span style="font-size:11px;color:var(--ink-soft);">Self-measured</span></div>
+        </div>
+
+        <div class="form-grid" style="margin-top:22px;">
+          <div class="field"><label for="bParent">Parent / guardian name</label><input id="bParent" required type="text" placeholder="Full name"></div>
+          <div class="field"><label for="bPhone">Phone number <span style="color:var(--primary-dark);">(used to identify your booking)</span></label><input id="bPhone" required type="tel" placeholder="03xx-xxxxxxx"></div>
+          <div class="field"><label for="bEmail">Email (optional)</label><input id="bEmail" type="email" placeholder="you@example.com"></div>
+          <div class="field"><label for="bChild">Child's name</label><input id="bChild" type="text" placeholder="e.g. Zoya"></div>
+          <div class="field"><label for="bGarment">Garment type</label>
+            <select id="bGarment">
+              <option>Occasion / bridal-side wear</option>
+              <option>Kurta pajama</option>
+              <option>Frock</option>
+              <option>Everyday sets</option>
+              <option>Uniform / school wear</option>
+            </select>
+          </div>
+          <div class="field full">
+            <label for="bDate">Preferred date</label>
+            <input id="bDate" type="date">
+          </div>
+          <div class="field full">
+            <label>Preferred time slot</label>
+            <div class="slot-grid" id="slotGrid">
+              <div class="slot active" data-slot="11:00">11:00 AM</div>
+              <div class="slot" data-slot="14:00">2:00 PM</div>
+              <div class="slot" data-slot="17:00">5:00 PM</div>
+              <div class="slot" data-slot="19:00">7:00 PM</div>
+              <div class="slot" data-slot="12:30">12:30 PM</div>
+              <div class="slot" data-slot="16:00">4:00 PM</div>
+            </div>
+          </div>
+          <div class="field full"><label for="bNotes">Notes for Ustad Sattar</label><textarea id="bNotes" rows="3" placeholder="Fabric preference, embroidery ideas, occasion, colours..."></textarea></div>
+        </div>
+
+        <div class="mt-note">This request is routed to Ustad Sattar specifically — for a general studio fitting with any available tailor, use the <a href="booking.html" style="color:var(--primary-dark);font-weight:600;">regular booking page</a> instead.</div>
+
+        <button type="submit" class="btn btn-primary btn-block" style="margin-top:22px;" id="bookSubmitBtn">Request fitting with Ustad Sattar</button>
+
+        <div class="confirm-card" id="confirmCard">
+          <h3 style="color:var(--ink-on-dark);font-size:18px;">Booking received</h3>
+          <p style="color:var(--ink-on-dark-soft);font-size:13.5px;margin-top:8px;">We'll call to confirm your slot with him directly. Keep this reference handy.</p>
+          <p class="ref" id="confirmRef" style="margin-top:14px;"></p>
+        </div>
+      </form>
+
+      <div>
+        <div class="side-card">
+          <h3>Attached measurements</h3>
+          <p id="attachedMeasureText">None yet — save measurements on the Measurements page and they'll appear here automatically.</p>
+        </div>
+        <div class="side-card">
+          <h3>Studio address</h3>
+          <p>Tifl Little Wear, MM Alam Road area, Gulberg III, Lahore, Pakistan.<br>Open Tue–Sun, 11am – 8pm.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <img src="assets/logo.png" alt="Tifl Little Wear" style="height:34px;width:auto;">
+        <p style="color:var(--ink-soft);font-size:13.5px;margin-top:12px;max-width:260px;">A made-to-measure kidswear studio working out of Gulberg, Lahore. Measured by hand, stitched by hand.</p>
+      </div>
+      <div>
+        <p class="foot-heading">Studio</p>
+        <a href="index.html">Home</a>
+        <a href="measurements.html">Our process</a>
+        <a href="master-tailor.html">Master tailor</a>
+        <a href="booking.html">Book a fitting</a>
+      </div>
+      <div>
+        <p class="foot-heading">Shop</p>
+        <a href="shop.html">Ready pieces</a>
+        <a href="live-sell.html">Live sale</a>
+        <a href="blog.html">Blog</a>
+        <a href="design-studio.html">Design studio</a>
+      </div>
+      <div>
+        <p class="foot-heading">Contact</p>
+        <a href="tel:+924212345678">+92 42 1234 5678</a>
+        <a href="mailto:studio@tiflwear.pk">studio@tiflwear.pk</a>
+        <span style="display:block;font-size:14px;padding:4px 0;">Gulberg III, Lahore</span>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 Tifl Little Wear, Lahore.</span>
+      <span style="display:flex;gap:16px;flex-wrap:wrap;">
+        <a href="privacy-policy.html" style="color:var(--ink-soft);text-decoration:none;">Privacy Policy</a>
+        <a href="cookie-policy.html" style="color:var(--ink-soft);text-decoration:none;">Cookie Policy</a>
+        <a href="#" data-open-consent style="color:var(--ink-soft);text-decoration:none;">Cookie Preferences</a>
+      </span>
+    </div>
+  </div>
+</footer>
+
+<a class="whatsapp-float" href="https://wa.me/924212345678" target="_blank" rel="noopener" aria-label="Chat with us on WhatsApp">
+  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.6 15L2 22l5.2-1.4A10 10 0 1012 2zm5.7 14.2c-.2.6-1.3 1.2-1.8 1.3-.5.1-1 .2-3.3-.7-2.8-1.1-4.6-3.9-4.7-4.1-.1-.2-1.1-1.5-1.1-2.9 0-1.4.7-2 1-2.3.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5.2.5.7 1.8.8 1.9.1.2.1.3 0 .5-.1.2-.2.3-.3.5-.2.2-.3.3-.5.5-.2.2-.3.4-.2.6.3.5.9 1.5 1.9 2.4 1.3 1.2 2.4 1.5 2.7 1.7.3.2.5.1.7-.1.2-.2.8-.9 1-1.2.2-.3.4-.2.7-.1.3.1 1.8.9 2.1 1 .3.1.5.2.6.3.1.2.1.7-.1 1.3z"/></svg>
+</a>
+<span class="whatsapp-tip">Chat with us</span>
+
+<div class="toast" id="toast"></div>
+<script src="rudderstack.js"></script>
+<script src="consent.js"></script>
+<script src="script.js"></script>
+<script>
+  // Portfolio grid: real products tagged to this tailor, pulled from the
+  // same catalogue as the shop. Falls back to a friendly empty state if
+  // none are tagged yet (e.g. before the admin adds the "Designed by" field).
+  (async function initTailorPortfolio(){
+    const grid = document.getElementById('tailorPortfolioGrid');
+    if(!grid) return;
+    await loadProducts();
+    const pieces = PRODUCTS.filter(p => (p.tailor || '').trim() === 'Ustad Abdul Sattar');
+    if(!pieces.length){
+      grid.innerHTML = '<p style="color:var(--ink-soft);grid-column:1/-1;">Portfolio pieces will appear here as they\'re tagged to Ustad Sattar in the shop.</p>';
+      return;
+    }
+    grid.innerHTML = pieces.map(p => `
+      <div class="p-card" data-id="${p.id}">
+        <div class="p-thumb">
+          <span class="brand-tag">${p.brand || 'Tifl Little Wear'}</span>
+          ${productThumbHTML(p)}
+        </div>
+        <div class="p-info">
+          <div class="pname">${p.name}</div>
+          <div class="pcat">${p.category}</div>
+          <div class="prow">
+            <span class="price">PKR ${p.price.toLocaleString()}</span>
+          </div>
+        </div>
+      </div>`).join('');
+    grid.querySelectorAll('.p-card').forEach(card=>{
+      card.addEventListener('click', ()=>{
+        window.location.href = 'product.html?id='+encodeURIComponent(card.dataset.id);
+      });
+    });
+  })();
+</script>
+</body>
+</html>

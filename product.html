@@ -59,6 +59,7 @@
       <p class="pd-price" id="pdPrice"></p>
       <p class="pd-desc" id="pdDescription"></p>
       <div id="pdAttributes" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;"></div>
+      <a id="pdTailorLink" href="master-tailor.html" class="pd-tailor-credit" style="display:none;"></a>
 
       <div class="pd-feature-strip">
         <div class="pd-feature">
@@ -117,14 +118,21 @@
             </div>
           </div>
         </div>
+
+        <div class="pd-acc-item">
+          <button class="pd-acc-trigger" data-acc="sizing">
+            Sizing
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="pd-acc-panel">
+            <div class="pd-acc-panel-inner">
+              <div class="pd-detail-grid" id="pdDetailGrid"></div>
+              <a class="pd-sizing-link" href="measurements.html">View our full sizing chart →</a>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-
-  <div class="pd-cross-section" id="pdFeaturesSection" style="display:none;">
-    <div class="eyebrow">Product features</div>
-    <h2>What makes this piece special.</h2>
-    <div id="pdFeaturesList" class="pd-features-list"></div>
   </div>
 
   <div id="productEmpty" style="display:none;padding:60px 0;text-align:center;color:var(--ink-soft);">
@@ -163,6 +171,7 @@
         <a href="index.html">Home</a>
         <a href="about-us.html">About us</a>
         <a href="measurements.html">Our process</a>
+        <a href="master-tailor.html">Master tailor</a>
         <a href="booking.html">Book a fitting</a>
       </div>
       <div>

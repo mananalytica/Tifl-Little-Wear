@@ -270,7 +270,6 @@ def ensure_schema(conn):
         ("google_product_category", "VARCHAR"), ("product_type", "VARCHAR"),
         ("color", "VARCHAR"), ("size", "VARCHAR"), ("gender", "VARCHAR"),
         ("age_group", "VARCHAR"), ("item_group_id", "VARCHAR"), ("material", "VARCHAR"),
-        ("features", "VARCHAR"),
     ]
     alter_statements = [f"ALTER TABLE products ADD COLUMN IF NOT EXISTS {c} {t};" for c, t in shopping_columns]
     alter_statements.append("ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_id VARCHAR;")
@@ -279,6 +278,13 @@ def ensure_schema(conn):
     alter_statements.append("ALTER TABLE orders ADD COLUMN IF NOT EXISTS postal_code VARCHAR;")
     alter_statements.append("ALTER TABLE orders ADD COLUMN IF NOT EXISTS state VARCHAR;")
     alter_statements.append("ALTER TABLE orders ADD COLUMN IF NOT EXISTS country VARCHAR;")
+    # Designer/tailor attribution — which master tailor cut and finished this
+    # piece. Shows on product.html and feeds the portfolio on master-tailor.html.
+    alter_statements.append("ALTER TABLE products ADD COLUMN IF NOT EXISTS tailor VARCHAR;")
+    # Which tailor a booking was requested with, set when someone books from
+    # the "Book with Ustad Sattar" form on master-tailor.html (blank for a
+    # normal studio booking).
+    alter_statements.append("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS preferred_tailor VARCHAR;")
     try:
         conn.execute("\n".join(alter_statements))
     except Exception:
@@ -295,27 +301,31 @@ def seed_products_if_empty(conn):
     count = conn.execute("SELECT count(*) FROM products").fetchone()[0]
     if count > 0:
         return
+    # Last field is the tailor attribution — pieces cut and finished
+    # in-house by Ustad Abdul Sattar are tagged so they surface in his
+    # portfolio on master-tailor.html. Ready-to-wear partner-brand pieces
+    # (Chinar Kids, Bunain, etc.) are left blank since they aren't his work.
     seed = [
-        ("p1","Block-print Kurta Set","Chinar Kids","Boys",3200,"#108A00","Hand block-printed cotton kurta and pajama set, breathable for everyday wear."),
-        ("p2","Layered Cotton Frock","Bunain","Girls",3800,"#0C6B00","A layered cotton frock with soft gathers, easy to move in."),
-        ("p3","Newborn Gown, 0-3m","Rui & Co","Newborn",2100,"#5C6B61","Soft muslin gown for newborns, envelope neckline for easy changing."),
-        ("p4","Silk Waistcoat Set","Chinar Kids","Occasion",6200,"#0F2B1B","Silk waistcoat and trouser set for weddings and formal occasions."),
-        ("p5","Everyday Dungaree","Bunain","Boys",2600,"#108A00","Sturdy cotton dungaree built for play, adjustable straps."),
-        ("p6","Embroidered Lehnga, Mini","Zainab Kids","Occasion",8400,"#0C6B00","Hand-embroidered mini lehnga with dupatta, for festive occasions."),
-        ("p7","Soft Muslin Romper","Rui & Co","Newborn",1900,"#5C6B61","Breathable muslin romper, popper closures for quick changes."),
-        ("p8","Cotton Gharara Set","Zainab Kids","Girls",4600,"#108A00","Cotton gharara set with delicate embroidery detailing."),
-        ("p9","Hand-tied Rakhi Kurta","Chinar Kids","Boys",2900,"#0F2B1B","Festive kurta with hand-tied detailing at the collar."),
-        ("p10","Beaded Hairband Set","Zainab Kids","Accessories",850,"#0C6B00","Set of three beaded hairbands to match occasion wear."),
-        ("p11","Embroidered Juti, Kids","Bunain","Accessories",1600,"#5C6B61","Traditional embroidered juti, cushioned sole for small feet."),
-        ("p12","Quilted Winter Sherwani","Chinar Kids","Occasion",7300,"#B4682F","Quilted sherwani for cooler months, lined for warmth."),
+        ("p1","Block-print Kurta Set","Chinar Kids","Boys",3200,"#108A00","Hand block-printed cotton kurta and pajama set, breathable for everyday wear.",None),
+        ("p2","Layered Cotton Frock","Bunain","Girls",3800,"#0C6B00","A layered cotton frock with soft gathers, easy to move in.",None),
+        ("p3","Newborn Gown, 0-3m","Rui & Co","Newborn",2100,"#5C6B61","Soft muslin gown for newborns, envelope neckline for easy changing.",None),
+        ("p4","Silk Waistcoat Set","Tifl Little Wear","Occasion",6200,"#0F2B1B","Silk waistcoat and trouser set, hand-cut and finished in the studio for weddings and formal occasions.","Ustad Abdul Sattar"),
+        ("p5","Everyday Dungaree","Bunain","Boys",2600,"#108A00","Sturdy cotton dungaree built for play, adjustable straps.",None),
+        ("p6","Embroidered Lehnga, Mini","Tifl Little Wear","Occasion",8400,"#0C6B00","Hand-embroidered mini lehnga with dupatta, drafted and stitched in-house for festive occasions.","Ustad Abdul Sattar"),
+        ("p7","Soft Muslin Romper","Rui & Co","Newborn",1900,"#5C6B61","Breathable muslin romper, popper closures for quick changes.",None),
+        ("p8","Cotton Gharara Set","Tifl Little Wear","Girls",4600,"#108A00","Cotton gharara set with delicate hand embroidery, cut in the studio.","Ustad Abdul Sattar"),
+        ("p9","Hand-tied Rakhi Kurta","Chinar Kids","Boys",2900,"#0F2B1B","Festive kurta with hand-tied detailing at the collar.",None),
+        ("p10","Beaded Hairband Set","Zainab Kids","Accessories",850,"#0C6B00","Set of three beaded hairbands to match occasion wear.",None),
+        ("p11","Embroidered Juti, Kids","Bunain","Accessories",1600,"#5C6B61","Traditional embroidered juti, cushioned sole for small feet.",None),
+        ("p12","Quilted Winter Sherwani","Tifl Little Wear","Occasion",7300,"#B4682F","Quilted sherwani for cooler months, hand-lined and finished by the studio's master tailor.","Ustad Abdul Sattar"),
     ]
-    for pid, name, brand, cat, price, color, desc in seed:
+    for pid, name, brand, cat, price, color, desc, tailor in seed:
         conn.execute(
             """INSERT INTO products
                (product_id, created_at, name, brand, category, price, currency,
-                image_url, description, sku, stock_status, active)
-               VALUES (?, ?, ?, ?, ?, ?, 'PKR', ?, ?, ?, 'in_stock', true)""",
-            [pid, datetime.now(), name, brand, cat, price, color, desc, pid.upper()],
+                image_url, description, sku, stock_status, active, tailor)
+               VALUES (?, ?, ?, ?, ?, ?, 'PKR', ?, ?, ?, 'in_stock', true, ?)""",
+            [pid, datetime.now(), name, brand, cat, price, color, desc, pid.upper(), tailor],
         )
 
 
@@ -339,6 +349,7 @@ class Booking(BaseModel):
     time_slot: str | None = None
     notes: str | None = None
     measurements: Measurements | None = None
+    preferred_tailor: str | None = None   # set when booked from a specific tailor's page, e.g. master-tailor.html
     anonymous_id: str | None = None
     attribution: dict | None = None
 
@@ -369,11 +380,6 @@ class Product(BaseModel):
 
     # ---- Shopping feed attributes (Google Merchant Center / Meta Catalog) ----
     link: str | None = None                          # product page URL — auto-filled if left blank
-    # One or more extra photo URLs, comma-separated (matches Google Merchant
-    # Center's text-feed convention for additional_image_link — up to 10
-    # images, e.g. "https://.../a.jpg, https://.../b.jpg"). The first,
-    # required photo stays in image_url; these are shown as extra gallery
-    # thumbnails on the product page.
     additional_image_link: str | None = None
     availability: str | None = "in stock"            # in stock | out of stock | preorder | backorder
     sale_price: float | None = None
@@ -388,12 +394,7 @@ class Product(BaseModel):
     age_group: str | None = "kids"                     # newborn | infant | toddler | kids | adult
     item_group_id: str | None = None                   # same value across size/colour variants of one product
     material: str | None = None                        # e.g. "100% Cotton", "Lawn", "Silk blend"
-
-    # Short bullet-point product features (not part of the Google/Meta feed
-    # spec — shown only on the product page). Stored as a single string with
-    # "|" separating each bullet, e.g. "Hand-embroidered collar|Adjustable
-    # drawstring waist|Lined for comfort".
-    features: str | None = None
+    tailor: str | None = None                           # which in-house master tailor cut/finished this piece, if any
 
 
 class OrderItem(BaseModel):
@@ -576,8 +577,8 @@ def create_booking(booking: Booking):
         """
         INSERT INTO bookings
             (booking_id, created_at, parent_name, child_name, phone, email,
-             garment_type, mode, date, time_slot, notes, measurements)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             garment_type, mode, date, time_slot, notes, measurements, preferred_tailor)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         [
             booking_id,
@@ -592,6 +593,7 @@ def create_booking(booking: Booking):
             booking.time_slot,
             booking.notes,
             json.dumps(booking.measurements.dict()) if booking.measurements else None,
+            booking.preferred_tailor,
         ],
     )
     conn.close()
@@ -599,6 +601,7 @@ def create_booking(booking: Booking):
               dict({
                   "booking_id": booking_id, "parent_name": booking.parent_name, "child_name": booking.child_name,
                   "garment_type": booking.garment_type, "mode": booking.mode, "date": booking.date, "time_slot": booking.time_slot,
+                  "preferred_tailor": booking.preferred_tailor,
               }, **flatten_attribution(booking.attribution)),
               anonymous_id=booking.anonymous_id)
     return {"booking_id": booking_id, "status": "confirmed"}
@@ -694,7 +697,6 @@ def products_feed_xml():
       <description>{esc(p.get('description') or p['name'])}</description>
       <link>{esc(link)}</link>
       <g:image_link>{esc(image)}</g:image_link>
-      {''.join(f"<g:additional_image_link>{esc(u.strip())}</g:additional_image_link>" for u in (p.get('additional_image_link') or '').split(',') if u.strip())}
       <g:availability>{esc(p.get('availability') or 'in stock')}</g:availability>
       <g:price>{esc(p['price'])} {esc(p.get('currency') or 'PKR')}</g:price>
       {f"<g:sale_price>{esc(p['sale_price'])} {esc(p.get('currency') or 'PKR')}</g:sale_price>" if p.get('sale_price') else ""}
@@ -731,10 +733,9 @@ def products_feed_csv():
     conn.close()
 
     header = [
-        "id", "title", "description", "link", "image_link", "additional_image_link",
-        "availability", "price", "sale_price", "brand", "condition", "gtin", "mpn",
-        "google_product_category", "product_type", "color", "size", "gender",
-        "age_group", "item_group_id", "material", "features",
+        "id", "title", "description", "link", "image_link", "availability", "price",
+        "sale_price", "brand", "condition", "gtin", "mpn", "google_product_category",
+        "product_type", "color", "size", "gender", "age_group", "item_group_id",
     ]
     buf = io.StringIO()
     writer = csv.writer(buf)
@@ -750,7 +751,6 @@ def products_feed_csv():
             p.get("description") or p["name"],
             link,
             image,
-            p.get("additional_image_link") or "",
             p.get("availability") or "in stock",
             f"{p['price']} {p.get('currency') or 'PKR'}",
             f"{p['sale_price']} {p.get('currency') or 'PKR'}" if p.get("sale_price") else "",
@@ -765,8 +765,6 @@ def products_feed_csv():
             p.get("gender") or "",
             p.get("age_group") or "kids",
             p.get("item_group_id") or "",
-            p.get("material") or "",
-            p.get("features") or "",
         ])
     return Response(content=buf.getvalue(), media_type="text/csv")
 
@@ -791,7 +789,7 @@ PRODUCT_FIELDS = [
     "name", "brand", "category", "price", "currency", "image_url", "description",
     "sku", "stock_status", "active", "link", "additional_image_link", "availability",
     "sale_price", "gtin", "mpn", "condition", "google_product_category", "product_type",
-    "color", "size", "gender", "age_group", "item_group_id", "material", "features",
+    "color", "size", "gender", "age_group", "item_group_id", "material", "tailor",
 ]
 
 def product_values(product: "Product"):

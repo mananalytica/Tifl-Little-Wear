@@ -195,7 +195,8 @@ function normalizeProduct(p){
     gender: p.gender || '',
     age_group: p.age_group || 'kids',
     item_group_id: p.item_group_id || '',
-    material: p.material || ''
+    material: p.material || '',
+    tailor: p.tailor || ''
   };
 }
 
@@ -506,6 +507,11 @@ function initBookingPage(){
   const form = document.getElementById('bookingForm');
   if(!form) return;
 
+  // Present on tailor-specific booking forms (e.g. master-tailor.html) as a
+  // hidden field so submissions carry which tailor was requested. Absent
+  // (and so ignored) on the general studio booking.html form.
+  const preferredTailor = document.getElementById('bTailorName')?.value || null;
+
   const m = Store.get('tifl_measurements', null);
   const attachedEl = document.getElementById('attachedMeasureText');
   if(m && attachedEl){
@@ -549,6 +555,7 @@ function initBookingPage(){
       date: document.getElementById('bDate').value,
       notes: document.getElementById('bNotes').value,
       measurements: Store.get('tifl_measurements', null),
+      preferred_tailor: preferredTailor,
       anonymous_id: rsGetAnonymousId(), attribution: rsGetAttribution()
     };
 
@@ -572,12 +579,14 @@ function initBookingPage(){
       ref = 'TLW-'+(bookingCounter++)+'-OFFLINE';
     }
 
-    dataLayer.push({event:'generate_lead', lead_type:'booking', booking_ref:ref, garment_type:payload.garment_type, fitting_mode:mode});
-    rsTrack('generate_lead', {lead_type:'booking', booking_ref:ref, garment_type:payload.garment_type, fitting_mode:mode});
+    dataLayer.push({event:'generate_lead', lead_type:'booking', booking_ref:ref, garment_type:payload.garment_type, fitting_mode:mode, preferred_tailor:preferredTailor});
+    rsTrack('generate_lead', {lead_type:'booking', booking_ref:ref, garment_type:payload.garment_type, fitting_mode:mode, preferred_tailor:preferredTailor});
 
     document.getElementById('confirmRef').textContent = wasOnline
       ? 'Reference '+ref+' · saved to studio database'
       : 'Reference '+ref+' · saved on this device — we will confirm by phone';
+    const confirmHeading = document.querySelector('#confirmCard h3');
+    if(confirmHeading) confirmHeading.textContent = preferredTailor ? 'Request sent to '+preferredTailor : 'Booking received';
     document.getElementById('confirmCard').classList.add('show');
     btn.disabled = false; btn.textContent = 'Confirm booking';
     showToast('Booking '+ref+' received');
@@ -661,6 +670,18 @@ async function initProductPage(){
   if(p.gender) chips.push(p.gender.charAt(0).toUpperCase()+p.gender.slice(1));
   if(p.age_group) chips.push(p.age_group.charAt(0).toUpperCase()+p.age_group.slice(1));
   document.getElementById('pdAttributes').innerHTML = chips.map(c=>`<span class="garment-tag">${c}</span>`).join('');
+
+  const tailorLink = document.getElementById('pdTailorLink');
+  if(tailorLink){
+    if(p.tailor){
+      tailorLink.style.display = 'inline-flex';
+      tailorLink.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M4 21v-6a4 4 0 014-4h8a4 4 0 014 4v6M9 11V7a3 3 0 016 0v4"/></svg>
+        Designed &amp; stitched by <b>${p.tailor}</b> — view profile →`;
+    } else {
+      tailorLink.style.display = 'none';
+    }
+  }
 
   const AGE_GROUP_LABELS = {
     newborn: 'Newborn (0–3 months)', infant: 'Infant (3–12 months)',
@@ -940,6 +961,8 @@ function initAdminPage(){
     document.getElementById('apGoogleCategory').value = p.google_product_category || '';
     document.getElementById('apProductType').value = p.product_type || '';
     document.getElementById('apLink').value = p.link || '';
+    const apTailorEl = document.getElementById('apTailor');
+    if(apTailorEl) apTailorEl.value = p.tailor || '';
     document.getElementById('apFormTitle').textContent = 'Editing: '+p.name;
   }
   function resetForm(){
@@ -975,6 +998,7 @@ function initAdminPage(){
       google_product_category: document.getElementById('apGoogleCategory').value || null,
       product_type: document.getElementById('apProductType').value || null,
       link: document.getElementById('apLink').value || null,
+      tailor: document.getElementById('apTailor')?.value || null,
       active: true
     };
   }
