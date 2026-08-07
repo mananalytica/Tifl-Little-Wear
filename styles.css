@@ -139,6 +139,15 @@ main{min-height:60vh;}
 .tape-figure{position:relative;aspect-ratio:1/1.05;}
 .tape-figure svg{width:100%;height:100%;}
 
+.hero-gallery{position:relative;aspect-ratio:1/1.05;border-radius:19px;overflow:hidden;background:#F2F8FE;border:1px solid #E1E8F2;display:flex;gap:12px;padding:12px;-webkit-mask-image:linear-gradient(180deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(180deg,transparent,#000 8%,#000 92%,transparent);}
+.hero-gallery-col{flex:1;display:flex;flex-direction:column;gap:12px;width:max-content;animation:hg-scroll-y 26s linear infinite;}
+.hero-gallery-col.reverse{animation-direction:reverse;animation-delay:-13s;}
+.hero-gallery:hover .hero-gallery-col{animation-play-state:paused;}
+.hero-gallery-col .hgc-card{border-radius:12px;overflow:hidden;aspect-ratio:4/5;background:var(--bg-alt);border:1px solid var(--line);flex:none;}
+.hero-gallery-col .hgc-card img,.hero-gallery-col .hgc-card > div{width:100%;height:100%;}
+@keyframes hg-scroll-y{from{transform:translateY(0);}to{transform:translateY(-50%);}}
+@media (prefers-reduced-motion: reduce){.hero-gallery-col{animation:none;}}
+
 .stat-row{display:flex;gap:38px;margin-top:52px;flex-wrap:wrap;}
 .stat b{font-family:'Fredoka',sans-serif;font-size:30px;display:block;color:var(--ink);}
 .stat span{font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.06em;color:var(--ink-soft);text-transform:uppercase;}

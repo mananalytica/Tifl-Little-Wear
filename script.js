@@ -374,8 +374,29 @@ function renderProducts(cat){
 }
 
 /* ============================================================
-   HOMEPAGE — auto-sliding product gallery
+   HOMEPAGE — hero gallery (two columns, auto-scrolling vertically
+   in opposite directions) + the horizontal "From the shop" strip
 ============================================================= */
+async function initHeroGallery(){
+  const col1 = document.getElementById('heroGalleryCol1');
+  const col2 = document.getElementById('heroGalleryCol2');
+  if(!col1 || !col2) return;
+  await loadProducts();
+  if(!PRODUCTS.length) return;
+
+  const cardHTML = p => `<div class="hgc-card">${productThumbHTML(p)}</div>`;
+
+  // Split the catalogue between the two columns, then duplicate each
+  // column's list so its scroll animation (0% to -50%) loops seamlessly.
+  const half = Math.ceil(PRODUCTS.length/2);
+  const listA = PRODUCTS.slice(0, half);
+  const listB = PRODUCTS.slice(half).concat(PRODUCTS.slice(0, Math.max(0, half-PRODUCTS.slice(half).length)));
+  const colA = (listA.length ? listA : PRODUCTS).map(cardHTML).join('');
+  const colB = (listB.length ? listB : PRODUCTS).map(cardHTML).join('');
+  col1.innerHTML = colA + colA;
+  col2.innerHTML = colB + colB;
+}
+
 async function initHomeGallery(){
   const track = document.getElementById('homeGalleryTrack');
   if(!track) return;
@@ -1419,6 +1440,7 @@ function initCheckoutPage(){
 document.addEventListener('DOMContentLoaded', ()=>{
   if(typeof rsPage === 'function') rsPage();
   applyConfig();
+  initHeroGallery();
   initHomeGallery();
   initShopPage();
   initMeasurementsPage();
