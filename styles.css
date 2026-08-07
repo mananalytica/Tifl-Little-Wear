@@ -139,14 +139,17 @@ main{min-height:60vh;}
 .tape-figure{position:relative;aspect-ratio:1/1.05;}
 .tape-figure svg{width:100%;height:100%;}
 
-.hero-gallery{position:relative;aspect-ratio:1/1.05;border-radius:19px;overflow:hidden;background:#F2F8FE;border:1px solid #E1E8F2;display:flex;gap:12px;padding:12px;-webkit-mask-image:linear-gradient(180deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(180deg,transparent,#000 8%,#000 92%,transparent);}
-.hero-gallery-col{flex:1;display:flex;flex-direction:column;gap:12px;width:max-content;animation:hg-scroll-y 26s linear infinite;}
-.hero-gallery-col.reverse{animation-direction:reverse;animation-delay:-13s;}
-.hero-gallery:hover .hero-gallery-col{animation-play-state:paused;}
-.hero-gallery-col .hgc-card{border-radius:12px;overflow:hidden;aspect-ratio:4/5;background:var(--bg-alt);border:1px solid var(--line);flex:none;}
-.hero-gallery-col .hgc-card img,.hero-gallery-col .hgc-card > div{width:100%;height:100%;}
-@keyframes hg-scroll-y{from{transform:translateY(0);}to{transform:translateY(-50%);}}
-@media (prefers-reduced-motion: reduce){.hero-gallery-col{animation:none;}}
+.hero-gallery{position:relative;aspect-ratio:1/1.05;border-radius:19px;overflow:hidden;background:#F2F8FE;border:1px solid #E1E8F2;}
+.hero-gallery-slide{position:absolute;inset:0;opacity:0;transition:opacity .8s ease;cursor:pointer;}
+.hero-gallery-slide.active{opacity:1;}
+.hero-gallery-slide img,.hero-gallery-slide > div{width:100%;height:100%;}
+.hero-gallery-cap{position:absolute;left:0;right:0;bottom:0;padding:16px 18px;background:linear-gradient(0deg,rgba(15,25,45,.62),transparent);color:#fff;}
+.hero-gallery-cap .hgc-name{font-size:14.5px;font-weight:600;}
+.hero-gallery-cap .hgc-price{font-family:'IBM Plex Mono',monospace;font-size:12px;opacity:.9;margin-top:2px;}
+.hero-gallery-dots{position:absolute;top:14px;right:14px;display:flex;gap:6px;}
+.hero-gallery-dots span{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.55);transition:background .2s,transform .2s;}
+.hero-gallery-dots span.active{background:#fff;transform:scale(1.3);}
+@media (prefers-reduced-motion: reduce){.hero-gallery-slide{transition:none;}}
 
 .stat-row{display:flex;gap:38px;margin-top:52px;flex-wrap:wrap;}
 .stat b{font-family:'Fredoka',sans-serif;font-size:30px;display:block;color:var(--ink);}

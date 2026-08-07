@@ -374,27 +374,62 @@ function renderProducts(cat){
 }
 
 /* ============================================================
-   HOMEPAGE — hero gallery (two columns, auto-scrolling vertically
-   in opposite directions) + the horizontal "From the shop" strip
+   HOMEPAGE — hero gallery: single-image auto-cycling slideshow
+   (crossfades through every product photo, clicking one goes to
+   that exact product) + the horizontal "From the shop" strip
 ============================================================= */
 async function initHeroGallery(){
-  const col1 = document.getElementById('heroGalleryCol1');
-  const col2 = document.getElementById('heroGalleryCol2');
-  if(!col1 || !col2) return;
+  const root = document.getElementById('heroGallery');
+  if(!root) return;
   await loadProducts();
   if(!PRODUCTS.length) return;
 
-  const cardHTML = p => `<div class="hgc-card">${productThumbHTML(p)}</div>`;
+  root.innerHTML = `
+    <div class="hero-gallery-dots" id="heroGalleryDots"></div>
+  `;
+  const dotsRoot = document.getElementById('heroGalleryDots');
 
-  // Split the catalogue between the two columns, then duplicate each
-  // column's list so its scroll animation (0% to -50%) loops seamlessly.
-  const half = Math.ceil(PRODUCTS.length/2);
-  const listA = PRODUCTS.slice(0, half);
-  const listB = PRODUCTS.slice(half).concat(PRODUCTS.slice(0, Math.max(0, half-PRODUCTS.slice(half).length)));
-  const colA = (listA.length ? listA : PRODUCTS).map(cardHTML).join('');
-  const colB = (listB.length ? listB : PRODUCTS).map(cardHTML).join('');
-  col1.innerHTML = colA + colA;
-  col2.innerHTML = colB + colB;
+  PRODUCTS.forEach((p, i)=>{
+    const slide = document.createElement('div');
+    slide.className = 'hero-gallery-slide' + (i===0 ? ' active' : '');
+    slide.innerHTML = `
+      ${productThumbHTML(p)}
+      <div class="hero-gallery-cap">
+        <div class="hgc-name">${p.name}</div>
+        <div class="hgc-price">PKR ${p.price.toLocaleString()}</div>
+      </div>`;
+    slide.addEventListener('click', ()=>{
+      fireSelectItem(p);
+      window.location.href = 'product.html?id='+encodeURIComponent(p.id);
+    });
+    root.insertBefore(slide, dotsRoot);
+
+    const dot = document.createElement('span');
+    if(i===0) dot.className = 'active';
+    dot.addEventListener('click', (e)=>{ e.stopPropagation(); goToSlide(i); });
+    dotsRoot.appendChild(dot);
+  });
+
+  const slides = root.querySelectorAll('.hero-gallery-slide');
+  const dots = dotsRoot.querySelectorAll('span');
+  let current = 0;
+  let timer = null;
+
+  function goToSlide(i){
+    slides[current].classList.remove('active');
+    dots[current].classList.remove('active');
+    current = i;
+    slides[current].classList.add('active');
+    dots[current].classList.add('active');
+  }
+  function next(){ goToSlide((current+1) % slides.length); }
+  function start(){ if(slides.length>1) timer = setInterval(next, 3200); }
+  function stop(){ clearInterval(timer); }
+
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(!reduceMotion) start();
+  root.addEventListener('mouseenter', stop);
+  root.addEventListener('mouseleave', ()=>{ if(!reduceMotion) start(); });
 }
 
 async function initHomeGallery(){
