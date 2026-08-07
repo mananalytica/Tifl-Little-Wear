@@ -23,10 +23,10 @@ if (typeof window.rsIdentify !== 'function') window.rsIdentify = function(){};
    hunt through every HTML file.
 ============================================================= */
 const CONFIG = {
-  phone: '+92 42 1234 5678',
-  phoneHref: 'tel:+924212345678',
-  whatsappNumber: '924212345678',        // country code + number, no + or spaces
-  email: 'studio@tiflwear.pk',
+  phone: '+92 305 4110254',
+  phoneHref: 'tel:+923054110254',
+  whatsappNumber: '923054110254',        // country code + number, no + or spaces
+  email: 'studio@tifllittlewear.com',
   address: 'Tifl Little Wear, MM Alam Road area, Gulberg III, Lahore, Pakistan.',
   hours: 'Open Tue–Sun, 11am – 8pm.',
   currency: 'PKR'
@@ -679,11 +679,15 @@ async function initProductPage(){
 
   /* ---------- variant B only (guarded — no-op on product.html) ---------- */
 
-  // Gallery thumbnails: main image + additional_image_link if present.
+  // Gallery thumbnails: main image + any extra images. Extra images are
+  // stored as a comma-separated list in additional_image_link, so a
+  // product can have as many photos as you want, not just one.
   const thumbsRoot = document.getElementById('pdThumbs');
   if(thumbsRoot){
     const images = [p.image_url];
-    if(p.additional_image_link) images.push(p.additional_image_link);
+    if(p.additional_image_link){
+      p.additional_image_link.split(',').map(s=>s.trim()).filter(Boolean).forEach(img=>images.push(img));
+    }
     thumbsRoot.innerHTML = images.map((img,i)=>`
       <div class="pd-thumb ${i===0?'active':''}" data-img="${img}">
         ${productThumbHTML(Object.assign({}, p, {image_url: img}), '70%')}
@@ -840,6 +844,8 @@ function initAdminPage(){
     document.getElementById('apSalePrice').value = p.sale_price || '';
     document.getElementById('apImage').value = isColor(p.image_url) ? '' : p.image_url;
     document.getElementById('apSwatch').value = isColor(p.image_url) ? p.image_url : '#4A93E8';
+    document.getElementById('apExtraImages').value = p.additional_image_link
+      ? p.additional_image_link.split(',').map(s=>s.trim()).filter(Boolean).join('\n') : '';
     document.getElementById('apDescription').value = p.description;
     document.getElementById('apSku').value = p.sku || '';
     document.getElementById('apGtin').value = p.gtin || '';
@@ -875,6 +881,8 @@ function initAdminPage(){
       sale_price: document.getElementById('apSalePrice').value ? parseFloat(document.getElementById('apSalePrice').value) : null,
       currency: 'PKR',
       image_url: document.getElementById('apImage').value.trim() || document.getElementById('apSwatch').value,
+      additional_image_link: document.getElementById('apExtraImages').value
+        .split('\n').map(s=>s.trim()).filter(Boolean).join(',') || null,
       description: document.getElementById('apDescription').value,
       sku: document.getElementById('apSku').value || null,
       gtin: document.getElementById('apGtin').value || null,
@@ -901,6 +909,7 @@ function initAdminPage(){
     document.getElementById('adminGate').style.display = 'none';
     document.getElementById('adminPanel').style.display = 'block';
     refreshList();
+    refreshMediaGrid();
   });
 
   document.getElementById('productForm')?.addEventListener('submit', async (e)=>{
@@ -936,6 +945,7 @@ function initAdminPage(){
       description: get('description'),
       link: get('link'),
       image_url: get('image_link','image_url'),
+      additional_image_link: get('additional_image_link'),
       price,
       sale_price: salePrice,
       availability: get('availability') || 'in stock',
@@ -1006,10 +1016,209 @@ function initAdminPage(){
     }catch(e){ /* apiCall already toasts on 401 */ }
   });
 
+  /* ---------- media library ---------- */
+  const mediaState = { items: [], selected: new Set(), picking: null }; // picking: null | 'cover' | 'extra'
+
+  // Downscales large photos in the browser before upload — keeps the R2
+  // bucket lean and the shop fast to load. Returns a Blob (not base64):
+  // the browser uploads this straight to R2, it never passes through
+  // our API. Anything already small just passes through near-unchanged.
+  function prepareImageFile(file, maxDim, quality){
+    return new Promise((resolve, reject)=>{
+      const img = new Image();
+      const reader = new FileReader();
+      reader.onload = ()=>{ img.onload = ()=>{
+        let {width, height} = img;
+        if(width > maxDim || height > maxDim){
+          const scale = maxDim / Math.max(width, height);
+          width = Math.round(width*scale); height = Math.round(height*scale);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        canvas.toBlob(blob=>{
+          if(!blob){ reject(new Error('Could not encode image')); return; }
+          resolve({ blob, contentType: 'image/jpeg' });
+        }, 'image/jpeg', quality);
+      }; img.onerror = reject; img.src = reader.result; };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // SHA-256 of the (already-resized) file, used to de-duplicate — same
+  // hash means same photo, so it's reused instead of uploaded again.
+  async function hashBlob(blob){
+    const buf = await blob.arrayBuffer();
+    const digest = await crypto.subtle.digest('SHA-256', buf);
+    return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+
+  async function refreshMediaGrid(){
+    const grid = document.getElementById('mediaGrid');
+    if(!grid) return;
+    grid.innerHTML = '<p style="color:var(--ink-soft);grid-column:1/-1;">Loading…</p>';
+    try{
+      mediaState.items = await apiCall('/api/media', 'GET');
+    }catch(e){ grid.innerHTML = '<p style="color:var(--primary-dark);grid-column:1/-1;">Could not load the media library.</p>'; return; }
+    renderMediaGrid();
+  }
+
+  function renderMediaGrid(){
+    const grid = document.getElementById('mediaGrid');
+    const filter = (document.getElementById('mediaFilterTag').value || '').trim().toLowerCase();
+    const items = filter ? mediaState.items.filter(m=>m.tags.some(t=>t.toLowerCase().includes(filter))) : mediaState.items;
+
+    grid.innerHTML = items.map(m=>`
+      <div class="media-item ${mediaState.selected.has(m.media_id)?'selected':''}" data-id="${m.media_id}">
+        <input type="checkbox" class="media-check" ${mediaState.selected.has(m.media_id)?'checked':''}>
+        <div class="media-thumb"><img src="${m.url}" loading="lazy" alt="${m.filename}"></div>
+        <div class="media-body">
+          <div class="media-filename">${m.filename} · ${Math.round(m.size_bytes/1024)}KB</div>
+          <input type="text" class="media-tags-input" value="${m.tags.join(', ')}" placeholder="tags, comma separated">
+          <div class="media-actions">
+            <button type="button" data-copy>Copy URL</button>
+            <button type="button" data-use-cover>Use as cover</button>
+            <button type="button" data-use-extra>Add as extra</button>
+            <button type="button" class="danger" data-del>Delete</button>
+          </div>
+        </div>
+      </div>`).join('') || '<p style="color:var(--ink-soft);grid-column:1/-1;">No photos yet — upload some above.</p>';
+
+    grid.querySelectorAll('.media-item').forEach(el=>{
+      const id = el.dataset.id;
+      const item = mediaState.items.find(m=>m.media_id===id);
+
+      el.querySelector('.media-check').addEventListener('change', (e)=>{
+        if(e.target.checked) mediaState.selected.add(id); else mediaState.selected.delete(id);
+        el.classList.toggle('selected', e.target.checked);
+        updateMediaToolbar();
+      });
+      el.querySelector('.media-tags-input').addEventListener('change', async (e)=>{
+        const tags = e.target.value.split(',').map(s=>s.trim()).filter(Boolean);
+        try{ await apiCall('/api/media/'+id, 'PUT', {tags}); item.tags = tags; showToast('Tags updated'); }
+        catch(err){}
+      });
+      el.querySelector('[data-copy]').addEventListener('click', ()=>{
+        navigator.clipboard?.writeText(item.url);
+        showToast('URL copied');
+      });
+      el.querySelector('[data-use-cover]').addEventListener('click', ()=>{
+        document.getElementById('apImage').value = item.url;
+        showToast('Set as cover photo');
+      });
+      el.querySelector('[data-use-extra]').addEventListener('click', ()=>{
+        const ta = document.getElementById('apExtraImages');
+        const url = item.url;
+        ta.value = ta.value.trim() ? ta.value.trim()+'\n'+url : url;
+        showToast('Added to extra photos');
+      });
+      el.querySelector('[data-del]').addEventListener('click', async ()=>{
+        if(!confirm('Delete this photo? Products using its URL will show a broken image.')) return;
+        try{ await apiCall('/api/media/'+id, 'DELETE'); mediaState.selected.delete(id); refreshMediaGrid(); showToast('Deleted'); }
+        catch(err){}
+      });
+
+      // Picking mode: clicking anywhere on the card (outside the controls) picks it.
+      el.querySelector('.media-thumb').addEventListener('click', ()=>{
+        if(!mediaState.picking) return;
+        const url = item.url;
+        if(mediaState.picking === 'cover'){
+          document.getElementById('apImage').value = url;
+        } else {
+          const ta = document.getElementById('apExtraImages');
+          ta.value = ta.value.trim() ? ta.value.trim()+'\n'+url : url;
+        }
+        showToast(mediaState.picking === 'cover' ? 'Set as cover photo' : 'Added to extra photos');
+        setPickingMode(null);
+      });
+    });
+    updateMediaToolbar();
+  }
+
+  function updateMediaToolbar(){
+    const toolbar = document.getElementById('mediaToolbar');
+    const count = mediaState.selected.size;
+    toolbar.style.display = count ? 'flex' : 'none';
+    document.getElementById('mediaSelectedCount').textContent = count + ' selected';
+  }
+
+  function setPickingMode(mode){
+    mediaState.picking = mode;
+    const banner = document.getElementById('mediaPickingBanner');
+    banner.classList.toggle('active', !!mode);
+    document.getElementById('mediaPickingText').textContent = mode === 'cover'
+      ? 'Click a photo below to use it as the cover photo.'
+      : mode === 'extra' ? 'Click a photo below to add it to extra photos.' : '';
+    if(mode) document.getElementById('mediaGrid').scrollIntoView({behavior:'smooth', block:'start'});
+  }
+
+  document.getElementById('apPickCover')?.addEventListener('click', ()=>setPickingMode('cover'));
+  document.getElementById('apPickExtra')?.addEventListener('click', ()=>setPickingMode('extra'));
+  document.getElementById('mediaPickingCancel')?.addEventListener('click', ()=>setPickingMode(null));
+  document.getElementById('mediaFilterTag')?.addEventListener('input', renderMediaGrid);
+
+  document.getElementById('mediaUploadBtn')?.addEventListener('click', async ()=>{
+    const input = document.getElementById('mediaFiles');
+    const statusEl = document.getElementById('mediaUploadStatus');
+    const files = Array.from(input.files || []);
+    if(!files.length){ showToast('Choose one or more photos first'); return; }
+
+    let uploaded = 0, duplicates = 0;
+    for(const file of files){
+      statusEl.textContent = `Uploading ${uploaded+duplicates+1} of ${files.length}…`;
+      try{
+        const {blob, contentType} = await prepareImageFile(file, 1400, 0.82);
+        const hash = await hashBlob(blob);
+
+        // Already have this exact photo? Reuse it — no upload needed.
+        const check = await apiCall('/api/media/check', 'POST', {hash});
+        if(check.duplicate){ duplicates++; continue; }
+
+        const {upload_url, r2_key} = await apiCall('/api/media/presign', 'POST', {hash, content_type: contentType});
+        const putRes = await fetch(upload_url, {method:'PUT', headers:{'Content-Type': contentType}, body: blob});
+        if(!putRes.ok) throw new Error('R2 upload failed ('+putRes.status+')');
+
+        await apiCall('/api/media/confirm', 'POST', {
+          hash, r2_key, filename: file.name, content_type: contentType, size_bytes: blob.size,
+        });
+        uploaded++;
+      }catch(e){ showToast('Could not upload '+file.name+' — '+(e.message || 'check R2 is configured')); }
+    }
+    statusEl.textContent = `Done — ${uploaded} uploaded${duplicates ? ', '+duplicates+' already in the library (reused, not duplicated)' : ''}.`;
+    input.value = '';
+    refreshMediaGrid();
+  });
+
+  document.getElementById('mediaBulkTagBtn')?.addEventListener('click', async ()=>{
+    const tagInput = document.getElementById('mediaBulkTagInput');
+    const tags = tagInput.value.split(',').map(s=>s.trim()).filter(Boolean);
+    if(!tags.length){ showToast('Type a tag first'); return; }
+    try{
+      await apiCall('/api/media/bulk-tag', 'POST', {media_ids: Array.from(mediaState.selected), tags, mode: 'add'});
+      showToast('Tag applied to '+mediaState.selected.size+' photos');
+      tagInput.value = '';
+      refreshMediaGrid();
+    }catch(e){}
+  });
+
+  document.getElementById('mediaBulkDeleteBtn')?.addEventListener('click', async ()=>{
+    const count = mediaState.selected.size;
+    if(!count){ showToast('Select some photos first'); return; }
+    if(!confirm(`Delete ${count} selected photo(s)? Products using these URLs will show a broken image.`)) return;
+    try{
+      await apiCall('/api/media/bulk-delete', 'POST', {media_ids: Array.from(mediaState.selected)});
+      mediaState.selected.clear();
+      showToast('Deleted');
+      refreshMediaGrid();
+    }catch(e){}
+  });
+
   if(getKey()){
     document.getElementById('adminGate').style.display = 'none';
     document.getElementById('adminPanel').style.display = 'block';
     refreshList();
+    refreshMediaGrid();
   }
 }
 

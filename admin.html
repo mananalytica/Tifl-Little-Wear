@@ -45,13 +45,40 @@
 
   <div id="adminPanel" style="display:none;margin-top:34px;">
 
+    <!-- ===== Media library ===== -->
+    <div class="side-card" style="margin-bottom:40px;">
+      <h3>Media library</h3>
+      <p style="margin-bottom:6px;">Upload photos here once, then reuse them across products — no Cloudinary needed. Photos are stored in your Cloudflare R2 bucket (not the database); this page just keeps track of them. Uploads are hashed, so if you accidentally upload the same photo twice, it's recognised as a duplicate and reuses the original instead of storing it again.</p>
+      <p style="font-size:12.5px;color:var(--ink-soft);margin-bottom:16px;">Needs a one-time Cloudflare R2 setup first — see the comment block at the top of <code>index.py</code> for the exact steps and the environment variables to set in Vercel. Until that's done, uploads here will show an error.</p>
+      <input type="file" id="mediaFiles" accept="image/*" multiple style="margin-bottom:12px;">
+      <div style="display:flex;gap:10px;align-items:center;">
+        <button class="btn btn-primary btn-sm" id="mediaUploadBtn">Upload</button>
+        <input type="text" id="mediaFilterTag" placeholder="Filter by tag…" style="flex:1;max-width:220px;border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 11px;font-size:13px;">
+      </div>
+      <div id="mediaUploadStatus" style="margin-top:10px;font-size:13px;color:var(--ink-soft);"></div>
+
+      <div id="mediaPickingBanner" class="media-picking-banner">
+        <span id="mediaPickingText">Click a photo to use it.</span>
+        <button type="button" id="mediaPickingCancel">Cancel</button>
+      </div>
+
+      <div class="media-toolbar" id="mediaToolbar" style="display:none;">
+        <span id="mediaSelectedCount" style="font-size:12.8px;color:var(--ink-soft);"></span>
+        <input type="text" id="mediaBulkTagInput" placeholder="Add tag to selected…" style="border:1px solid var(--line);border-radius:6px;padding:6px 9px;font-size:12.5px;">
+        <button class="btn btn-ghost btn-sm" id="mediaBulkTagBtn">Apply tag</button>
+        <button class="btn btn-ghost btn-sm" id="mediaBulkDeleteBtn" style="color:#c0392b;">Delete selected</button>
+      </div>
+
+      <div id="mediaGrid" class="media-grid"></div>
+    </div>
+
     <!-- ===== Bulk import ===== -->
     <div class="side-card" style="margin-bottom:40px;">
       <h3>Bulk upload (CSV or XML)</h3>
       <p style="margin-bottom:16px;">Upload a Google Shopping-style feed file to add or update many products at once. Matching is done by <b>SKU</b> — if a row's SKU matches an existing product, that product is updated instead of duplicated, so it's safe to re-upload the same file later.</p>
       <p style="font-size:12.5px;color:var(--ink-soft);margin-bottom:14px;">
-        Expected columns (CSV header row, or XML <code>&lt;item&gt;</code> tags): <code>id, title, description, link, image_link, price, sale_price, availability, brand, condition, gtin, mpn, google_product_category, product_type, color, size, material, gender, age_group, item_group_id</code>.
-        <code>id</code> is used as the SKU. Missing columns are fine — only <code>title</code> and <code>price</code> are required.
+        Expected columns (CSV header row, or XML <code>&lt;item&gt;</code> tags): <code>id, title, description, link, image_link, additional_image_link, price, sale_price, availability, brand, condition, gtin, mpn, google_product_category, product_type, color, size, material, gender, age_group, item_group_id</code>.
+        <code>id</code> is used as the SKU. For multiple extra photos, put a comma-separated list of URLs in <code>additional_image_link</code>. Missing columns are fine — only <code>title</code> and <code>price</code> are required.
       </p>
       <input type="file" id="bulkFile" accept=".csv,.xml" style="margin-bottom:12px;">
       <div style="display:flex;gap:10px;">
@@ -88,7 +115,21 @@
             <div class="field"><label for="apPrice">Price (PKR)</label><input id="apPrice" required type="number" min="0" placeholder="3200"></div>
             <div class="field"><label for="apSalePrice">Sale price (optional)</label><input id="apSalePrice" type="number" min="0" placeholder="Leave blank if not on sale"></div>
             <div class="field"><label for="apSwatch">Placeholder colour swatch</label><input id="apSwatch" type="color" value="#4A93E8" style="height:42px;padding:4px;"></div>
-            <div class="field"><label for="apImage">Photo URL (optional)</label><input id="apImage" type="text" placeholder="https://..."></div>
+            <div class="field">
+              <label for="apImage">Cover photo URL (optional)</label>
+              <div style="display:flex;gap:6px;">
+                <input id="apImage" type="text" placeholder="https://..." style="flex:1;">
+                <button type="button" class="btn btn-ghost btn-sm" id="apPickCover" style="white-space:nowrap;">From library</button>
+              </div>
+            </div>
+            <div class="field full">
+              <label for="apExtraImages">More photos (optional)</label>
+              <textarea id="apExtraImages" rows="3" placeholder="Paste one image URL per line — these show as extra thumbnails on the product page, in the order you list them."></textarea>
+              <div style="margin-top:6px;">
+                <button type="button" class="btn btn-ghost btn-sm" id="apPickExtra">Add from library</button>
+              </div>
+              <p style="font-size:12px;color:var(--ink-soft);margin-top:4px;">The cover photo above is shown first everywhere (shop grid, feeds). Anything you add here shows as additional photos when a customer opens the product page — as many as you like.</p>
+            </div>
             <div class="field full"><label for="apDescription">Description</label><textarea id="apDescription" rows="3" placeholder="A short, honest description of the piece."></textarea></div>
           </div>
 

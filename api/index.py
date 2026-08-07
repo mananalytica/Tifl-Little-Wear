@@ -21,10 +21,14 @@ SETUP
 """
 
 import hashlib
+import hmac
 import json
 import os
 import secrets
 import uuid
+import urllib.request
+import urllib.error
+from urllib.parse import quote
 from datetime import datetime, timedelta
 
 # Vercel's serverless filesystem is read-only except /tmp. DuckDB looks up
@@ -42,6 +46,108 @@ from fastapi.responses import Response
 from pydantic import BaseModel
 
 MOTHERDUCK_TOKEN = os.environ.get("MOTHERDUCK_TOKEN", "")
+
+# ================= CLOUDFLARE R2 (product photo storage) =================
+# Photos live in an R2 bucket, not the database — MotherDuck only ever
+# stores their metadata (filename, tags, size, a content hash). The
+# browser uploads straight to R2 using a short-lived presigned URL that
+# this API generates, so image bytes never pass through this function.
+#
+# SETUP
+# -----
+# 1. Cloudflare dashboard -> R2 -> Create bucket (e.g. "tifl-media").
+# 2. That bucket -> Settings -> Public access -> Allow Access. Copy the
+#    public "r2.dev" URL it gives you (or connect a custom domain like
+#    media.tifllittlewear.com for a nicer-looking URL — either works).
+# 3. That bucket -> Settings -> CORS Policy -> add a rule allowing PUT
+#    from your site's origin, e.g.:
+#      [{"AllowedOrigins": ["https://www.tifllittlewear.com"],
+#        "AllowedMethods": ["PUT"], "AllowedHeaders": ["*"]}]
+#    (add your Vercel preview domain and http://localhost:3000 too if you
+#    test locally)
+# 4. Cloudflare dashboard -> R2 -> Manage API tokens -> Create API token
+#    (scope it to this bucket, Object Read & Write). Copy the Access Key
+#    ID and Secret Access Key it gives you — shown once.
+# 5. In Vercel -> Project -> Settings -> Environment Variables, set:
+#      R2_ACCOUNT_ID        = your Cloudflare account ID (shown on the R2 page)
+#      R2_ACCESS_KEY_ID     = from step 4
+#      R2_SECRET_ACCESS_KEY = from step 4
+#      R2_BUCKET_NAME       = the bucket name from step 1
+#      R2_PUBLIC_BASE_URL   = the public URL from step 2, no trailing slash
+#                             (e.g. https://pub-xxxxxxxx.r2.dev)
+R2_ACCOUNT_ID = os.environ.get("R2_ACCOUNT_ID", "")
+R2_ACCESS_KEY_ID = os.environ.get("R2_ACCESS_KEY_ID", "")
+R2_SECRET_ACCESS_KEY = os.environ.get("R2_SECRET_ACCESS_KEY", "")
+R2_BUCKET_NAME = os.environ.get("R2_BUCKET_NAME", "")
+R2_PUBLIC_BASE_URL = os.environ.get("R2_PUBLIC_BASE_URL", "").rstrip("/")
+
+def r2_configured() -> bool:
+    return bool(R2_ACCOUNT_ID and R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY and R2_BUCKET_NAME and R2_PUBLIC_BASE_URL)
+
+def _r2_host() -> str:
+    return f"{R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+
+def _r2_sign_key(date_stamp: str) -> bytes:
+    # Standard AWS SigV4 key-derivation chain — R2 speaks the S3 API, so
+    # the same algorithm S3 uses applies unchanged (region is always
+    # "auto" for R2). Implemented by hand with stdlib hmac/hashlib rather
+    # than pulling in boto3, which is a heavy dependency for a small
+    # serverless function.
+    def sign(key, msg):
+        return hmac.new(key, msg.encode("utf-8"), hashlib.sha256).digest()
+    k_date = sign(("AWS4" + R2_SECRET_ACCESS_KEY).encode("utf-8"), date_stamp)
+    k_region = sign(k_date, "auto")
+    k_service = sign(k_region, "s3")
+    return sign(k_service, "aws4_request")
+
+def r2_presign_put(key: str, expires: int = 600) -> str:
+    """Returns a URL the browser can PUT the file to directly, valid for `expires` seconds."""
+    now = datetime.utcnow()
+    amz_date = now.strftime("%Y%m%dT%H%M%SZ")
+    date_stamp = now.strftime("%Y%m%d")
+    host = _r2_host()
+    canonical_uri = f"/{R2_BUCKET_NAME}/{quote(key, safe='/')}"
+    credential_scope = f"{date_stamp}/auto/s3/aws4_request"
+    params = {
+        "X-Amz-Algorithm": "AWS4-HMAC-SHA256",
+        "X-Amz-Credential": f"{R2_ACCESS_KEY_ID}/{credential_scope}",
+        "X-Amz-Date": amz_date,
+        "X-Amz-Expires": str(expires),
+        "X-Amz-SignedHeaders": "host",
+    }
+    canonical_querystring = "&".join(f"{quote(k, safe='')}={quote(v, safe='')}" for k, v in sorted(params.items()))
+    canonical_request = f"PUT\n{canonical_uri}\n{canonical_querystring}\nhost:{host}\n\nhost\nUNSIGNED-PAYLOAD"
+    string_to_sign = f"AWS4-HMAC-SHA256\n{amz_date}\n{credential_scope}\n{hashlib.sha256(canonical_request.encode()).hexdigest()}"
+    signature = hmac.new(_r2_sign_key(date_stamp), string_to_sign.encode("utf-8"), hashlib.sha256).hexdigest()
+    return f"https://{host}{canonical_uri}?{canonical_querystring}&X-Amz-Signature={signature}"
+
+def r2_delete_object(key: str):
+    """Best-effort delete — called after the metadata row is already gone, so a
+    transient R2 error here shouldn't surface as a failure to the admin."""
+    now = datetime.utcnow()
+    amz_date = now.strftime("%Y%m%dT%H%M%SZ")
+    date_stamp = now.strftime("%Y%m%d")
+    host = _r2_host()
+    canonical_uri = f"/{R2_BUCKET_NAME}/{quote(key, safe='/')}"
+    payload_hash = hashlib.sha256(b"").hexdigest()
+    credential_scope = f"{date_stamp}/auto/s3/aws4_request"
+    canonical_request = f"DELETE\n{canonical_uri}\n\nhost:{host}\nx-amz-content-sha256:{payload_hash}\nx-amz-date:{amz_date}\n\nhost;x-amz-content-sha256;x-amz-date\n{payload_hash}"
+    string_to_sign = f"AWS4-HMAC-SHA256\n{amz_date}\n{credential_scope}\n{hashlib.sha256(canonical_request.encode()).hexdigest()}"
+    signature = hmac.new(_r2_sign_key(date_stamp), string_to_sign.encode("utf-8"), hashlib.sha256).hexdigest()
+    authorization = (f"AWS4-HMAC-SHA256 Credential={R2_ACCESS_KEY_ID}/{credential_scope}, "
+                      f"SignedHeaders=host;x-amz-content-sha256;x-amz-date, Signature={signature}")
+    req = urllib.request.Request(
+        f"https://{host}{canonical_uri}", method="DELETE",
+        headers={"host": host, "x-amz-content-sha256": payload_hash, "x-amz-date": amz_date, "Authorization": authorization},
+    )
+    try:
+        urllib.request.urlopen(req, timeout=10)
+    except Exception:
+        pass
+
+def _ext_for_content_type(content_type: str) -> str:
+    return {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif"}.get(content_type, "jpg")
+
 DB_NAME = "tifl_bookings"
 
 # ================= RUDDERSTACK (server-side) =================
@@ -249,6 +355,16 @@ def ensure_schema(conn):
             activity         VARCHAR,
             care             VARCHAR,
             recommended      VARCHAR
+        );""",
+        """CREATE TABLE IF NOT EXISTS media (
+            media_id         VARCHAR PRIMARY KEY,
+            created_at       TIMESTAMP,
+            filename         VARCHAR,
+            content_type     VARCHAR,
+            r2_key           VARCHAR,
+            hash             VARCHAR,
+            size_bytes       INTEGER,
+            tags             VARCHAR
         );""",
     ]
     try:
@@ -675,6 +791,11 @@ def products_feed_xml():
         image = p.get("image_url") or ""
         if image.startswith("#"):
             image = ""  # placeholder colour swatches aren't real images — omit rather than send a bad link
+        # additional_image_link is stored as a comma-separated list so a
+        # product can carry more than one extra photo; Merchant Center wants
+        # each one as its own <g:additional_image_link> tag (max 10).
+        extra_images = [u.strip() for u in (p.get("additional_image_link") or "").split(",") if u.strip()]
+        extra_image_tags = "".join(f"<g:additional_image_link>{esc(u)}</g:additional_image_link>" for u in extra_images[:10])
         xml_items.append(f"""
     <item>
       <g:id>{esc(p.get('sku') or p['product_id'])}</g:id>
@@ -682,6 +803,7 @@ def products_feed_xml():
       <description>{esc(p.get('description') or p['name'])}</description>
       <link>{esc(link)}</link>
       <g:image_link>{esc(image)}</g:image_link>
+      {extra_image_tags}
       <g:availability>{esc(p.get('availability') or 'in stock')}</g:availability>
       <g:price>{esc(p['price'])} {esc(p.get('currency') or 'PKR')}</g:price>
       {f"<g:sale_price>{esc(p['sale_price'])} {esc(p.get('currency') or 'PKR')}</g:sale_price>" if p.get('sale_price') else ""}
@@ -718,7 +840,7 @@ def products_feed_csv():
     conn.close()
 
     header = [
-        "id", "title", "description", "link", "image_link", "availability", "price",
+        "id", "title", "description", "link", "image_link", "additional_image_link", "availability", "price",
         "sale_price", "brand", "condition", "gtin", "mpn", "google_product_category",
         "product_type", "color", "size", "gender", "age_group", "item_group_id",
     ]
@@ -736,6 +858,7 @@ def products_feed_csv():
             p.get("description") or p["name"],
             link,
             image,
+            p.get("additional_image_link") or "",
             p.get("availability") or "in stock",
             f"{p['price']} {p.get('currency') or 'PKR'}",
             f"{p['sale_price']} {p.get('currency') or 'PKR'}" if p.get("sale_price") else "",
@@ -865,6 +988,198 @@ def bulk_import_products(payload: dict, x_admin_key: str | None = Header(default
 
     conn.close()
     return {"created": created, "updated": updated, "errors": errors, "total": len(items)}
+
+
+# ================= MEDIA LIBRARY =================
+# A small built-in image library so you don't need Cloudinary (or any
+# other image host) and don't need to store binary photos in the
+# database: actual image bytes live in a Cloudflare R2 bucket, and
+# MotherDuck only ever stores tabular metadata about them (filename,
+# tags, size, a content hash, and the R2 object key). See the R2 setup
+# comment near the top of this file for the one-time bucket setup.
+#
+# The browser never sends image bytes to this API — it uploads straight
+# to R2 using a short-lived presigned URL this API hands out, which keeps
+# this function light and avoids Vercel's request-body size limit
+# entirely. Flow for one photo:
+#   1. Browser resizes + hashes the file, POSTs the hash to /api/media/check.
+#   2. If that hash already exists, the browser reuses the existing photo
+#      instead of uploading anything — real de-duplication, not just a
+#      "you already have this" warning after the fact. Same photo used on
+#      five listings costs storage once, not five times.
+#   3. Otherwise, /api/media/presign returns a one-time upload URL; the
+#      browser PUTs the file directly to R2.
+#   4. /api/media/confirm records the metadata row once the upload succeeds.
+# Note: de-dup is by exact file hash — it catches the same file uploaded
+# twice, not two different files that merely look alike (a resave or a
+# crop hashes differently). That would need perceptual hashing, which is
+# meaningfully more machinery and can be added later if it turns out to
+# matter in practice.
+
+def media_row_to_dict(row, cols):
+    d = dict(zip(cols, row))
+    d["url"] = f"{R2_PUBLIC_BASE_URL}/{d['r2_key']}" if d.get("r2_key") else None
+    d["tags"] = [t for t in (d.get("tags") or "").split(",") if t]
+    return d
+
+
+MEDIA_COLS = ["media_id", "created_at", "filename", "content_type", "hash", "size_bytes", "tags", "r2_key"]
+
+
+class MediaCheck(BaseModel):
+    hash: str
+
+
+@app.post("/api/media/check")
+def check_media(payload: MediaCheck, x_admin_key: str | None = Header(default=None)):
+    require_admin(x_admin_key)
+    conn = get_conn()
+    row = conn.execute(
+        f"SELECT {', '.join(MEDIA_COLS)} FROM media WHERE hash = ? LIMIT 1", [payload.hash]
+    ).fetchone()
+    conn.close()
+    if not row:
+        return {"duplicate": False}
+    result = media_row_to_dict(row, MEDIA_COLS)
+    result["duplicate"] = True
+    return result
+
+
+class MediaPresign(BaseModel):
+    hash: str
+    content_type: str
+
+
+@app.post("/api/media/presign")
+def presign_media(payload: MediaPresign, x_admin_key: str | None = Header(default=None)):
+    require_admin(x_admin_key)
+    if not r2_configured():
+        raise HTTPException(status_code=500, detail="R2 isn't configured yet — set R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME and R2_PUBLIC_BASE_URL in Vercel env vars.")
+    ext = _ext_for_content_type(payload.content_type)
+    r2_key = f"products/{payload.hash}.{ext}"
+    return {"upload_url": r2_presign_put(r2_key), "r2_key": r2_key}
+
+
+class MediaConfirm(BaseModel):
+    hash: str
+    r2_key: str
+    filename: str
+    content_type: str
+    size_bytes: int
+    tags: list[str] | None = None
+
+
+@app.post("/api/media/confirm")
+def confirm_media(payload: MediaConfirm, x_admin_key: str | None = Header(default=None)):
+    require_admin(x_admin_key)
+    conn = get_conn()
+    existing = conn.execute(
+        f"SELECT {', '.join(MEDIA_COLS)} FROM media WHERE hash = ? LIMIT 1", [payload.hash]
+    ).fetchone()
+    if existing:
+        conn.close()
+        result = media_row_to_dict(existing, MEDIA_COLS)
+        result["duplicate"] = True
+        return result
+
+    media_id = "m-" + uuid.uuid4().hex[:10]
+    tags_str = ",".join(t.strip() for t in (payload.tags or []) if t.strip())
+    conn.execute(
+        """INSERT INTO media (media_id, created_at, filename, content_type, hash, size_bytes, tags, r2_key)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+        [media_id, datetime.now(), payload.filename, payload.content_type, payload.hash, payload.size_bytes, tags_str, payload.r2_key],
+    )
+    conn.close()
+    return {
+        "media_id": media_id, "filename": payload.filename, "content_type": payload.content_type,
+        "hash": payload.hash, "size_bytes": payload.size_bytes, "tags": payload.tags or [],
+        "r2_key": payload.r2_key, "url": f"{R2_PUBLIC_BASE_URL}/{payload.r2_key}", "duplicate": False,
+    }
+
+
+@app.get("/api/media")
+def list_media(x_admin_key: str | None = Header(default=None)):
+    require_admin(x_admin_key)
+    conn = get_conn()
+    rows = conn.execute(
+        f"SELECT {', '.join(MEDIA_COLS)} FROM media ORDER BY created_at DESC"
+    ).fetchall()
+    conn.close()
+    return [media_row_to_dict(r, MEDIA_COLS) for r in rows]
+
+
+class MediaTagUpdate(BaseModel):
+    tags: list[str]
+
+
+@app.put("/api/media/{media_id}")
+def update_media_tags(media_id: str, update: MediaTagUpdate, x_admin_key: str | None = Header(default=None)):
+    require_admin(x_admin_key)
+    tags_str = ",".join(t.strip() for t in update.tags if t.strip())
+    conn = get_conn()
+    conn.execute("UPDATE media SET tags = ? WHERE media_id = ?", [tags_str, media_id])
+    conn.close()
+    return {"media_id": media_id, "tags": update.tags}
+
+
+class MediaBulkTag(BaseModel):
+    media_ids: list[str]
+    tags: list[str]
+    mode: str = "add"  # "add" keeps existing tags, "replace" overwrites them
+
+
+@app.post("/api/media/bulk-tag")
+def bulk_tag_media(payload: MediaBulkTag, x_admin_key: str | None = Header(default=None)):
+    require_admin(x_admin_key)
+    conn = get_conn()
+    new_tags = [t.strip() for t in payload.tags if t.strip()]
+    updated = 0
+    for media_id in payload.media_ids:
+        if payload.mode == "add":
+            row = conn.execute("SELECT tags FROM media WHERE media_id = ?", [media_id]).fetchone()
+            if row is None:
+                continue
+            existing = [t for t in (row[0] or "").split(",") if t]
+            merged = existing + [t for t in new_tags if t not in existing]
+            tags_str = ",".join(merged)
+        else:
+            tags_str = ",".join(new_tags)
+        conn.execute("UPDATE media SET tags = ? WHERE media_id = ?", [tags_str, media_id])
+        updated += 1
+    conn.close()
+    return {"updated": updated}
+
+
+class MediaBulkDelete(BaseModel):
+    media_ids: list[str]
+
+
+@app.post("/api/media/bulk-delete")
+def bulk_delete_media(payload: MediaBulkDelete, x_admin_key: str | None = Header(default=None)):
+    require_admin(x_admin_key)
+    conn = get_conn()
+    keys = []
+    for media_id in payload.media_ids:
+        row = conn.execute("SELECT r2_key FROM media WHERE media_id = ?", [media_id]).fetchone()
+        if row and row[0]:
+            keys.append(row[0])
+        conn.execute("DELETE FROM media WHERE media_id = ?", [media_id])
+    conn.close()
+    for key in keys:
+        r2_delete_object(key)
+    return {"deleted": len(payload.media_ids)}
+
+
+@app.delete("/api/media/{media_id}")
+def delete_media(media_id: str, x_admin_key: str | None = Header(default=None)):
+    require_admin(x_admin_key)
+    conn = get_conn()
+    row = conn.execute("SELECT r2_key FROM media WHERE media_id = ?", [media_id]).fetchone()
+    conn.execute("DELETE FROM media WHERE media_id = ?", [media_id])
+    conn.close()
+    if row and row[0]:
+        r2_delete_object(row[0])
+    return {"media_id": media_id, "status": "deleted"}
 
 
 # ================= ORDERS =================

@@ -150,10 +150,10 @@ unrelated hue.
 At the top of `script.js`:
 ```js
 const CONFIG = {
-  phone: '+92 42 1234 5678',
-  phoneHref: 'tel:+924212345678',
-  whatsappNumber: '924212345678',
-  email: 'studio@tiflwear.pk',
+  phone: '+92 305 4110254',
+  phoneHref: 'tel:+923054110254',
+  whatsappNumber: '923054110254',
+  email: 'studio@tifllittlewear.com',
   address: 'Tifl Little Wear, MM Alam Road area, Gulberg III, Lahore, Pakistan.',
   hours: 'Open Tue–Sun, 11am – 8pm.',
   currency: 'PKR'
