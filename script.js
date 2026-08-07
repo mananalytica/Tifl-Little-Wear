@@ -23,10 +23,10 @@ if (typeof window.rsIdentify !== 'function') window.rsIdentify = function(){};
    hunt through every HTML file.
 ============================================================= */
 const CONFIG = {
-  phone: '+92 305 4110254',
-  phoneHref: 'tel:+923054110254',
-  whatsappNumber: '923054110254',        // country code + number, no + or spaces
-  email: 'studio@tifllittlewear.com',
+  phone: '+92 42 1234 5678',
+  phoneHref: 'tel:+924212345678',
+  whatsappNumber: '924212345678',        // country code + number, no + or spaces
+  email: 'studio@tiflwear.pk',
   address: 'Tifl Little Wear, MM Alam Road area, Gulberg III, Lahore, Pakistan.',
   hours: 'Open Tue–Sun, 11am – 8pm.',
   currency: 'PKR'
@@ -179,8 +179,12 @@ function normalizeProduct(p){
     price: p.price,
     currency: p.currency || 'PKR',
     image_url: p.image_url || '#4A93E8',
+    // One or more extra photo URLs, comma-separated — see productImages().
+    additional_image_link: p.additional_image_link || '',
     description: p.description || '',
     sku: p.sku || '',
+    // Short bullet-point product features, "|"-separated — see productFeatures().
+    features: p.features || '',
     // Shopping feed attributes (Google Merchant Center / Meta Catalog)
     link: p.link || '',
     availability: p.availability || 'in stock',
@@ -258,6 +262,21 @@ function productThumbHTML(p, size){
   }
   const color = isColor(p.image_url) ? p.image_url : '#4A93E8';
   return `<div style="background:${color}1A;width:100%;height:100%;display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 100 100" width="${size}" height="${size}"><path d="M50 10 L35 22 L20 18 L10 34 L22 42 L22 90 L78 90 L78 42 L90 34 L80 18 L65 22 Z" fill="${color}" opacity="0.85"/></svg></div>`;
+}
+// All photo URLs for a product's gallery: the main image_url first, then
+// any extra photos from additional_image_link. additional_image_link
+// follows Google Merchant Center's text-feed convention — a single
+// comma-separated string holding up to 10 extra image URLs — set either
+// via the admin form's "Additional photo URLs" field or a bulk CSV/XML
+// upload. Duplicates and blanks are dropped.
+function productImages(p){
+  const extra = (p.additional_image_link || '').split(',').map(s=>s.trim()).filter(Boolean);
+  const all = [p.image_url, ...extra].filter(Boolean);
+  return [...new Set(all)];
+}
+// A product's feature bullets, from the "|"-separated features field.
+function productFeatures(p){
+  return (p.features || '').split('|').map(s=>s.trim()).filter(Boolean);
 }
 function addToCart(p, qty=1){
   const cart = Store.get('tifl_cart', []);
@@ -577,23 +596,9 @@ async function initProductPage(){
   if(p.age_group) chips.push(p.age_group.charAt(0).toUpperCase()+p.age_group.slice(1));
   document.getElementById('pdAttributes').innerHTML = chips.map(c=>`<span class="garment-tag">${c}</span>`).join('');
 
-  const AGE_GROUP_LABELS = {
-    newborn: 'Newborn (0–3 months)', infant: 'Infant (3–12 months)',
-    toddler: 'Toddler (1–3 years)', kids: 'Kids (4–12 years)', adult: 'Teen / Adult'
-  };
   document.getElementById('pdMaterialText').textContent = p.material
     ? 'Made from ' + p.material + '.'
     : 'Material details available on request — ask us via WhatsApp or at your fitting.';
-
-  const details = [
-    { label:'Recommended age', value: AGE_GROUP_LABELS[p.age_group] || 'See sizing chart' },
-    { label:'Size', value: p.size || 'See sizing chart for measurements' }
-  ];
-  document.getElementById('pdDetailGrid').innerHTML = details.map(d=>`
-    <div class="pd-detail-item">
-      <div class="label">${d.label}</div>
-      <div class="value">${d.value}</div>
-    </div>`).join('');
 
   // Accordion — one panel open at a time, first one starts open.
   document.querySelectorAll('.pd-acc-trigger').forEach(btn=>{
@@ -679,19 +684,14 @@ async function initProductPage(){
 
   /* ---------- variant B only (guarded — no-op on product.html) ---------- */
 
-  // Gallery thumbnails: main image + any extra images. Extra images are
-  // stored as a comma-separated list in additional_image_link, so a
-  // product can have as many photos as you want, not just one.
+  // Gallery thumbnails: main image + every additional_image_link URL.
   const thumbsRoot = document.getElementById('pdThumbs');
   if(thumbsRoot){
-    const images = [p.image_url];
-    if(p.additional_image_link){
-      p.additional_image_link.split(',').map(s=>s.trim()).filter(Boolean).forEach(img=>images.push(img));
-    }
-    thumbsRoot.innerHTML = images.map((img,i)=>`
+    const images = productImages(p);
+    thumbsRoot.innerHTML = images.length > 1 ? images.map((img,i)=>`
       <div class="pd-thumb ${i===0?'active':''}" data-img="${img}">
         ${productThumbHTML(Object.assign({}, p, {image_url: img}), '70%')}
-      </div>`).join('');
+      </div>`).join('') : '';
     thumbsRoot.querySelectorAll('.pd-thumb').forEach(t=>{
       t.addEventListener('click', ()=>{
         thumbsRoot.querySelectorAll('.pd-thumb').forEach(x=>x.classList.remove('active'));
@@ -699,6 +699,24 @@ async function initProductPage(){
         document.getElementById('pdMedia').innerHTML = productThumbHTML(Object.assign({}, p, {image_url: t.dataset.img}), '55%');
       });
     });
+  }
+
+  // Product features section — one card per bullet, hidden entirely when
+  // the product has none set.
+  const featuresSection = document.getElementById('pdFeaturesSection');
+  const featuresList = document.getElementById('pdFeaturesList');
+  if(featuresSection && featuresList){
+    const features = productFeatures(p);
+    if(features.length){
+      featuresList.innerHTML = features.map(f=>`
+        <div class="pd-feature-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+          <span>${f}</span>
+        </div>`).join('');
+      featuresSection.style.display = 'block';
+    } else {
+      featuresSection.style.display = 'none';
+    }
   }
 
   // Size note (honest to the data model — one size per listing, not a
@@ -844,9 +862,9 @@ function initAdminPage(){
     document.getElementById('apSalePrice').value = p.sale_price || '';
     document.getElementById('apImage').value = isColor(p.image_url) ? '' : p.image_url;
     document.getElementById('apSwatch').value = isColor(p.image_url) ? p.image_url : '#4A93E8';
-    document.getElementById('apExtraImages').value = p.additional_image_link
-      ? p.additional_image_link.split(',').map(s=>s.trim()).filter(Boolean).join('\n') : '';
+    document.getElementById('apAdditionalImages').value = p.additional_image_link || '';
     document.getElementById('apDescription').value = p.description;
+    document.getElementById('apFeatures').value = (p.features || '').split('|').map(s=>s.trim()).filter(Boolean).join('\n');
     document.getElementById('apSku').value = p.sku || '';
     document.getElementById('apGtin').value = p.gtin || '';
     document.getElementById('apMpn').value = p.mpn || '';
@@ -881,9 +899,11 @@ function initAdminPage(){
       sale_price: document.getElementById('apSalePrice').value ? parseFloat(document.getElementById('apSalePrice').value) : null,
       currency: 'PKR',
       image_url: document.getElementById('apImage').value.trim() || document.getElementById('apSwatch').value,
-      additional_image_link: document.getElementById('apExtraImages').value
-        .split('\n').map(s=>s.trim()).filter(Boolean).join(',') || null,
+      additional_image_link: document.getElementById('apAdditionalImages').value
+        .split(',').map(s=>s.trim()).filter(Boolean).join(', ') || null,
       description: document.getElementById('apDescription').value,
+      features: document.getElementById('apFeatures').value
+        .split('\n').map(s=>s.trim()).filter(Boolean).join('|') || null,
       sku: document.getElementById('apSku').value || null,
       gtin: document.getElementById('apGtin').value || null,
       mpn: document.getElementById('apMpn').value || null,
@@ -945,6 +965,7 @@ function initAdminPage(){
       link: get('link'),
       image_url: get('image_link','image_url'),
       additional_image_link: get('additional_image_link'),
+      features: get('features'),
       price,
       sale_price: salePrice,
       availability: get('availability') || 'in stock',
@@ -982,6 +1003,26 @@ function initAdminPage(){
       return mapFeedRow(row);
     });
   }
+
+  // Downloadable starter CSV, built client-side so there's nothing extra to
+  // host. Demonstrates the multi-image (additional_image_link, comma-
+  // separated) and features (pipe-separated) conventions with real example
+  // rows, so a merchant can just edit it and re-upload.
+  document.getElementById('bulkTemplateBtn')?.addEventListener('click', ()=>{
+    const header = ['id','title','description','link','image_link','additional_image_link','price','sale_price','availability','brand','condition','gtin','mpn','google_product_category','product_type','color','size','material','features','gender','age_group','item_group_id'];
+    const rows = [
+      ['TLW-KURTA-001','Block-print Kurta Set','Hand block-printed cotton kurta and pajama set.','','https://example.com/kurta-1.jpg','https://example.com/kurta-2.jpg, https://example.com/kurta-3.jpg','3200','','in stock','Chinar Kids','new','','','Apparel & Accessories > Clothing > Kids\' Clothing','Kids > Boys > Kurta','Indigo','4-5Y','100% Cotton','Hand block-printed|Breathable cotton|Elastic waist pajama','male','kids',''],
+      ['TLW-FROCK-002','Layered Cotton Frock','A layered cotton frock with soft gathers.','','https://example.com/frock-1.jpg','https://example.com/frock-2.jpg','3800','3400','in stock','Bunain','new','','','Apparel & Accessories > Clothing > Kids\' Clothing','Kids > Girls > Frock','Blush Pink','3-4Y','Cotton blend','Soft gathered layers|Hidden back zip|Machine washable','female','kids',''],
+    ];
+    const esc = v => /[",\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v;
+    const csv = [header, ...rows].map(r=>r.map(esc).join(',')).join('\r\n');
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'product-import-template.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  });
 
   document.getElementById('bulkUploadBtn')?.addEventListener('click', async ()=>{
     const fileInput = document.getElementById('bulkFile');

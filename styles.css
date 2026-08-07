@@ -389,6 +389,10 @@ footer.site{border-top:1px solid var(--line);padding:52px 0 40px;margin-top:60px
 .pd-detail-item .label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:6px;}
 .pd-detail-item .value{font-size:14px;font-weight:600;color:var(--ink);}
 
+.pd-features-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;}
+.pd-feature-item{display:flex;align-items:flex-start;gap:10px;padding:16px 18px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--bg-alt);font-size:14px;color:var(--ink);line-height:1.5;}
+.pd-feature-item svg{width:18px;height:18px;color:var(--primary);flex:none;margin-top:2px;}
+
 /* =============== ADMIN =============== */
 .admin-list{display:flex;flex-direction:column;gap:10px;}
 .admin-row{display:flex;align-items:center;gap:14px;border:1px solid var(--line);border-radius:var(--radius-sm);padding:12px;background:var(--bg);}

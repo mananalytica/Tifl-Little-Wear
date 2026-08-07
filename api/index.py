@@ -42,7 +42,6 @@ from fastapi.responses import Response
 from pydantic import BaseModel
 
 MOTHERDUCK_TOKEN = os.environ.get("MOTHERDUCK_TOKEN", "")
-
 DB_NAME = "tifl_bookings"
 
 # ================= RUDDERSTACK (server-side) =================
@@ -271,6 +270,7 @@ def ensure_schema(conn):
         ("google_product_category", "VARCHAR"), ("product_type", "VARCHAR"),
         ("color", "VARCHAR"), ("size", "VARCHAR"), ("gender", "VARCHAR"),
         ("age_group", "VARCHAR"), ("item_group_id", "VARCHAR"), ("material", "VARCHAR"),
+        ("features", "VARCHAR"),
     ]
     alter_statements = [f"ALTER TABLE products ADD COLUMN IF NOT EXISTS {c} {t};" for c, t in shopping_columns]
     alter_statements.append("ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_id VARCHAR;")
@@ -369,6 +369,11 @@ class Product(BaseModel):
 
     # ---- Shopping feed attributes (Google Merchant Center / Meta Catalog) ----
     link: str | None = None                          # product page URL — auto-filled if left blank
+    # One or more extra photo URLs, comma-separated (matches Google Merchant
+    # Center's text-feed convention for additional_image_link — up to 10
+    # images, e.g. "https://.../a.jpg, https://.../b.jpg"). The first,
+    # required photo stays in image_url; these are shown as extra gallery
+    # thumbnails on the product page.
     additional_image_link: str | None = None
     availability: str | None = "in stock"            # in stock | out of stock | preorder | backorder
     sale_price: float | None = None
@@ -383,6 +388,12 @@ class Product(BaseModel):
     age_group: str | None = "kids"                     # newborn | infant | toddler | kids | adult
     item_group_id: str | None = None                   # same value across size/colour variants of one product
     material: str | None = None                        # e.g. "100% Cotton", "Lawn", "Silk blend"
+
+    # Short bullet-point product features (not part of the Google/Meta feed
+    # spec — shown only on the product page). Stored as a single string with
+    # "|" separating each bullet, e.g. "Hand-embroidered collar|Adjustable
+    # drawstring waist|Lined for comfort".
+    features: str | None = None
 
 
 class OrderItem(BaseModel):
@@ -676,11 +687,6 @@ def products_feed_xml():
         image = p.get("image_url") or ""
         if image.startswith("#"):
             image = ""  # placeholder colour swatches aren't real images — omit rather than send a bad link
-        # additional_image_link is stored as a comma-separated list so a
-        # product can carry more than one extra photo; Merchant Center wants
-        # each one as its own <g:additional_image_link> tag (max 10).
-        extra_images = [u.strip() for u in (p.get("additional_image_link") or "").split(",") if u.strip()]
-        extra_image_tags = "".join(f"<g:additional_image_link>{esc(u)}</g:additional_image_link>" for u in extra_images[:10])
         xml_items.append(f"""
     <item>
       <g:id>{esc(p.get('sku') or p['product_id'])}</g:id>
@@ -688,7 +694,7 @@ def products_feed_xml():
       <description>{esc(p.get('description') or p['name'])}</description>
       <link>{esc(link)}</link>
       <g:image_link>{esc(image)}</g:image_link>
-      {extra_image_tags}
+      {''.join(f"<g:additional_image_link>{esc(u.strip())}</g:additional_image_link>" for u in (p.get('additional_image_link') or '').split(',') if u.strip())}
       <g:availability>{esc(p.get('availability') or 'in stock')}</g:availability>
       <g:price>{esc(p['price'])} {esc(p.get('currency') or 'PKR')}</g:price>
       {f"<g:sale_price>{esc(p['sale_price'])} {esc(p.get('currency') or 'PKR')}</g:sale_price>" if p.get('sale_price') else ""}
@@ -725,9 +731,10 @@ def products_feed_csv():
     conn.close()
 
     header = [
-        "id", "title", "description", "link", "image_link", "additional_image_link", "availability", "price",
-        "sale_price", "brand", "condition", "gtin", "mpn", "google_product_category",
-        "product_type", "color", "size", "gender", "age_group", "item_group_id",
+        "id", "title", "description", "link", "image_link", "additional_image_link",
+        "availability", "price", "sale_price", "brand", "condition", "gtin", "mpn",
+        "google_product_category", "product_type", "color", "size", "gender",
+        "age_group", "item_group_id", "material", "features",
     ]
     buf = io.StringIO()
     writer = csv.writer(buf)
@@ -758,6 +765,8 @@ def products_feed_csv():
             p.get("gender") or "",
             p.get("age_group") or "kids",
             p.get("item_group_id") or "",
+            p.get("material") or "",
+            p.get("features") or "",
         ])
     return Response(content=buf.getvalue(), media_type="text/csv")
 
@@ -782,7 +791,7 @@ PRODUCT_FIELDS = [
     "name", "brand", "category", "price", "currency", "image_url", "description",
     "sku", "stock_status", "active", "link", "additional_image_link", "availability",
     "sale_price", "gtin", "mpn", "condition", "google_product_category", "product_type",
-    "color", "size", "gender", "age_group", "item_group_id", "material",
+    "color", "size", "gender", "age_group", "item_group_id", "material", "features",
 ]
 
 def product_values(product: "Product"):

@@ -50,12 +50,16 @@
       <h3>Bulk upload (CSV or XML)</h3>
       <p style="margin-bottom:16px;">Upload a Google Shopping-style feed file to add or update many products at once. Matching is done by <b>SKU</b> — if a row's SKU matches an existing product, that product is updated instead of duplicated, so it's safe to re-upload the same file later.</p>
       <p style="font-size:12.5px;color:var(--ink-soft);margin-bottom:14px;">
-        Expected columns (CSV header row, or XML <code>&lt;item&gt;</code> tags): <code>id, title, description, link, image_link, additional_image_link, price, sale_price, availability, brand, condition, gtin, mpn, google_product_category, product_type, color, size, material, gender, age_group, item_group_id</code>.
-        <code>id</code> is used as the SKU. For multiple extra photos, put a comma-separated list of URLs in <code>additional_image_link</code>. Missing columns are fine — only <code>title</code> and <code>price</code> are required.
+        Expected columns (CSV header row, or XML <code>&lt;item&gt;</code> tags): <code>id, title, description, link, image_link, additional_image_link, price, sale_price, availability, brand, condition, gtin, mpn, google_product_category, product_type, color, size, material, features, gender, age_group, item_group_id</code>.
+        <code>id</code> is used as the SKU. Missing columns are fine — only <code>title</code> and <code>price</code> are required.
+      </p>
+      <p style="font-size:12.5px;color:var(--ink-soft);margin-bottom:14px;">
+        <b>Multiple images:</b> put extra photo URLs in <code>additional_image_link</code>, separated by commas, in the same cell — e.g. <code>https://example.com/2.jpg, https://example.com/3.jpg</code>. <code>image_link</code> stays the single main photo. <b>Features:</b> put each bullet point in <code>features</code>, separated by a pipe — e.g. <code>Hand-embroidered collar|Adjustable waist|Lined for comfort</code>. Both work exactly the same as their matching fields in the manual form above.
       </p>
       <input type="file" id="bulkFile" accept=".csv,.xml" style="margin-bottom:12px;">
-      <div style="display:flex;gap:10px;">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
         <button class="btn btn-primary btn-sm" id="bulkUploadBtn">Upload &amp; import</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="bulkTemplateBtn">Download CSV template</button>
       </div>
       <div id="bulkResults" style="margin-top:14px;font-size:13.3px;"></div>
     </div>
@@ -88,13 +92,16 @@
             <div class="field"><label for="apPrice">Price (PKR)</label><input id="apPrice" required type="number" min="0" placeholder="3200"></div>
             <div class="field"><label for="apSalePrice">Sale price (optional)</label><input id="apSalePrice" type="number" min="0" placeholder="Leave blank if not on sale"></div>
             <div class="field"><label for="apSwatch">Placeholder colour swatch</label><input id="apSwatch" type="color" value="#4A93E8" style="height:42px;padding:4px;"></div>
-            <div class="field"><label for="apImage">Cover photo URL (optional)</label><input id="apImage" type="text" placeholder="https://..."></div>
-            <div class="field full">
-              <label for="apExtraImages">More photos (optional)</label>
-              <textarea id="apExtraImages" rows="3" placeholder="Paste one image URL per line — these show as extra thumbnails on the product page, in the order you list them."></textarea>
-              <p style="font-size:12px;color:var(--ink-soft);margin-top:4px;">The cover photo above is shown first everywhere (shop grid, feeds). Anything you add here shows as additional photos when a customer opens the product page — as many as you like.</p>
+            <div class="field"><label for="apImage">Main photo URL (optional)</label><input id="apImage" type="text" placeholder="https://..."></div>
+            <div class="field full"><label for="apAdditionalImages">Additional photo URLs (optional)</label>
+              <textarea id="apAdditionalImages" rows="2" placeholder="https://example.com/photo-2.jpg, https://example.com/photo-3.jpg"></textarea>
+              <p style="font-size:11.8px;color:var(--ink-soft);margin-top:4px;">Comma-separated — these show as extra gallery thumbnails on the product page, same as a bulk CSV's <code>additional_image_link</code> column.</p>
             </div>
             <div class="field full"><label for="apDescription">Description</label><textarea id="apDescription" rows="3" placeholder="A short, honest description of the piece."></textarea></div>
+            <div class="field full"><label for="apFeatures">Product features (optional)</label>
+              <textarea id="apFeatures" rows="3" placeholder="Hand-embroidered collar&#10;Adjustable drawstring waist&#10;Lined for comfort"></textarea>
+              <p style="font-size:11.8px;color:var(--ink-soft);margin-top:4px;">One feature per line — shown as a bullet list in a dedicated "Product features" section on the product page.</p>
+            </div>
           </div>
 
           <p class="eyebrow">Identifiers</p>
