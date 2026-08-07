@@ -383,6 +383,19 @@ footer.site{border-top:1px solid var(--line);padding:52px 0 40px;margin-top:60px
 .pd-tailor-credit{align-items:center;gap:8px;margin-top:14px;font-size:13px;color:var(--primary-dark);text-decoration:none;background:var(--primary-light);border-radius:999px;padding:8px 14px;width:fit-content;}
 .pd-tailor-credit:hover{background:var(--primary);color:#fff;}
 .pd-tailor-credit b{font-weight:600;}
+
+/* Tailors directory (tailors.html) */
+.td-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:28px;margin-bottom:70px;}
+.td-card{display:block;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--bg-alt);text-decoration:none;color:var(--ink);transition:transform .2s var(--ease),box-shadow .2s;}
+.td-card:hover{transform:translateY(-3px);box-shadow:var(--shadow);}
+.td-photo{aspect-ratio:1/1;}
+.td-photo > div,.td-photo img{width:100%;height:100%;}
+.td-info{padding:16px 18px 20px;}
+.td-name{font-size:16px;font-weight:600;font-family:'Fredoka',sans-serif;}
+.td-title{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--primary-dark);margin-top:4px;}
+.td-tagline{font-size:13.3px;color:var(--ink-soft);margin-top:10px;line-height:1.5;}
+@media (max-width:980px){ .td-grid{grid-template-columns:1fr 1fr;} }
+@media (max-width:560px){ .td-grid{grid-template-columns:1fr;} }
 .pd-info h1{font-size:clamp(24px,3vw,32px);margin-top:6px;}
 .pd-price{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;margin-top:16px;}
 .pd-desc{color:var(--ink-soft);font-size:14.8px;margin-top:16px;line-height:1.6;}

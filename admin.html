@@ -89,7 +89,9 @@
             <div class="field"><label for="apSalePrice">Sale price (optional)</label><input id="apSalePrice" type="number" min="0" placeholder="Leave blank if not on sale"></div>
             <div class="field"><label for="apSwatch">Placeholder colour swatch</label><input id="apSwatch" type="color" value="#4A93E8" style="height:42px;padding:4px;"></div>
             <div class="field"><label for="apImage">Photo URL (optional)</label><input id="apImage" type="text" placeholder="https://..."></div>
-            <div class="field"><label for="apTailor">Designed / stitched by <span style="color:var(--primary-dark);">(optional)</span></label><input id="apTailor" type="text" placeholder="e.g. Ustad Abdul Sattar"></div>
+            <div class="field"><label for="apTailor">Designed / stitched by <span style="color:var(--primary-dark);">(optional)</span></label>
+              <select id="apTailor"><option value="">— none / partner brand —</option></select>
+            </div>
             <div class="field full"><label for="apDescription">Description</label><textarea id="apDescription" rows="3" placeholder="A short, honest description of the piece."></textarea></div>
           </div>
 
@@ -153,6 +155,70 @@
       <div>
         <h2 style="font-size:18px;margin-bottom:16px;">Current products</h2>
         <div id="adminProductList" class="admin-list"></div>
+      </div>
+    </div>
+
+    <!-- ===== Tailors ===== -->
+    <hr class="seam" style="margin:50px 0;">
+    <div class="eyebrow">Onboard a tailor</div>
+    <h2 style="font-size:22px;margin-bottom:8px;">Add and manage master tailors</h2>
+    <p style="color:var(--ink-soft);font-size:14.5px;max-width:640px;margin-bottom:28px;">
+      Each row here becomes its own page at <code>master-tailor.html?slug=&lt;slug&gt;</code> and a card on
+      <code>tailors.html</code> — no code changes needed. Tag a product to a tailor above (the "Designed /
+      stitched by" dropdown) and it automatically shows up in that tailor's portfolio and lookbook.
+    </p>
+
+    <div class="contact-grid">
+      <div class="contact-form" style="background:var(--bg-alt);">
+        <h2 id="atFormTitle" style="font-size:18px;margin-bottom:16px;">Add a tailor</h2>
+        <form id="tailorForm">
+          <input type="hidden" id="atEditingId">
+
+          <p class="eyebrow" style="margin-top:0;">Basics</p>
+          <div class="form-grid">
+            <div class="field full"><label for="atName">Full name</label><input id="atName" required type="text" placeholder="e.g. Ustad Iram Baig"></div>
+            <div class="field"><label for="atSlug">URL slug <span style="color:var(--primary-dark);">(used in the link — no spaces)</span></label><input id="atSlug" required type="text" placeholder="e.g. iram-baig"></div>
+            <div class="field"><label for="atTitle">Title</label><input id="atTitle" type="text" placeholder="Master Tailor" value="Master Tailor"></div>
+            <div class="field full"><label for="atTagline">Tagline <span style="color:var(--primary-dark);">(shown next to their name in the hero)</span></label><input id="atTagline" type="text" placeholder="e.g. 15 years of hand embroidery for occasion wear."></div>
+            <div class="field"><label for="atSwatch">Placeholder colour <span style="color:var(--primary-dark);">(used until a photo is set)</span></label><input id="atSwatch" type="color" value="#101B2E" style="height:42px;padding:4px;"></div>
+            <div class="field"><label for="atPhoto">Photo URL (optional)</label><input id="atPhoto" type="text" placeholder="https://..."></div>
+            <div class="field"><label for="atYears">Years of experience</label><input id="atYears" type="number" min="0" placeholder="15"></div>
+            <div class="field"><label for="atEstablished">Joined / established year</label><input id="atEstablished" type="text" placeholder="e.g. 2018"></div>
+            <div class="field"><label for="atGarments">Garments count <span style="color:var(--primary-dark);">(free text)</span></label><input id="atGarments" type="text" placeholder="e.g. 1,200+"></div>
+            <div class="field"><label for="atApprentices">Apprentices trained</label><input id="atApprentices" type="text" placeholder="e.g. 4"></div>
+            <div class="field full"><label for="atBio">Bio</label><textarea id="atBio" rows="3" placeholder="A short paragraph about their background and craft."></textarea></div>
+          </div>
+
+          <p class="eyebrow">Story &amp; portfolio <span style="text-transform:none;letter-spacing:0;color:var(--ink-soft);">(optional — JSON, leave blank to skip a section)</span></p>
+          <div class="form-grid">
+            <div class="field full">
+              <label for="atSpecialties">Specialties / approach — 3 cards</label>
+              <textarea id="atSpecialties" rows="3" placeholder='[{"title":"Hand embroidery","description":"..."}]'></textarea>
+            </div>
+            <div class="field full">
+              <label for="atTimeline">Career timeline</label>
+              <textarea id="atTimeline" rows="3" placeholder='[{"year":"2018","title":"Joined Tifl","description":"..."}]'></textarea>
+            </div>
+            <div class="field full">
+              <label for="atGallery">Lookbook gallery photos <span style="color:var(--primary-dark);">(image_url can be a photo link or a "#hex" colour)</span></label>
+              <textarea id="atGallery" rows="3" placeholder='[{"image_url":"https://...","title":"The Gulabi Anarkali","caption":"Crafted by...","tag":"Ages 12-16"}]'></textarea>
+            </div>
+            <div class="field full">
+              <label for="atTestimonials">Testimonials</label>
+              <textarea id="atTestimonials" rows="3" placeholder='[{"quote":"...","name":"Sana R.","location":"Gulberg, Lahore"}]'></textarea>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:10px;margin-top:18px;">
+            <button type="button" class="btn btn-ghost" id="atCancelEdit">Clear</button>
+            <button type="submit" class="btn btn-primary btn-block">Save tailor</button>
+          </div>
+        </form>
+      </div>
+
+      <div>
+        <h2 style="font-size:18px;margin-bottom:16px;">Current tailors</h2>
+        <div id="adminTailorList" class="admin-list"></div>
       </div>
     </div>
   </div>
