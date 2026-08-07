@@ -353,6 +353,19 @@ footer.site{border-top:1px solid var(--line);padding:52px 0 40px;margin-top:60px
 .pd-cross-row .meta{font-size:12px;color:var(--ink-soft);margin-top:2px;}
 .pd-cross-row .price{font-family:'IBM Plex Mono',monospace;font-size:13.5px;margin-right:14px;}
 
+/* Homepage — auto-sliding product gallery */
+.hg-wrap{position:relative;margin-top:22px;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);}
+.hg-track{display:flex;gap:18px;width:max-content;animation:hg-scroll 34s linear infinite;}
+.hg-wrap:hover .hg-track{animation-play-state:paused;}
+.hg-card{flex:0 0 190px;text-decoration:none;color:var(--ink);display:block;}
+.hg-thumb{aspect-ratio:4/5;border-radius:var(--radius);overflow:hidden;background:var(--bg-alt);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;transition:transform .2s var(--ease),box-shadow .2s;}
+.hg-card:hover .hg-thumb{transform:translateY(-3px);box-shadow:var(--shadow);}
+.hg-name{font-size:13.5px;font-weight:600;margin-top:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hg-price{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-soft);margin-top:2px;}
+@keyframes hg-scroll{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+@media (prefers-reduced-motion: reduce){.hg-track{animation:none;overflow-x:auto;}}
+@media (max-width:640px){.hg-card{flex-basis:150px;}}
+
 .pd-uniform-strip{display:flex;gap:16px;overflow-x:auto;padding-bottom:8px;}
 .pd-uniform-strip .p-card{flex:0 0 200px;}
 .pd-info h1{font-size:clamp(24px,3vw,32px);margin-top:6px;}
@@ -388,10 +401,6 @@ footer.site{border-top:1px solid var(--line);padding:52px 0 40px;margin-top:60px
 .pd-detail-item{border:1px solid var(--line);border-radius:var(--radius-sm);padding:14px 16px;background:var(--bg-alt);}
 .pd-detail-item .label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:6px;}
 .pd-detail-item .value{font-size:14px;font-weight:600;color:var(--ink);}
-
-.pd-features-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;}
-.pd-feature-item{display:flex;align-items:flex-start;gap:10px;padding:16px 18px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--bg-alt);font-size:14px;color:var(--ink);line-height:1.5;}
-.pd-feature-item svg{width:18px;height:18px;color:var(--primary);flex:none;margin-top:2px;}
 
 /* =============== ADMIN =============== */
 .admin-list{display:flex;flex-direction:column;gap:10px;}
