@@ -250,6 +250,28 @@ def ensure_schema(conn):
             care             VARCHAR,
             recommended      VARCHAR
         );""",
+        # One row per master tailor. Each row becomes its own page at
+        # master-tailor.html?slug=<slug> — see TAILOR ONBOARDING notes
+        # near seed_tailors_if_empty() below for how a new tailor is added.
+        """CREATE TABLE IF NOT EXISTS tailors (
+            tailor_id          VARCHAR PRIMARY KEY,
+            created_at         TIMESTAMP,
+            slug               VARCHAR,
+            name               VARCHAR,
+            title              VARCHAR,
+            tagline            VARCHAR,
+            photo_url          VARCHAR,
+            years_experience   INTEGER,
+            garments_count     VARCHAR,
+            apprentices_count  VARCHAR,
+            established_year   VARCHAR,
+            bio                VARCHAR,
+            specialties        JSON,
+            timeline           JSON,
+            gallery            JSON,
+            testimonials       JSON,
+            active             BOOLEAN
+        );""",
     ]
     try:
         conn.execute("\n".join(create_statements))
@@ -270,7 +292,6 @@ def ensure_schema(conn):
         ("google_product_category", "VARCHAR"), ("product_type", "VARCHAR"),
         ("color", "VARCHAR"), ("size", "VARCHAR"), ("gender", "VARCHAR"),
         ("age_group", "VARCHAR"), ("item_group_id", "VARCHAR"), ("material", "VARCHAR"),
-        ("features", "VARCHAR"),
     ]
     alter_statements = [f"ALTER TABLE products ADD COLUMN IF NOT EXISTS {c} {t};" for c, t in shopping_columns]
     alter_statements.append("ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_id VARCHAR;")
@@ -279,6 +300,16 @@ def ensure_schema(conn):
     alter_statements.append("ALTER TABLE orders ADD COLUMN IF NOT EXISTS postal_code VARCHAR;")
     alter_statements.append("ALTER TABLE orders ADD COLUMN IF NOT EXISTS state VARCHAR;")
     alter_statements.append("ALTER TABLE orders ADD COLUMN IF NOT EXISTS country VARCHAR;")
+    # Designer/tailor attribution — which master tailor cut and finished this
+    # piece. Stores the tailor's SLUG (e.g. "abdul-sattar"), not their display
+    # name, so renaming a tailor never breaks product attribution. Resolved
+    # to a name + link on product.html via /api/tailors/{slug}.
+    alter_statements.append("ALTER TABLE products ADD COLUMN IF NOT EXISTS tailor VARCHAR;")
+    # Which tailor a booking was requested with (their name, for readability
+    # in the bookings list) — set when someone books from a tailor's own
+    # "Book with [Name]" form on master-tailor.html (blank for a normal
+    # studio booking).
+    alter_statements.append("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS preferred_tailor VARCHAR;")
     try:
         conn.execute("\n".join(alter_statements))
     except Exception:
@@ -289,34 +320,95 @@ def ensure_schema(conn):
                 pass
 
     seed_products_if_empty(conn)
+    seed_tailors_if_empty(conn)
 
 
 def seed_products_if_empty(conn):
     count = conn.execute("SELECT count(*) FROM products").fetchone()[0]
     if count > 0:
         return
+    # Last field is the tailor attribution — pieces cut and finished
+    # in-house by Ustad Abdul Sattar are tagged so they surface in his
+    # portfolio on master-tailor.html. Ready-to-wear partner-brand pieces
+    # (Chinar Kids, Bunain, etc.) are left blank since they aren't his work.
+    # Last field is the tailor attribution — the SLUG of whoever cut and
+    # finished the piece in-house (see the `tailors` table / Tailor model
+    # below). Ready-to-wear partner-brand pieces (Chinar Kids, Bunain, etc.)
+    # are left blank since they aren't studio-tailored.
     seed = [
-        ("p1","Block-print Kurta Set","Chinar Kids","Boys",3200,"#108A00","Hand block-printed cotton kurta and pajama set, breathable for everyday wear."),
-        ("p2","Layered Cotton Frock","Bunain","Girls",3800,"#0C6B00","A layered cotton frock with soft gathers, easy to move in."),
-        ("p3","Newborn Gown, 0-3m","Rui & Co","Newborn",2100,"#5C6B61","Soft muslin gown for newborns, envelope neckline for easy changing."),
-        ("p4","Silk Waistcoat Set","Chinar Kids","Occasion",6200,"#0F2B1B","Silk waistcoat and trouser set for weddings and formal occasions."),
-        ("p5","Everyday Dungaree","Bunain","Boys",2600,"#108A00","Sturdy cotton dungaree built for play, adjustable straps."),
-        ("p6","Embroidered Lehnga, Mini","Zainab Kids","Occasion",8400,"#0C6B00","Hand-embroidered mini lehnga with dupatta, for festive occasions."),
-        ("p7","Soft Muslin Romper","Rui & Co","Newborn",1900,"#5C6B61","Breathable muslin romper, popper closures for quick changes."),
-        ("p8","Cotton Gharara Set","Zainab Kids","Girls",4600,"#108A00","Cotton gharara set with delicate embroidery detailing."),
-        ("p9","Hand-tied Rakhi Kurta","Chinar Kids","Boys",2900,"#0F2B1B","Festive kurta with hand-tied detailing at the collar."),
-        ("p10","Beaded Hairband Set","Zainab Kids","Accessories",850,"#0C6B00","Set of three beaded hairbands to match occasion wear."),
-        ("p11","Embroidered Juti, Kids","Bunain","Accessories",1600,"#5C6B61","Traditional embroidered juti, cushioned sole for small feet."),
-        ("p12","Quilted Winter Sherwani","Chinar Kids","Occasion",7300,"#B4682F","Quilted sherwani for cooler months, lined for warmth."),
+        ("p1","Block-print Kurta Set","Chinar Kids","Boys",3200,"#108A00","Hand block-printed cotton kurta and pajama set, breathable for everyday wear.",None),
+        ("p2","Layered Cotton Frock","Bunain","Girls",3800,"#0C6B00","A layered cotton frock with soft gathers, easy to move in.",None),
+        ("p3","Newborn Gown, 0-3m","Rui & Co","Newborn",2100,"#5C6B61","Soft muslin gown for newborns, envelope neckline for easy changing.",None),
+        ("p4","Silk Waistcoat Set","Tifl Little Wear","Occasion",6200,"#0F2B1B","Silk waistcoat and trouser set, hand-cut and finished in the studio for weddings and formal occasions.","abdul-sattar"),
+        ("p5","Everyday Dungaree","Bunain","Boys",2600,"#108A00","Sturdy cotton dungaree built for play, adjustable straps.",None),
+        ("p6","Embroidered Lehnga, Mini","Tifl Little Wear","Occasion",8400,"#0C6B00","Hand-embroidered mini lehnga with dupatta, drafted and stitched in-house for festive occasions.","abdul-sattar"),
+        ("p7","Soft Muslin Romper","Rui & Co","Newborn",1900,"#5C6B61","Breathable muslin romper, popper closures for quick changes.",None),
+        ("p8","Cotton Gharara Set","Tifl Little Wear","Girls",4600,"#108A00","Cotton gharara set with delicate hand embroidery, cut in the studio.","abdul-sattar"),
+        ("p9","Hand-tied Rakhi Kurta","Chinar Kids","Boys",2900,"#0F2B1B","Festive kurta with hand-tied detailing at the collar.",None),
+        ("p10","Beaded Hairband Set","Zainab Kids","Accessories",850,"#0C6B00","Set of three beaded hairbands to match occasion wear.",None),
+        ("p11","Embroidered Juti, Kids","Bunain","Accessories",1600,"#5C6B61","Traditional embroidered juti, cushioned sole for small feet.",None),
+        ("p12","Quilted Winter Sherwani","Tifl Little Wear","Occasion",7300,"#B4682F","Quilted sherwani for cooler months, hand-lined and finished by the studio's master tailor.","abdul-sattar"),
     ]
-    for pid, name, brand, cat, price, color, desc in seed:
+    for pid, name, brand, cat, price, color, desc, tailor in seed:
         conn.execute(
             """INSERT INTO products
                (product_id, created_at, name, brand, category, price, currency,
-                image_url, description, sku, stock_status, active)
-               VALUES (?, ?, ?, ?, ?, ?, 'PKR', ?, ?, ?, 'in_stock', true)""",
-            [pid, datetime.now(), name, brand, cat, price, color, desc, pid.upper()],
+                image_url, description, sku, stock_status, active, tailor)
+               VALUES (?, ?, ?, ?, ?, ?, 'PKR', ?, ?, ?, 'in_stock', true, ?)""",
+            [pid, datetime.now(), name, brand, cat, price, color, desc, pid.upper(), tailor],
         )
+
+
+# ================= TAILOR ONBOARDING =================
+# How to add a new master tailor (no code changes needed):
+#   1. Open admin.html -> "Tailors" panel -> "Add a tailor".
+#   2. Fill in name, slug (used in the URL — keep it short, e.g. "iram-baig"),
+#      photo, years of experience, bio, and (optionally) specialties /
+#      timeline / gallery / testimonials.
+#   3. Save. Their page is immediately live at
+#      master-tailor.html?slug=<their-slug> and they appear on tailors.html.
+#   4. Tag any of their pieces to them in the product form's "Designed /
+#      stitched by" dropdown (admin.html -> Products) — those pieces then
+#      populate their portfolio + lookbook automatically.
+# That's the whole flow — nothing here needs a redeploy per tailor.
+def seed_tailors_if_empty(conn):
+    count = conn.execute("SELECT count(*) FROM tailors").fetchone()[0]
+    if count > 0:
+        return
+    specialties = json.dumps([
+        {"title": "Hand-drafted patterns", "description": "No size charts — every pattern starts as a fresh draft from the child's own measurements, chalked and cut by hand."},
+        {"title": "A Multan training lineage", "description": "Apprenticed under his father's shop in Multan from age 14, then twelve years cutting occasion wear before opening his own line in Lahore."},
+        {"title": "Embroidery specialist", "description": "Focused on hand-set embroidery for festive and bridal-side pieces — the lehngas and sherwanis marked \"by Ustad Sattar\" are his."},
+    ])
+    timeline = json.dumps([
+        {"year": "2000", "title": "Apprenticeship", "description": "Started learning the trade at 14, in his father's tailoring shop in Multan."},
+        {"year": "2008", "title": "His own line", "description": "Opened a small occasion-wear shop, specialising in hand embroidery for weddings."},
+        {"year": "2010", "title": "Joined Tifl", "description": "Moved to Lahore to lead Tifl Little Wear's made-to-measure and occasion-wear line."},
+        {"year": "Today", "title": "Mentoring", "description": "Trains the studio's newer tailors and still cuts every occasion piece personally."},
+    ])
+    gallery = json.dumps([
+        {"image_url": "#C24B7C", "title": "The Gulabi Anarkali", "caption": "Crafted by Ustad Abdul Sattar", "tag": "Ages 12-16"},
+        {"image_url": "#3AA0A8", "title": "Firuzi Fusion Kurta", "caption": "Lightweight summer formal", "tag": "Ages 5-8"},
+        {"image_url": "#D8C7B0", "title": "Ivory Block Print", "caption": "Hand block-printed cotton", "tag": None},
+    ])
+    testimonials = json.dumps([
+        {"quote": "He remeasured our son's kurta himself and had it ready before the fitting even ended — the embroidery on the collar was better than anything we'd seen ready-made.", "name": "Sana R.", "location": "Gulberg, Lahore"},
+        {"quote": "Booked a private fitting for a wedding lehnga on short notice. Ustad Sattar sketched changes on the spot and it fit perfectly on the day.", "name": "Hina M.", "location": "DHA, Lahore"},
+    ])
+    conn.execute(
+        """INSERT INTO tailors
+           (tailor_id, created_at, slug, name, title, tagline, photo_url,
+            years_experience, garments_count, apprentices_count, established_year,
+            bio, specialties, timeline, gallery, testimonials, active)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, true)""",
+        [
+            "t-abdulsattar", datetime.now(), "abdul-sattar", "Ustad Abdul Sattar", "Master Tailor",
+            "24 years of hands that shaped this studio's stitch line.", "#101B2E",
+            24, "3,000+", "12", "2010",
+            "Every occasion piece in our in-house line passes through Ustad Sattar's hands — pattern drafted from scratch, embroidery marked by eye, seams finished the way he learned them from his father's shop in Multan.",
+            specialties, timeline, gallery, testimonials,
+        ],
+    )
 
 
 class Measurements(BaseModel):
@@ -339,6 +431,7 @@ class Booking(BaseModel):
     time_slot: str | None = None
     notes: str | None = None
     measurements: Measurements | None = None
+    preferred_tailor: str | None = None   # set when booked from a specific tailor's page, e.g. master-tailor.html
     anonymous_id: str | None = None
     attribution: dict | None = None
 
@@ -383,15 +476,52 @@ class Product(BaseModel):
     age_group: str | None = "kids"                     # newborn | infant | toddler | kids | adult
     item_group_id: str | None = None                   # same value across size/colour variants of one product
     material: str | None = None                        # e.g. "100% Cotton", "Lawn", "Silk blend"
+    tailor: str | None = None                           # which in-house master tailor cut/finished this piece, if any
 
-    # ---- Product page "feature boxes" ----
-    # A "|"-separated list of short trust-badge style features shown as
-    # icon boxes on the product page (e.g. "Hand-finished seams|Cash on
-    # delivery|Checked for fit"). Manual entry uses one per line in the
-    # admin form; CSV/XML bulk uploads use a single "features" column
-    # with the same "|" separator. Left blank, the product page falls
-    # back to the site-wide default boxes.
-    features: str | None = None
+
+class TailorSpecialty(BaseModel):
+    title: str
+    description: str
+
+
+class TailorTimelineItem(BaseModel):
+    year: str
+    title: str
+    description: str
+
+
+class TailorGalleryItem(BaseModel):
+    image_url: str          # real photo URL, or a hex colour like "#C24B7C" for a placeholder tile
+    title: str | None = None
+    caption: str | None = None
+    tag: str | None = None  # small badge, e.g. "Ages 5-8"
+
+
+class TailorTestimonial(BaseModel):
+    quote: str
+    name: str
+    location: str | None = None
+
+
+class Tailor(BaseModel):
+    slug: str                                    # used in the URL: master-tailor.html?slug=<slug>
+    name: str
+    title: str | None = "Master Tailor"
+    tagline: str | None = None
+    # Real photo URL, or a hex colour like "#101B2E" — if it starts with
+    # "#", the hero draws a placeholder illustration in that colour instead
+    # of a photo, so a tailor can be onboarded before headshots exist.
+    photo_url: str | None = None
+    years_experience: int | None = None
+    garments_count: str | None = None
+    apprentices_count: str | None = None
+    established_year: str | None = None
+    bio: str | None = None
+    specialties: list[TailorSpecialty] | None = None
+    timeline: list[TailorTimelineItem] | None = None
+    gallery: list[TailorGalleryItem] | None = None
+    testimonials: list[TailorTestimonial] | None = None
+    active: bool | None = True
 
 
 class OrderItem(BaseModel):
@@ -574,8 +704,8 @@ def create_booking(booking: Booking):
         """
         INSERT INTO bookings
             (booking_id, created_at, parent_name, child_name, phone, email,
-             garment_type, mode, date, time_slot, notes, measurements)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             garment_type, mode, date, time_slot, notes, measurements, preferred_tailor)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         [
             booking_id,
@@ -590,6 +720,7 @@ def create_booking(booking: Booking):
             booking.time_slot,
             booking.notes,
             json.dumps(booking.measurements.dict()) if booking.measurements else None,
+            booking.preferred_tailor,
         ],
     )
     conn.close()
@@ -597,6 +728,7 @@ def create_booking(booking: Booking):
               dict({
                   "booking_id": booking_id, "parent_name": booking.parent_name, "child_name": booking.child_name,
                   "garment_type": booking.garment_type, "mode": booking.mode, "date": booking.date, "time_slot": booking.time_slot,
+                  "preferred_tailor": booking.preferred_tailor,
               }, **flatten_attribution(booking.attribution)),
               anonymous_id=booking.anonymous_id)
     return {"booking_id": booking_id, "status": "confirmed"}
@@ -640,6 +772,85 @@ def list_contact_messages():
 # Admin-key protected: POST / PUT / DELETE (used by admin.html)
 # Set ADMIN_KEY in Vercel -> Settings -> Environment Variables, then enter
 # the same value into admin.html when prompted.
+
+# ================= TAILORS =================
+# One page per row — see the TAILOR ONBOARDING comment above
+# seed_tailors_if_empty() for the full add-a-new-tailor flow.
+TAILOR_FIELDS = [
+    "slug", "name", "title", "tagline", "photo_url", "years_experience",
+    "garments_count", "apprentices_count", "established_year", "bio",
+    "specialties", "timeline", "gallery", "testimonials", "active",
+]
+TAILOR_JSON_FIELDS = {"specialties", "timeline", "gallery", "testimonials"}
+
+def tailor_values(tailor: "Tailor"):
+    values = []
+    for f in TAILOR_FIELDS:
+        v = getattr(tailor, f)
+        if f in TAILOR_JSON_FIELDS and v is not None:
+            v = json.dumps([item.dict() for item in v])
+        values.append(v)
+    return values
+
+
+@app.get("/api/tailors")
+def list_tailors():
+    conn = get_conn()
+    rows = conn.execute(
+        "SELECT * FROM tailors WHERE active = true ORDER BY created_at"
+    ).fetchall()
+    cols = [c[0] for c in conn.description]
+    conn.close()
+    return [dict(zip(cols, row)) for row in rows]
+
+
+@app.get("/api/tailors/{slug}")
+def get_tailor(slug: str):
+    conn = get_conn()
+    row = conn.execute("SELECT * FROM tailors WHERE slug = ?", [slug]).fetchone()
+    cols = [c[0] for c in conn.description]
+    conn.close()
+    if not row:
+        raise HTTPException(status_code=404, detail="Tailor not found")
+    return dict(zip(cols, row))
+
+
+@app.post("/api/tailors")
+def create_tailor(tailor: Tailor, x_admin_key: str | None = Header(default=None)):
+    require_admin(x_admin_key)
+    tailor_id = "t-" + uuid.uuid4().hex[:8]
+    conn = get_conn()
+    cols = ", ".join(TAILOR_FIELDS)
+    placeholders = ", ".join(["?"] * len(TAILOR_FIELDS))
+    conn.execute(
+        f"INSERT INTO tailors (tailor_id, created_at, {cols}) VALUES (?, ?, {placeholders})",
+        [tailor_id, datetime.now()] + tailor_values(tailor),
+    )
+    conn.close()
+    return {"tailor_id": tailor_id, "status": "created"}
+
+
+@app.put("/api/tailors/{tailor_id}")
+def update_tailor(tailor_id: str, tailor: Tailor, x_admin_key: str | None = Header(default=None)):
+    require_admin(x_admin_key)
+    conn = get_conn()
+    set_clause = ", ".join([f"{f}=?" for f in TAILOR_FIELDS])
+    conn.execute(
+        f"UPDATE tailors SET {set_clause} WHERE tailor_id=?",
+        tailor_values(tailor) + [tailor_id],
+    )
+    conn.close()
+    return {"tailor_id": tailor_id, "status": "updated"}
+
+
+@app.delete("/api/tailors/{tailor_id}")
+def delete_tailor(tailor_id: str, x_admin_key: str | None = Header(default=None)):
+    require_admin(x_admin_key)
+    conn = get_conn()
+    conn.execute("DELETE FROM tailors WHERE tailor_id = ?", [tailor_id])
+    conn.close()
+    return {"tailor_id": tailor_id, "status": "deleted"}
+
 
 @app.get("/api/products")
 def list_products():
@@ -784,7 +995,7 @@ PRODUCT_FIELDS = [
     "name", "brand", "category", "price", "currency", "image_url", "description",
     "sku", "stock_status", "active", "link", "additional_image_link", "availability",
     "sale_price", "gtin", "mpn", "condition", "google_product_category", "product_type",
-    "color", "size", "gender", "age_group", "item_group_id", "material", "features",
+    "color", "size", "gender", "age_group", "item_group_id", "material", "tailor",
 ]
 
 def product_values(product: "Product"):
