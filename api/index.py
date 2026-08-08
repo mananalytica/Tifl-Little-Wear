@@ -292,6 +292,10 @@ def ensure_schema(conn):
         ("google_product_category", "VARCHAR"), ("product_type", "VARCHAR"),
         ("color", "VARCHAR"), ("size", "VARCHAR"), ("gender", "VARCHAR"),
         ("age_group", "VARCHAR"), ("item_group_id", "VARCHAR"), ("material", "VARCHAR"),
+        # Bullet-point selling points shown as the checkmark strip on the
+        # product page (e.g. "Premium Jacquard Fabric: Crafted from..."),
+        # stored as JSON: [{"title": "...", "description": "..."}, ...].
+        ("features", "JSON"),
     ]
     alter_statements = [f"ALTER TABLE products ADD COLUMN IF NOT EXISTS {c} {t};" for c, t in shopping_columns]
     alter_statements.append("ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_id VARCHAR;")
@@ -445,6 +449,11 @@ class ContactMessage(BaseModel):
     attribution: dict | None = None
 
 
+class ProductFeature(BaseModel):
+    title: str
+    description: str | None = None
+
+
 class Product(BaseModel):
     name: str
     brand: str | None = None
@@ -462,6 +471,9 @@ class Product(BaseModel):
 
     # ---- Shopping feed attributes (Google Merchant Center / Meta Catalog) ----
     link: str | None = None                          # product page URL — auto-filled if left blank
+    # One or more extra photo URLs, comma-separated (matches the Google
+    # Merchant Center text-feed convention for this exact attribute) — the
+    # product gallery on product.html shows image_url plus every URL here.
     additional_image_link: str | None = None
     availability: str | None = "in stock"            # in stock | out of stock | preorder | backorder
     sale_price: float | None = None
@@ -477,6 +489,9 @@ class Product(BaseModel):
     item_group_id: str | None = None                   # same value across size/colour variants of one product
     material: str | None = None                        # e.g. "100% Cotton", "Lawn", "Silk blend"
     tailor: str | None = None                           # which in-house master tailor cut/finished this piece, if any
+    # Selling-point bullets shown as the checkmark strip on product.html,
+    # e.g. [{"title": "Premium Jacquard Fabric", "description": "Crafted from..."}].
+    features: list[ProductFeature] | None = None
 
 
 class TailorSpecialty(BaseModel):
@@ -896,6 +911,12 @@ def products_feed_xml():
         image = p.get("image_url") or ""
         if image.startswith("#"):
             image = ""  # placeholder colour swatches aren't real images — omit rather than send a bad link
+        # Google/Meta expect one <g:additional_image_link> tag per extra
+        # photo (up to 10) — the value is stored as a comma-separated list.
+        additional_images = [u.strip() for u in (p.get("additional_image_link") or "").split(",") if u.strip()]
+        additional_image_tags = "\n      ".join(
+            f"<g:additional_image_link>{esc(u)}</g:additional_image_link>" for u in additional_images[:10]
+        )
         xml_items.append(f"""
     <item>
       <g:id>{esc(p.get('sku') or p['product_id'])}</g:id>
@@ -903,6 +924,7 @@ def products_feed_xml():
       <description>{esc(p.get('description') or p['name'])}</description>
       <link>{esc(link)}</link>
       <g:image_link>{esc(image)}</g:image_link>
+      {additional_image_tags}
       <g:availability>{esc(p.get('availability') or 'in stock')}</g:availability>
       <g:price>{esc(p['price'])} {esc(p.get('currency') or 'PKR')}</g:price>
       {f"<g:sale_price>{esc(p['sale_price'])} {esc(p.get('currency') or 'PKR')}</g:sale_price>" if p.get('sale_price') else ""}
@@ -939,9 +961,10 @@ def products_feed_csv():
     conn.close()
 
     header = [
-        "id", "title", "description", "link", "image_link", "availability", "price",
-        "sale_price", "brand", "condition", "gtin", "mpn", "google_product_category",
-        "product_type", "color", "size", "gender", "age_group", "item_group_id",
+        "id", "title", "description", "link", "image_link", "additional_image_link",
+        "availability", "price", "sale_price", "brand", "condition", "gtin", "mpn",
+        "google_product_category", "product_type", "color", "size", "gender",
+        "age_group", "item_group_id",
     ]
     buf = io.StringIO()
     writer = csv.writer(buf)
@@ -957,6 +980,7 @@ def products_feed_csv():
             p.get("description") or p["name"],
             link,
             image,
+            p.get("additional_image_link") or "",
             p.get("availability") or "in stock",
             f"{p['price']} {p.get('currency') or 'PKR'}",
             f"{p['sale_price']} {p.get('currency') or 'PKR'}" if p.get("sale_price") else "",
@@ -996,10 +1020,18 @@ PRODUCT_FIELDS = [
     "sku", "stock_status", "active", "link", "additional_image_link", "availability",
     "sale_price", "gtin", "mpn", "condition", "google_product_category", "product_type",
     "color", "size", "gender", "age_group", "item_group_id", "material", "tailor",
+    "features",
 ]
+PRODUCT_JSON_FIELDS = {"features"}
 
 def product_values(product: "Product"):
-    return [getattr(product, f) for f in PRODUCT_FIELDS]
+    values = []
+    for f in PRODUCT_FIELDS:
+        v = getattr(product, f)
+        if f in PRODUCT_JSON_FIELDS and v is not None:
+            v = json.dumps([item.dict() for item in v])
+        values.append(v)
+    return values
 
 
 @app.post("/api/products")

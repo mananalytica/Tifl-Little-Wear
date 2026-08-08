@@ -406,6 +406,15 @@ footer.site{border-top:1px solid var(--line);padding:52px 0 40px;margin-top:60px
 .pd-feature svg{width:22px;height:22px;color:var(--primary);}
 .pd-feature span{font-size:10.8px;font-weight:600;color:var(--ink-soft);line-height:1.3;}
 
+/* Product-specific selling points (from the admin "Features" field) —
+   a checkmark + bold title + short description per item, laid out in the
+   same strip as the generic trust badges above. */
+.pd-feature-strip.has-points{grid-template-columns:repeat(auto-fit,minmax(130px,1fr));}
+.pd-feature-point{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;}
+.pd-feature-point svg{width:16px;height:16px;color:var(--primary);}
+.pd-feature-point .pd-fp-title{font-size:11.5px;font-weight:700;color:var(--ink);line-height:1.3;}
+.pd-feature-point .pd-fp-desc{font-size:10.8px;color:var(--ink-soft);line-height:1.4;}
+
 .pd-qty-row{display:flex;align-items:center;gap:10px;margin-top:26px;margin-bottom:14px;}
 .pd-qty-row label{font-size:12.5px;font-weight:600;color:var(--ink-soft);}
 .pd-qty-row input{width:70px;border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 10px;font-size:14px;}

@@ -183,6 +183,12 @@ function normalizeProduct(p){
     sku: p.sku || '',
     // Shopping feed attributes (Google Merchant Center / Meta Catalog)
     link: p.link || '',
+    // Comma-separated list of extra photo URLs (Google feed convention) —
+    // split into an array here so callers never have to parse it themselves.
+    additional_image_link: p.additional_image_link || '',
+    additional_images: (p.additional_image_link || '').split(',').map(s=>s.trim()).filter(Boolean),
+    // Selling-point bullets for the product page's checkmark strip.
+    features: parseJSONField(p.features),
     availability: p.availability || 'in stock',
     sale_price: p.sale_price || null,
     gtin: p.gtin || '',
@@ -912,6 +918,41 @@ async function initProductPage(){
   if(p.age_group) chips.push(p.age_group.charAt(0).toUpperCase()+p.age_group.slice(1));
   document.getElementById('pdAttributes').innerHTML = chips.map(c=>`<span class="garment-tag">${c}</span>`).join('');
 
+  // Feature strip: product-specific selling points if the admin set any
+  // (title + description, shown with a checkmark — see admin.html's
+  // "Features" section), otherwise the generic studio trust badges.
+  const featureStripEl = document.getElementById('pdFeatureStrip');
+  if(featureStripEl){
+    if(p.features && p.features.length){
+      featureStripEl.classList.add('has-points');
+      featureStripEl.innerHTML = p.features.map(f=>`
+        <div class="pd-feature-point">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+          <span class="pd-fp-title">${f.title}</span>
+          ${f.description ? `<span class="pd-fp-desc">${f.description}</span>` : ''}
+        </div>`).join('');
+    } else {
+      featureStripEl.classList.remove('has-points');
+      featureStripEl.innerHTML = `
+        <div class="pd-feature">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 21v-6a4 4 0 014-4h8a4 4 0 014 4v6M9 11V7a3 3 0 016 0v4"/></svg>
+          <span>Hand-finished seams</span>
+        </div>
+        <div class="pd-feature">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+          <span>Cash on delivery</span>
+        </div>
+        <div class="pd-feature">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 6L9 17l-5-5"/></svg>
+          <span>Checked for fit</span>
+        </div>
+        <div class="pd-feature">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <span>Lahore-based studio</span>
+        </div>`;
+    }
+  }
+
   const tailorLink = document.getElementById('pdTailorLink');
   if(tailorLink){
     if(p.tailor){
@@ -1033,8 +1074,7 @@ async function initProductPage(){
   // Gallery thumbnails: main image + additional_image_link if present.
   const thumbsRoot = document.getElementById('pdThumbs');
   if(thumbsRoot){
-    const images = [p.image_url];
-    if(p.additional_image_link) images.push(p.additional_image_link);
+    const images = [p.image_url, ...(p.additional_images || [])].filter(Boolean);
     thumbsRoot.innerHTML = images.map((img,i)=>`
       <div class="pd-thumb ${i===0?'active':''}" data-img="${img}">
         ${productThumbHTML(Object.assign({}, p, {image_url: img}), '70%')}
@@ -1289,6 +1329,53 @@ function initAdminPage(){
     };
   }
 
+  // ---- Additional photos + Features: dynamic repeatable rows ----
+  function escAttr(v){ return (v==null?'':String(v)).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+  function apImageRowHTML(value){
+    return `<div class="ap-image-row" style="display:flex;gap:8px;align-items:center;">
+      <input type="text" class="ap-image-url" placeholder="https://..." value="${escAttr(value)}" style="flex:1;border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 10px;font-size:13.5px;">
+      <button type="button" class="btn btn-ghost btn-sm ap-remove-row" style="padding:6px 10px;">✕</button>
+    </div>`;
+  }
+  function addImageRow(value){
+    document.getElementById('apImageRows').insertAdjacentHTML('beforeend', apImageRowHTML(value));
+  }
+  function apFeatureRowHTML(title, description){
+    return `<div class="ap-feature-row" style="border:1px solid var(--line);border-radius:var(--radius-sm);padding:10px;display:flex;flex-direction:column;gap:6px;">
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="text" class="ap-feature-title" placeholder="Feature title, e.g. Premium Jacquard Fabric" value="${escAttr(title)}" style="flex:1;border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 10px;font-size:13.5px;">
+        <button type="button" class="btn btn-ghost btn-sm ap-remove-row" style="padding:6px 10px;">✕</button>
+      </div>
+      <textarea class="ap-feature-desc" rows="2" placeholder="Short description of this feature">${description||''}</textarea>
+    </div>`;
+  }
+  function addFeatureRow(title, description){
+    document.getElementById('apFeatureRows').insertAdjacentHTML('beforeend', apFeatureRowHTML(title, description));
+  }
+  function collectImageRows(){
+    return Array.from(document.querySelectorAll('#apImageRows .ap-image-url'))
+      .map(el=>el.value.trim()).filter(Boolean);
+  }
+  function collectFeatureRows(){
+    return Array.from(document.querySelectorAll('#apFeatureRows .ap-feature-row'))
+      .map(row=>({
+        title: row.querySelector('.ap-feature-title').value.trim(),
+        description: row.querySelector('.ap-feature-desc').value.trim() || null
+      }))
+      .filter(f=>f.title);
+  }
+  document.getElementById('apAddImageRow')?.addEventListener('click', ()=>addImageRow(''));
+  document.getElementById('apAddFeatureRow')?.addEventListener('click', ()=>addFeatureRow('',''));
+  // One shared delegated handler removes a row from whichever list it's in.
+  document.getElementById('adminPanel')?.addEventListener('click', (e)=>{
+    if(e.target.classList.contains('ap-remove-row')){
+      e.target.closest('.ap-image-row, .ap-feature-row')?.remove();
+    }
+  });
+  // The form always starts on "add a new product" — seed one blank photo
+  // row so there's somewhere to type without hunting for the + button.
+  addImageRow('');
+
   function fillForm(p){
     document.getElementById('apEditingId').value = p.id;
     document.getElementById('apName').value = p.name;
@@ -1299,6 +1386,10 @@ function initAdminPage(){
     document.getElementById('apImage').value = isColor(p.image_url) ? '' : p.image_url;
     document.getElementById('apSwatch').value = isColor(p.image_url) ? p.image_url : '#4A93E8';
     document.getElementById('apDescription').value = p.description;
+    document.getElementById('apImageRows').innerHTML = '';
+    (p.additional_images && p.additional_images.length ? p.additional_images : ['']).forEach(addImageRow);
+    document.getElementById('apFeatureRows').innerHTML = '';
+    (p.features && p.features.length ? p.features : []).forEach(f=>addFeatureRow(f.title, f.description));
     document.getElementById('apSku').value = p.sku || '';
     document.getElementById('apGtin').value = p.gtin || '';
     document.getElementById('apMpn').value = p.mpn || '';
@@ -1323,6 +1414,9 @@ function initAdminPage(){
     document.getElementById('apAgeGroup').value = 'kids';
     document.getElementById('apAvailability').value = 'in stock';
     document.getElementById('apCondition').value = 'new';
+    document.getElementById('apImageRows').innerHTML = '';
+    addImageRow('');
+    document.getElementById('apFeatureRows').innerHTML = '';
     document.getElementById('apFormTitle').textContent = 'Add a new product';
   }
 
@@ -1335,6 +1429,8 @@ function initAdminPage(){
       sale_price: document.getElementById('apSalePrice').value ? parseFloat(document.getElementById('apSalePrice').value) : null,
       currency: 'PKR',
       image_url: document.getElementById('apImage').value.trim() || document.getElementById('apSwatch').value,
+      additional_image_link: collectImageRows().join(', ') || null,
+      features: collectFeatureRows(),
       description: document.getElementById('apDescription').value,
       sku: document.getElementById('apSku').value || null,
       gtin: document.getElementById('apGtin').value || null,
@@ -1401,6 +1497,18 @@ function initAdminPage(){
   // Maps common Google Shopping / Meta Catalog feed column names onto our
   // Product fields. "id" becomes our sku, since that's the stable
   // identifier a merchant feed uses to track one product across uploads.
+  // "Title: description | Title: description" -> [{title, description}, ...]
+  // (the format documented in admin.html's bulk-upload instructions).
+  function parseFeaturesField(raw){
+    if(!raw) return null;
+    const features = raw.split('|').map(s=>s.trim()).filter(Boolean).map(part=>{
+      const idx = part.indexOf(':');
+      if(idx === -1) return {title: part, description: null};
+      return {title: part.slice(0, idx).trim(), description: part.slice(idx+1).trim() || null};
+    }).filter(f=>f.title);
+    return features.length ? features : null;
+  }
+
   function mapFeedRow(row){
     const get = (...keys)=>{
       for(const k of keys){
@@ -1416,6 +1524,8 @@ function initAdminPage(){
       description: get('description'),
       link: get('link'),
       image_url: get('image_link','image_url'),
+      additional_image_link: get('additional_image_link','additional_image_links'),
+      features: parseFeaturesField(get('features')),
       price,
       sale_price: salePrice,
       availability: get('availability') || 'in stock',
@@ -1448,7 +1558,14 @@ function initAdminPage(){
       const row = {};
       Array.from(item.children).forEach(el=>{
         const tag = el.tagName.includes(':') ? el.tagName.split(':')[1] : el.tagName;
-        row[tag] = el.textContent;
+        // Google feeds repeat <g:additional_image_link> once per extra
+        // photo rather than comma-separating — collect every occurrence
+        // instead of letting the last one silently overwrite the rest.
+        if(tag === 'additional_image_link'){
+          row[tag] = row[tag] ? row[tag] + ',' + el.textContent : el.textContent;
+        } else {
+          row[tag] = el.textContent;
+        }
       });
       return mapFeedRow(row);
     });

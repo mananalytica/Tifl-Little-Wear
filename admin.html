@@ -49,10 +49,15 @@
     <div class="side-card" style="margin-bottom:40px;">
       <h3>Bulk upload (CSV or XML)</h3>
       <p style="margin-bottom:16px;">Upload a Google Shopping-style feed file to add or update many products at once. Matching is done by <b>SKU</b> — if a row's SKU matches an existing product, that product is updated instead of duplicated, so it's safe to re-upload the same file later.</p>
-      <p style="font-size:12.5px;color:var(--ink-soft);margin-bottom:14px;">
-        Expected columns (CSV header row, or XML <code>&lt;item&gt;</code> tags): <code>id, title, description, link, image_link, price, sale_price, availability, brand, condition, gtin, mpn, google_product_category, product_type, color, size, material, gender, age_group, item_group_id</code>.
+      <p style="font-size:12.5px;color:var(--ink-soft);margin-bottom:8px;">
+        Expected columns (CSV header row, or XML <code>&lt;item&gt;</code> tags): <code>id, title, description, link, image_link, additional_image_link, price, sale_price, availability, brand, condition, gtin, mpn, google_product_category, product_type, color, size, material, gender, age_group, item_group_id, features</code>.
         <code>id</code> is used as the SKU. Missing columns are fine — only <code>title</code> and <code>price</code> are required.
       </p>
+      <p style="font-size:12.5px;color:var(--ink-soft);margin-bottom:14px;">
+        <b>Multiple photos:</b> put more than one URL in <code>additional_image_link</code>, separated by commas.<br>
+        <b>Features:</b> in <code>features</code>, separate each feature with a <code>|</code> and split its title from its description with a <code>:</code> — e.g. <code>Premium Jacquard Fabric: Crafted from high-quality jacquard material. | Intricate Gold Details: Adorned with delicate gold work.</code>
+      </p>
+      <p style="font-size:12.5px;margin-bottom:14px;"><a href="producttemplate.csv" download style="color:var(--primary-dark);font-weight:600;">↓ Download a starter CSV template</a> with these columns pre-filled on an example row.</p>
       <input type="file" id="bulkFile" accept=".csv,.xml" style="margin-bottom:12px;">
       <div style="display:flex;gap:10px;">
         <button class="btn btn-primary btn-sm" id="bulkUploadBtn">Upload &amp; import</button>
@@ -88,12 +93,20 @@
             <div class="field"><label for="apPrice">Price (PKR)</label><input id="apPrice" required type="number" min="0" placeholder="3200"></div>
             <div class="field"><label for="apSalePrice">Sale price (optional)</label><input id="apSalePrice" type="number" min="0" placeholder="Leave blank if not on sale"></div>
             <div class="field"><label for="apSwatch">Placeholder colour swatch</label><input id="apSwatch" type="color" value="#4A93E8" style="height:42px;padding:4px;"></div>
-            <div class="field"><label for="apImage">Photo URL (optional)</label><input id="apImage" type="text" placeholder="https://..."></div>
+            <div class="field"><label for="apImage">Main photo URL (optional)</label><input id="apImage" type="text" placeholder="https://..."></div>
             <div class="field"><label for="apTailor">Designed / stitched by <span style="color:var(--primary-dark);">(optional)</span></label>
               <select id="apTailor"><option value="">— none / partner brand —</option></select>
             </div>
             <div class="field full"><label for="apDescription">Description</label><textarea id="apDescription" rows="3" placeholder="A short, honest description of the piece."></textarea></div>
           </div>
+
+          <p class="eyebrow">Additional photos <span style="text-transform:none;letter-spacing:0;color:var(--ink-soft);">(optional — shown as extra thumbnails on the product page)</span></p>
+          <div id="apImageRows" style="display:flex;flex-direction:column;gap:8px;"></div>
+          <button type="button" class="btn btn-ghost btn-sm" id="apAddImageRow" style="margin-top:8px;">+ Add another photo</button>
+
+          <p class="eyebrow">Features <span style="text-transform:none;letter-spacing:0;color:var(--ink-soft);">(optional — shown as the checkmark strip on the product page, e.g. "Premium Jacquard Fabric: Crafted from high-quality jacquard material...")</span></p>
+          <div id="apFeatureRows" style="display:flex;flex-direction:column;gap:10px;"></div>
+          <button type="button" class="btn btn-ghost btn-sm" id="apAddFeatureRow" style="margin-top:8px;">+ Add a feature</button>
 
           <p class="eyebrow">Identifiers</p>
           <div class="form-grid">
