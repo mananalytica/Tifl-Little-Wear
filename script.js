@@ -196,7 +196,8 @@ function normalizeProduct(p){
     age_group: p.age_group || 'kids',
     item_group_id: p.item_group_id || '',
     material: p.material || '',
-    features: p.features || ''
+    features: p.features || '',
+    additional_image_link: p.additional_image_link || ''
   };
 }
 
@@ -580,21 +581,39 @@ async function initProductPage(){
 
   // Feature boxes — pulled from the product's own "features" field
   // (set via admin panel or CSV/XML bulk upload) if present, otherwise
-  // fall back to the site-wide defaults.
-  const DEFAULT_FEATURES = ['Hand-finished seams', 'Cash on delivery', 'Checked for fit', 'Lahore-based studio'];
-  const FEATURE_ICONS = {
-    'hand-finished seams': '<path d="M4 21v-6a4 4 0 014-4h8a4 4 0 014 4v6M9 11V7a3 3 0 016 0v4"/>',
-    'cash on delivery': '<rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>',
-    'checked for fit': '<path d="M20 6L9 17l-5-5"/>',
-    'lahore-based studio': '<path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>'
-  };
+  // fall back to the site-wide defaults. Rendered as its own section
+  // below the accordion, not inline in the buy box.
+  const DEFAULT_FEATURES = [
+    {title:'Hand-finished seams', text:'Every seam is checked and finished by hand before a piece leaves the studio.'},
+    {title:'Cash on delivery', text:'Pay when it arrives at your door — no card or advance payment needed.'},
+    {title:'Checked for fit', text:'Each piece is checked against its size chart before it\u2019s packed.'},
+    {title:'Lahore-based studio', text:'Designed, stitched, and shipped from our own studio in Lahore.'}
+  ];
   const DEFAULT_ICON = '<path d="M20 6L9 17l-5-5"/>'; // generic checkmark for custom features
-  const featureList = (p.features ? p.features.split('|').map(s=>s.trim()).filter(Boolean) : DEFAULT_FEATURES);
-  document.getElementById('pdFeatureStrip').innerHTML = featureList.map(f=>`
-    <div class="pd-feature">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">${FEATURE_ICONS[f.toLowerCase()] || DEFAULT_ICON}</svg>
-      <span>${f}</span>
-    </div>`).join('');
+  const featureGrid = document.getElementById('pdFeatureGrid');
+  const featuresSection = document.getElementById('pdFeaturesSection');
+  if(featureGrid && featuresSection){
+    let cards;
+    if(p.features){
+      // Each entry is "Title: description" if a colon is present,
+      // otherwise the whole string is used as the title.
+      cards = p.features.split('|').map(s=>s.trim()).filter(Boolean).map(raw=>{
+        const idx = raw.indexOf(':');
+        return idx > -1
+          ? {title: raw.slice(0, idx).trim(), text: raw.slice(idx+1).trim()}
+          : {title: raw, text: ''};
+      });
+    } else {
+      cards = DEFAULT_FEATURES;
+    }
+    featureGrid.innerHTML = cards.map(c=>`
+      <div class="pd-feature-card">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">${DEFAULT_ICON}</svg></div>
+        <div class="title">${c.title}</div>
+        ${c.text ? `<div class="text">${c.text}</div>` : ''}
+      </div>`).join('');
+    featuresSection.style.display = cards.length ? 'block' : 'none';
+  }
 
   const AGE_GROUP_LABELS = {
     newborn: 'Newborn (0–3 months)', infant: 'Infant (3–12 months)',
@@ -698,15 +717,19 @@ async function initProductPage(){
 
   /* ---------- variant B only (guarded — no-op on product.html) ---------- */
 
-  // Gallery thumbnails: main image + additional_image_link if present.
+  // Gallery thumbnails: main image + any additional_image_link images.
+  // additional_image_link can hold multiple URLs, comma-separated.
   const thumbsRoot = document.getElementById('pdThumbs');
   if(thumbsRoot){
     const images = [p.image_url];
-    if(p.additional_image_link) images.push(p.additional_image_link);
+    if(p.additional_image_link){
+      p.additional_image_link.split(',').map(s=>s.trim()).filter(Boolean).forEach(img=>images.push(img));
+    }
     thumbsRoot.innerHTML = images.map((img,i)=>`
       <div class="pd-thumb ${i===0?'active':''}" data-img="${img}">
         ${productThumbHTML(Object.assign({}, p, {image_url: img}), '70%')}
       </div>`).join('');
+    thumbsRoot.style.display = images.length > 1 ? '' : 'none';
     thumbsRoot.querySelectorAll('.pd-thumb').forEach(t=>{
       t.addEventListener('click', ()=>{
         thumbsRoot.querySelectorAll('.pd-thumb').forEach(x=>x.classList.remove('active'));
@@ -859,6 +882,7 @@ function initAdminPage(){
     document.getElementById('apSalePrice').value = p.sale_price || '';
     document.getElementById('apImage').value = isColor(p.image_url) ? '' : p.image_url;
     document.getElementById('apSwatch').value = isColor(p.image_url) ? p.image_url : '#4A93E8';
+    document.getElementById('apAdditionalImages').value = p.additional_image_link ? p.additional_image_link.split(',').map(s=>s.trim()).filter(Boolean).join('\n') : '';
     document.getElementById('apDescription').value = p.description;
     document.getElementById('apSku').value = p.sku || '';
     document.getElementById('apGtin').value = p.gtin || '';
@@ -895,6 +919,8 @@ function initAdminPage(){
       sale_price: document.getElementById('apSalePrice').value ? parseFloat(document.getElementById('apSalePrice').value) : null,
       currency: 'PKR',
       image_url: document.getElementById('apImage').value.trim() || document.getElementById('apSwatch').value,
+      additional_image_link: document.getElementById('apAdditionalImages').value
+        .split('\n').map(s=>s.trim()).filter(Boolean).join(',') || null,
       description: document.getElementById('apDescription').value,
       sku: document.getElementById('apSku').value || null,
       gtin: document.getElementById('apGtin').value || null,
@@ -958,6 +984,9 @@ function initAdminPage(){
       description: get('description'),
       link: get('link'),
       image_url: get('image_link','image_url'),
+      // Extra gallery photos — accepts multiple URLs comma-separated in
+      // a single "additional_image_link" column (Google feed spec).
+      additional_image_link: get('additional_image_link') ? get('additional_image_link').split(',').map(s=>s.trim()).filter(Boolean).join(',') : null,
       price,
       sale_price: salePrice,
       availability: get('availability') || 'in stock',

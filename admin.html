@@ -50,9 +50,10 @@
       <h3>Bulk upload (CSV or XML)</h3>
       <p style="margin-bottom:16px;">Upload a Google Shopping-style feed file to add or update many products at once. Matching is done by <b>SKU</b> — if a row's SKU matches an existing product, that product is updated instead of duplicated, so it's safe to re-upload the same file later.</p>
       <p style="font-size:12.5px;color:var(--ink-soft);margin-bottom:14px;">
-        Expected columns (CSV header row, or XML <code>&lt;item&gt;</code> tags): <code>id, title, description, link, image_link, price, sale_price, availability, brand, condition, gtin, mpn, google_product_category, product_type, color, size, material, gender, age_group, item_group_id, features</code>.
+        Expected columns (CSV header row, or XML <code>&lt;item&gt;</code> tags): <code>id, title, description, link, image_link, additional_image_link, price, sale_price, availability, brand, condition, gtin, mpn, google_product_category, product_type, color, size, material, gender, age_group, item_group_id, features</code>.
         <code>id</code> is used as the SKU. Missing columns are fine — only <code>title</code> and <code>price</code> are required.
-        For <code>features</code>, put the short trust-badge boxes shown on the product page in one cell, separated by <code>|</code> or <code>;</code> — e.g. <code>Hand-finished seams|Cash on delivery|Checked for fit</code>.
+        For <code>additional_image_link</code>, put extra gallery photo URLs in one cell separated by commas.
+        For <code>features</code>, put the feature boxes shown on the product page in one cell separated by <code>|</code> — each one can be just a title, or <code>Title: description</code> — e.g. <code>Premium fabric: Soft, breathable jacquard|Cash on delivery: Pay when it arrives</code>.
       </p>
       <input type="file" id="bulkFile" accept=".csv,.xml" style="margin-bottom:12px;">
       <div style="display:flex;gap:10px;">
@@ -89,7 +90,8 @@
             <div class="field"><label for="apPrice">Price (PKR)</label><input id="apPrice" required type="number" min="0" placeholder="3200"></div>
             <div class="field"><label for="apSalePrice">Sale price (optional)</label><input id="apSalePrice" type="number" min="0" placeholder="Leave blank if not on sale"></div>
             <div class="field"><label for="apSwatch">Placeholder colour swatch</label><input id="apSwatch" type="color" value="#4A93E8" style="height:42px;padding:4px;"></div>
-            <div class="field"><label for="apImage">Photo URL (optional)</label><input id="apImage" type="text" placeholder="https://..."></div>
+            <div class="field"><label for="apImage">Main photo URL (optional)</label><input id="apImage" type="text" placeholder="https://..."></div>
+            <div class="field full"><label for="apAdditionalImages">Additional photo URLs — one per line, shown as gallery thumbnails</label><textarea id="apAdditionalImages" rows="3" placeholder="https://example.com/photo-2.jpg&#10;https://example.com/photo-3.jpg"></textarea></div>
             <div class="field full"><label for="apDescription">Description</label><textarea id="apDescription" rows="3" placeholder="A short, honest description of the piece."></textarea></div>
           </div>
 
@@ -146,9 +148,9 @@
           <p class="eyebrow">Feature boxes</p>
           <div class="form-grid">
             <div class="field full">
-              <label for="apFeatures">Shown as icon boxes on the product page — one per line</label>
-              <textarea id="apFeatures" rows="4" placeholder="Hand-finished seams&#10;Cash on delivery&#10;Checked for fit&#10;Lahore-based studio"></textarea>
-              <p style="font-size:12px;color:var(--ink-soft);margin-top:6px;">Leave blank to use the site's default four boxes. In a CSV/XML bulk upload, use a single <code>features</code> column with values separated by <code>|</code> or <code>;</code>.</p>
+              <label for="apFeatures">Shown as feature boxes below the product details — one per line, optionally "Title: description"</label>
+              <textarea id="apFeatures" rows="4" placeholder="Premium fabric: Soft, breathable jacquard&#10;Cash on delivery&#10;Checked for fit before it ships"></textarea>
+              <p style="font-size:12px;color:var(--ink-soft);margin-top:6px;">Leave blank to use the site's default four boxes. In a CSV/XML bulk upload, use a single <code>features</code> column with entries separated by <code>|</code>.</p>
             </div>
           </div>
 

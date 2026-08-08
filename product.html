@@ -60,12 +60,6 @@
       <p class="pd-desc" id="pdDescription"></p>
       <div id="pdAttributes" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;"></div>
 
-      <div class="pd-feature-strip" id="pdFeatureStrip">
-        <!-- Filled by initProductPage() in script.js — from the product's
-             own "features" field if set (admin panel or CSV/XML bulk
-             upload), otherwise the site-wide default boxes. -->
-      </div>
-
       <div class="pd-size-note" id="pdSizeNote" style="display:none;">
         <span>Size: <b id="pdSizeValue">—</b></span>
         <a href="measurements.html">Need a different size? →</a>
@@ -118,6 +112,16 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <div class="pd-features-section" id="pdFeaturesSection" style="display:none;">
+    <div class="eyebrow">Why you'll love it</div>
+    <h2>What makes this piece special.</h2>
+    <div class="pd-feature-grid" id="pdFeatureGrid">
+      <!-- Filled by initProductPage() in script.js — from the product's
+           own "features" field if set (admin panel or CSV/XML bulk
+           upload), otherwise the site-wide default boxes. -->
     </div>
   </div>
 
