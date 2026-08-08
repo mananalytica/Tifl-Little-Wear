@@ -196,84 +196,8 @@ function normalizeProduct(p){
     age_group: p.age_group || 'kids',
     item_group_id: p.item_group_id || '',
     material: p.material || '',
-    tailor: p.tailor || ''   // tailor SLUG, e.g. "abdul-sattar" — resolve via TAILORS/loadTailors()
+    features: p.features || ''
   };
-}
-
-/* ============================================================
-   TAILORS — one row per master tailor, powers master-tailor.html
-   (?slug=...), tailors.html, and the "Designed / stitched by"
-   attribution on product.html. See index.py's TAILOR ONBOARDING
-   comment for how a new tailor gets added (no code changes needed).
-============================================================= */
-const FALLBACK_TAILORS = [
-  {tailor_id:'t-abdulsattar', slug:'abdul-sattar', name:'Ustad Abdul Sattar', title:'Master Tailor',
-   tagline:"24 years of hands that shaped this studio's stitch line.", photo_url:'#101B2E',
-   years_experience:24, garments_count:'3,000+', apprentices_count:'12', established_year:'2010',
-   bio:"Every occasion piece in our in-house line passes through Ustad Sattar's hands.",
-   specialties:[], timeline:[], gallery:[], testimonials:[], active:true}
-];
-let TAILORS = [];
-
-async function loadTailors(){
-  try{
-    const res = await fetch('/api/tailors');
-    if(!res.ok) throw new Error('bad status');
-    const data = await res.json();
-    TAILORS = data.map(normalizeTailor);
-  }catch(e){
-    TAILORS = FALLBACK_TAILORS.map(normalizeTailor);
-  }
-  return TAILORS;
-}
-// JSON columns come back from the API as strings — parse them safely,
-// and fall back to [] rather than throwing if a field is empty/malformed.
-function parseJSONField(v){
-  if(Array.isArray(v)) return v;
-  if(typeof v !== 'string' || !v.trim()) return [];
-  try{ const parsed = JSON.parse(v); return Array.isArray(parsed) ? parsed : []; }
-  catch(e){ return []; }
-}
-function normalizeTailor(t){
-  return {
-    id: t.tailor_id || t.id,
-    slug: t.slug,
-    name: t.name,
-    title: t.title || 'Master Tailor',
-    tagline: t.tagline || '',
-    photo_url: t.photo_url || '#101B2E',
-    years_experience: t.years_experience || null,
-    garments_count: t.garments_count || '',
-    apprentices_count: t.apprentices_count || '',
-    established_year: t.established_year || '',
-    bio: t.bio || '',
-    specialties: parseJSONField(t.specialties),
-    timeline: parseJSONField(t.timeline),
-    gallery: parseJSONField(t.gallery),
-    testimonials: parseJSONField(t.testimonials),
-    active: t.active !== false
-  };
-}
-// Returns HTML for a tailor's hero photo: a real image if photo_url is a
-// URL, otherwise a soft initials placeholder in that colour (same
-// fallback idea as productThumbHTML, so onboarding works before headshots exist).
-function tailorPhotoHTML(t){
-  if(t.photo_url && !isColor(t.photo_url)){
-    return `<img src="${t.photo_url}" alt="${t.name}" style="width:100%;height:100%;object-fit:cover;">`;
-  }
-  const color = isColor(t.photo_url) ? t.photo_url : '#101B2E';
-  const initials = (t.name||'').split(' ').filter(Boolean).slice(-2).map(w=>w[0]).join('').toUpperCase();
-  return `<div style="background:${color};width:100%;height:100%;display:flex;align-items:center;justify-content:center;">
-    <span style="font-family:'Fredoka',sans-serif;font-weight:700;font-size:56px;color:rgba(255,255,255,.9);">${initials}</span>
-  </div>`;
-}
-// Returns HTML for a lookbook gallery tile (real photo or a colour swatch).
-function tailorGalleryTileHTML(item){
-  if(item.image_url && !isColor(item.image_url)){
-    return `<img src="${item.image_url}" alt="${item.title||''}" style="width:100%;height:100%;object-fit:cover;">`;
-  }
-  const color = isColor(item.image_url) ? item.image_url : '#8FB7E8';
-  return `<div style="background:${color};width:100%;height:100%;"></div>`;
 }
 
 /* ============================================================
@@ -450,256 +374,6 @@ function renderProducts(cat){
   });
 }
 
-/* ============================================================
-   HOMEPAGE — hero gallery: single-image auto-cycling slideshow
-   (crossfades through every product photo, clicking one goes to
-   that exact product) + the horizontal "From the shop" strip
-============================================================= */
-async function initHeroGallery(){
-  const root = document.getElementById('heroGallery');
-  if(!root) return;
-  await loadProducts();
-  if(!PRODUCTS.length) return;
-
-  root.innerHTML = `
-    <div class="hero-gallery-dots" id="heroGalleryDots"></div>
-  `;
-  const dotsRoot = document.getElementById('heroGalleryDots');
-
-  PRODUCTS.forEach((p, i)=>{
-    const slide = document.createElement('div');
-    slide.className = 'hero-gallery-slide' + (i===0 ? ' active' : '');
-    slide.innerHTML = `
-      ${productThumbHTML(p)}
-      <div class="hero-gallery-cap">
-        <div class="hgc-name">${p.name}</div>
-        <div class="hgc-price">PKR ${p.price.toLocaleString()}</div>
-      </div>`;
-    slide.addEventListener('click', ()=>{
-      fireSelectItem(p);
-      window.location.href = 'product.html?id='+encodeURIComponent(p.id);
-    });
-    root.insertBefore(slide, dotsRoot);
-
-    const dot = document.createElement('span');
-    if(i===0) dot.className = 'active';
-    dot.addEventListener('click', (e)=>{ e.stopPropagation(); goToSlide(i); });
-    dotsRoot.appendChild(dot);
-  });
-
-  const slides = root.querySelectorAll('.hero-gallery-slide');
-  const dots = dotsRoot.querySelectorAll('span');
-  let current = 0;
-  let timer = null;
-
-  function goToSlide(i){
-    slides[current].classList.remove('active');
-    dots[current].classList.remove('active');
-    current = i;
-    slides[current].classList.add('active');
-    dots[current].classList.add('active');
-  }
-  function next(){ goToSlide((current+1) % slides.length); }
-  function start(){ if(slides.length>1) timer = setInterval(next, 3200); }
-  function stop(){ clearInterval(timer); }
-
-  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if(!reduceMotion) start();
-  root.addEventListener('mouseenter', stop);
-  root.addEventListener('mouseleave', ()=>{ if(!reduceMotion) start(); });
-}
-
-async function initHomeGallery(){
-  const track = document.getElementById('homeGalleryTrack');
-  if(!track) return;
-  await loadProducts();
-  if(!PRODUCTS.length) return;
-
-  const cardHTML = p => `
-    <a class="hg-card" href="product.html?id=${encodeURIComponent(p.id)}" data-id="${p.id}">
-      <div class="hg-thumb">${productThumbHTML(p)}</div>
-      <div class="hg-name">${p.name}</div>
-      <div class="hg-price">PKR ${p.price.toLocaleString()}</div>
-    </a>`;
-
-  // Render the list twice back-to-back so the CSS animation can scroll
-  // from 0% to -50% and loop seamlessly without a visible jump.
-  const cards = PRODUCTS.map(cardHTML).join('');
-  track.innerHTML = cards + cards;
-
-  track.querySelectorAll('.hg-card').forEach(el=>{
-    el.addEventListener('click', ()=>{
-      const p = PRODUCTS.find(x=>x.id===el.dataset.id);
-      if(p) fireSelectItem(p);
-    });
-  });
-}
-
-/* ============================================================
-   MASTER TAILOR PAGE (master-tailor.html?slug=...) — fully
-   data-driven so onboarding a new tailor never needs a code
-   change; see index.py's TAILOR ONBOARDING comment for the flow.
-============================================================= */
-async function initTailorPage(){
-  const root = document.getElementById('tailorPage');
-  if(!root) return;
-  const empty = document.getElementById('tailorEmpty');
-  const slug = new URLSearchParams(window.location.search).get('slug') || 'abdul-sattar';
-
-  await loadTailors();
-  const t = TAILORS.find(x=>x.slug===slug);
-  if(!t){ root.style.display='none'; if(empty) empty.style.display='block'; return; }
-
-  document.title = t.name+', '+t.title+' — Tifl Little Wear, Lahore';
-
-  // ---- Hero: photo one side, name + experience + stats the other ----
-  document.getElementById('tpPhoto').innerHTML = tailorPhotoHTML(t);
-  document.getElementById('tpEyebrow').textContent = (t.title||'Master Tailor')+(t.established_year ? ' · Est. '+t.established_year+' at Tifl' : '');
-  document.getElementById('tpName').innerHTML = t.name+(t.tagline ? ' — <span class="accent">'+t.tagline+'</span>' : '');
-  document.getElementById('tpBio').textContent = t.bio || '';
-  const statsRoot = document.getElementById('tpStats');
-  const stats = [];
-  if(t.years_experience) stats.push([t.years_experience, 'Years of tailoring']);
-  if(t.garments_count) stats.push([t.garments_count, 'Garments hand-cut']);
-  if(t.apprentices_count) stats.push([t.apprentices_count, 'Apprentices trained']);
-  statsRoot.innerHTML = stats.map(([n,l])=>`<div class="mt-stat"><b>${n}</b><span>${l}</span></div>`).join('');
-
-  // ---- Approach / specialties ----
-  const specRoot = document.getElementById('tpSpecialties');
-  const specSection = document.getElementById('tpSpecialtiesSection');
-  if(t.specialties.length){
-    specSection.style.display = '';
-    const icons = [
-      '<path d="M4 21v-6a4 4 0 014-4h8a4 4 0 014 4v6M9 11V7a3 3 0 016 0v4"/>',
-      '<path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="9"/>',
-      '<path d="M20 7L12 3 4 7l8 4 8-4z"/><path d="M4 7v10l8 4 8-4V7"/><path d="M12 11v10"/>'
-    ];
-    specRoot.innerHTML = t.specialties.map((s,i)=>`
-      <div class="craft-card">
-        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">${icons[i%icons.length]}</svg>
-        <h3>${s.title}</h3>
-        <p>${s.description}</p>
-      </div>`).join('');
-  } else { specSection.style.display = 'none'; }
-
-  // ---- Timeline ----
-  const tlRoot = document.getElementById('tpTimeline');
-  const tlSection = document.getElementById('tpTimelineSection');
-  if(t.timeline.length){
-    tlSection.style.display = '';
-    tlRoot.innerHTML = t.timeline.map(item=>`
-      <div class="mt-tl-item">
-        <div class="mt-tl-dot"></div>
-        <div class="mt-tl-year">${item.year}</div>
-        <h4>${item.title}</h4>
-        <p>${item.description}</p>
-      </div>`).join('');
-  } else { tlSection.style.display = 'none'; }
-
-  // ---- Lookbook gallery (editorial grid: big shot + top/mid tiles +
-  // "Explore Gallery" CTA — matches the CSS grid-template-areas in
-  // master-tailor.html. Falls back to a simple wrapping row if fewer
-  // than 3 photos are available yet.) ----
-  await loadProducts();
-  const pieces = PRODUCTS.filter(p=>p.tailor===slug);
-  document.getElementById('tpLookbookHeading').textContent = 'Recent bespoke creations by '+t.name+'.';
-  const galleryItems = t.gallery.length ? t.gallery : pieces.slice(0,3).map(p=>({
-    image_url: p.image_url, title: p.name, caption: 'Crafted by '+t.name, tag: p.category
-  }));
-  const lookbookRoot = document.getElementById('tpLookbook');
-  const lookbookSection = document.getElementById('tpLookbookSection');
-  const exploreTile = `
-    <a class="mt-lb-explore" href="#portfolio">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="22" height="22"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-      Explore Gallery
-    </a>`;
-  function lbTile(item, cls){
-    return `<div class="mt-lb-tile ${cls}">
-      ${tailorGalleryTileHTML(item)}
-      ${item.tag ? `<span class="mt-lb-badge">${item.tag}</span>` : ''}
-      <div class="mt-lb-caption"><b>${item.title||''}</b>${item.caption?`<span>${item.caption}</span>`:''}</div>
-    </div>`;
-  }
-  if(galleryItems.length){
-    lookbookSection.style.display = '';
-    if(galleryItems.length>=3){
-      lookbookRoot.className = 'mt-lookbook';
-      lookbookRoot.innerHTML = lbTile(galleryItems[0],'big') + lbTile(galleryItems[1],'top') + lbTile(galleryItems[2],'mid') + exploreTile;
-    } else {
-      lookbookRoot.className = 'mt-lookbook simple';
-      lookbookRoot.innerHTML = galleryItems.map(item=>lbTile(item,'')).join('') + exploreTile;
-    }
-  } else { lookbookSection.style.display = 'none'; }
-
-  // ---- Portfolio grid (live products tagged to this tailor) ----
-  const portfolioGrid = document.getElementById('tpPortfolioGrid');
-  if(!pieces.length){
-    portfolioGrid.innerHTML = `<p style="color:var(--ink-soft);grid-column:1/-1;">Portfolio pieces will appear here as they're tagged to ${t.name} in the shop.</p>`;
-  } else {
-    portfolioGrid.innerHTML = pieces.map(p => `
-      <div class="p-card" data-id="${p.id}">
-        <div class="p-thumb">
-          <span class="brand-tag">${p.brand || 'Tifl Little Wear'}</span>
-          ${productThumbHTML(p)}
-        </div>
-        <div class="p-info">
-          <div class="pname">${p.name}</div>
-          <div class="pcat">${p.category}</div>
-          <div class="prow"><span class="price">PKR ${p.price.toLocaleString()}</span></div>
-        </div>
-      </div>`).join('');
-    portfolioGrid.querySelectorAll('.p-card').forEach(card=>{
-      card.addEventListener('click', ()=>{ window.location.href = 'product.html?id='+encodeURIComponent(card.dataset.id); });
-    });
-  }
-
-  // ---- Testimonials ----
-  const testRoot = document.getElementById('tpTestimonials');
-  const testSection = document.getElementById('tpTestimonialsSection');
-  const starSVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.9-6.2-3.3-6.2 3.3 1.2-6.9-5-4.9 6.9-1z"/></svg>';
-  if(t.testimonials.length){
-    testSection.style.display = '';
-    testRoot.innerHTML = t.testimonials.map(r=>`
-      <div class="review-card">
-        <div class="stars">${starSVG.repeat(5)}</div>
-        <p class="quote">${r.quote}</p>
-        <div class="review-who"><b>${r.name}</b>${r.location?`<div class="wloc">${r.location}</div>`:''}</div>
-      </div>`).join('');
-  } else { testSection.style.display = 'none'; }
-
-  // ---- Booking form: tag the request to this tailor specifically ----
-  document.getElementById('bTailorName').value = t.name;
-  const modeLabel = document.querySelector('#modeGrid .mode[data-mode="studio"]');
-  if(modeLabel) modeLabel.innerHTML = `In-studio with ${t.name}<br><span style="font-size:11px;color:var(--ink-soft);">Gulberg, Lahore</span>`;
-  const bookingHeading = document.getElementById('tpBookingHeading');
-  if(bookingHeading) bookingHeading.textContent = 'Reserve a private fitting with '+t.name+'.';
-  const bookingNote = document.getElementById('tpBookingNote');
-  if(bookingNote) bookingNote.innerHTML = `This request is routed to ${t.name} specifically — for a general studio fitting with any available tailor, use the <a href="booking.html" style="color:var(--primary-dark);font-weight:600;">regular booking page</a> instead.`;
-}
-
-/* ============================================================
-   TAILORS DIRECTORY (tailors.html) — every active tailor, each
-   linking to their own master-tailor.html?slug=... page.
-============================================================= */
-async function initTailorsDirectoryPage(){
-  const grid = document.getElementById('tailorsDirectoryGrid');
-  if(!grid) return;
-  await loadTailors();
-  if(!TAILORS.length){
-    grid.innerHTML = '<p style="color:var(--ink-soft);">No tailors listed yet.</p>';
-    return;
-  }
-  grid.innerHTML = TAILORS.map(t=>`
-    <a class="td-card" href="master-tailor.html?slug=${encodeURIComponent(t.slug)}">
-      <div class="td-photo">${tailorPhotoHTML(t)}</div>
-      <div class="td-info">
-        <div class="td-name">${t.name}</div>
-        <div class="td-title">${t.title}${t.years_experience ? ' · '+t.years_experience+' yrs experience' : ''}</div>
-        <p class="td-tagline">${t.tagline||''}</p>
-      </div>
-    </a>`).join('');
-}
-
 async function initShopPage(){
   if(!document.getElementById('productGrid')) return;
   await loadProducts();
@@ -779,11 +453,6 @@ function initBookingPage(){
   let bookingCounter = 1042;
   form.addEventListener('submit', async (e)=>{
     e.preventDefault();
-    // Read live at submit time (not at page load) — on master-tailor.html
-    // this hidden field's value is set asynchronously by initTailorPage()
-    // once tailor data has loaded, which can finish after this handler is
-    // wired up. Absent entirely on the general booking.html form.
-    const preferredTailor = document.getElementById('bTailorName')?.value || null;
     const mode = document.querySelector('#modeGrid .mode.active').dataset.mode;
     const slot = document.querySelector('#slotGrid .slot.active').dataset.slot;
     const payload = {
@@ -796,7 +465,6 @@ function initBookingPage(){
       date: document.getElementById('bDate').value,
       notes: document.getElementById('bNotes').value,
       measurements: Store.get('tifl_measurements', null),
-      preferred_tailor: preferredTailor,
       anonymous_id: rsGetAnonymousId(), attribution: rsGetAttribution()
     };
 
@@ -820,14 +488,12 @@ function initBookingPage(){
       ref = 'TLW-'+(bookingCounter++)+'-OFFLINE';
     }
 
-    dataLayer.push({event:'generate_lead', lead_type:'booking', booking_ref:ref, garment_type:payload.garment_type, fitting_mode:mode, preferred_tailor:preferredTailor});
-    rsTrack('generate_lead', {lead_type:'booking', booking_ref:ref, garment_type:payload.garment_type, fitting_mode:mode, preferred_tailor:preferredTailor});
+    dataLayer.push({event:'generate_lead', lead_type:'booking', booking_ref:ref, garment_type:payload.garment_type, fitting_mode:mode});
+    rsTrack('generate_lead', {lead_type:'booking', booking_ref:ref, garment_type:payload.garment_type, fitting_mode:mode});
 
     document.getElementById('confirmRef').textContent = wasOnline
       ? 'Reference '+ref+' · saved to studio database'
       : 'Reference '+ref+' · saved on this device — we will confirm by phone';
-    const confirmHeading = document.querySelector('#confirmCard h3');
-    if(confirmHeading) confirmHeading.textContent = preferredTailor ? 'Request sent to '+preferredTailor : 'Booking received';
     document.getElementById('confirmCard').classList.add('show');
     btn.disabled = false; btn.textContent = 'Confirm booking';
     showToast('Booking '+ref+' received');
@@ -912,21 +578,23 @@ async function initProductPage(){
   if(p.age_group) chips.push(p.age_group.charAt(0).toUpperCase()+p.age_group.slice(1));
   document.getElementById('pdAttributes').innerHTML = chips.map(c=>`<span class="garment-tag">${c}</span>`).join('');
 
-  const tailorLink = document.getElementById('pdTailorLink');
-  if(tailorLink){
-    if(p.tailor){
-      await loadTailors();
-      const t = TAILORS.find(x=>x.slug===p.tailor);
-      const displayName = t ? t.name : p.tailor;
-      tailorLink.href = 'master-tailor.html?slug='+encodeURIComponent(p.tailor);
-      tailorLink.style.display = 'inline-flex';
-      tailorLink.innerHTML = `
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M4 21v-6a4 4 0 014-4h8a4 4 0 014 4v6M9 11V7a3 3 0 016 0v4"/></svg>
-        Designed &amp; stitched by <b>${displayName}</b> — view profile →`;
-    } else {
-      tailorLink.style.display = 'none';
-    }
-  }
+  // Feature boxes — pulled from the product's own "features" field
+  // (set via admin panel or CSV/XML bulk upload) if present, otherwise
+  // fall back to the site-wide defaults.
+  const DEFAULT_FEATURES = ['Hand-finished seams', 'Cash on delivery', 'Checked for fit', 'Lahore-based studio'];
+  const FEATURE_ICONS = {
+    'hand-finished seams': '<path d="M4 21v-6a4 4 0 014-4h8a4 4 0 014 4v6M9 11V7a3 3 0 016 0v4"/>',
+    'cash on delivery': '<rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>',
+    'checked for fit': '<path d="M20 6L9 17l-5-5"/>',
+    'lahore-based studio': '<path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>'
+  };
+  const DEFAULT_ICON = '<path d="M20 6L9 17l-5-5"/>'; // generic checkmark for custom features
+  const featureList = (p.features ? p.features.split('|').map(s=>s.trim()).filter(Boolean) : DEFAULT_FEATURES);
+  document.getElementById('pdFeatureStrip').innerHTML = featureList.map(f=>`
+    <div class="pd-feature">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">${FEATURE_ICONS[f.toLowerCase()] || DEFAULT_ICON}</svg>
+      <span>${f}</span>
+    </div>`).join('');
 
   const AGE_GROUP_LABELS = {
     newborn: 'Newborn (0–3 months)', infant: 'Infant (3–12 months)',
@@ -1182,113 +850,6 @@ function initAdminPage(){
     }));
   }
 
-  // ---- Tailors panel: populates the product form's "Designed / stitched
-  // by" dropdown, and its own add/edit/delete list below the products grid.
-  async function refreshTailorDropdown(){
-    const sel = document.getElementById('apTailor');
-    if(!sel) return;
-    await loadTailors();
-    const current = sel.value;
-    sel.innerHTML = '<option value="">— none / partner brand —</option>'
-      + TAILORS.map(t=>`<option value="${t.slug}">${t.name}</option>`).join('');
-    if(current) sel.value = current;
-  }
-
-  async function refreshTailorList(){
-    const listRoot = document.getElementById('adminTailorList');
-    if(!listRoot) return;
-    listRoot.innerHTML = '<p style="color:var(--ink-soft);">Loading…</p>';
-    let tailors;
-    try{
-      const res = await fetch('/api/tailors');
-      if(!res.ok) throw new Error('status '+res.status);
-      tailors = (await res.json()).map(normalizeTailor);
-    }catch(e){
-      listRoot.innerHTML = '<p style="color:var(--primary-dark);">Could not load tailors from the server ('+e.message+').</p>';
-      return;
-    }
-    listRoot.innerHTML = tailors.map(t=>`
-      <div class="admin-row" data-id="${t.id}">
-        <div class="admin-row-thumb">${tailorPhotoHTML(t)}</div>
-        <div class="admin-row-info">
-          <div class="admin-row-name">${t.name}</div>
-          <div class="admin-row-meta">${t.title}${t.years_experience ? ' · '+t.years_experience+' yrs' : ''} · /master-tailor.html?slug=${t.slug}</div>
-        </div>
-        <button class="btn btn-ghost btn-sm" data-edit="${t.id}">Edit</button>
-        <button class="btn btn-ghost btn-sm" data-del="${t.id}">Delete</button>
-      </div>`).join('') || '<p style="color:var(--ink-soft);">No tailors yet — add your first one above.</p>';
-
-    listRoot.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click', ()=>{
-      const t = tailors.find(x=>x.id===b.dataset.edit);
-      fillTailorForm(t);
-      window.scrollTo({top: document.getElementById('tailorForm').getBoundingClientRect().top + window.scrollY - 20, behavior:'smooth'});
-    }));
-    listRoot.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click', async ()=>{
-      if(!confirm('Delete this tailor? Products already tagged to them will keep the slug but the page will 404 until it\'s reassigned.')) return;
-      try{ await apiCall('/api/tailors/'+b.dataset.del, 'DELETE'); showToast('Deleted'); refreshTailorList(); refreshTailorDropdown(); }
-      catch(e){}
-    }));
-  }
-
-  function fillTailorForm(t){
-    document.getElementById('atEditingId').value = t.id;
-    document.getElementById('atName').value = t.name;
-    document.getElementById('atSlug').value = t.slug;
-    document.getElementById('atTitle').value = t.title || 'Master Tailor';
-    document.getElementById('atTagline').value = t.tagline || '';
-    document.getElementById('atPhoto').value = isColor(t.photo_url) ? '' : t.photo_url;
-    document.getElementById('atSwatch').value = isColor(t.photo_url) ? t.photo_url : '#101B2E';
-    document.getElementById('atYears').value = t.years_experience || '';
-    document.getElementById('atEstablished').value = t.established_year || '';
-    document.getElementById('atGarments').value = t.garments_count || '';
-    document.getElementById('atApprentices').value = t.apprentices_count || '';
-    document.getElementById('atBio').value = t.bio || '';
-    document.getElementById('atSpecialties').value = t.specialties.length ? JSON.stringify(t.specialties, null, 2) : '';
-    document.getElementById('atTimeline').value = t.timeline.length ? JSON.stringify(t.timeline, null, 2) : '';
-    document.getElementById('atGallery').value = t.gallery.length ? JSON.stringify(t.gallery, null, 2) : '';
-    document.getElementById('atTestimonials').value = t.testimonials.length ? JSON.stringify(t.testimonials, null, 2) : '';
-    document.getElementById('atFormTitle').textContent = 'Editing: '+t.name;
-  }
-  function resetTailorForm(){
-    document.getElementById('tailorForm').reset();
-    document.getElementById('atEditingId').value = '';
-    document.getElementById('atTitle').value = 'Master Tailor';
-    document.getElementById('atSwatch').value = '#101B2E';
-    document.getElementById('atFormTitle').textContent = 'Add a tailor';
-  }
-  // Parses one of the optional JSON textareas; returns null (skip the
-  // section) if blank, throws a friendly error if the JSON is malformed.
-  function parseTailorJSONField(id, label){
-    const raw = document.getElementById(id).value.trim();
-    if(!raw) return null;
-    try{
-      const parsed = JSON.parse(raw);
-      if(!Array.isArray(parsed)) throw new Error('not a list');
-      return parsed;
-    }catch(e){
-      throw new Error(`"${label}" isn't valid JSON — check for a stray comma or missing bracket.`);
-    }
-  }
-  function tailorFormToPayload(){
-    return {
-      name: document.getElementById('atName').value,
-      slug: document.getElementById('atSlug').value.trim().toLowerCase().replace(/[^a-z0-9-]+/g,'-'),
-      title: document.getElementById('atTitle').value || 'Master Tailor',
-      tagline: document.getElementById('atTagline').value || null,
-      photo_url: document.getElementById('atPhoto').value.trim() || document.getElementById('atSwatch').value,
-      years_experience: document.getElementById('atYears').value ? parseInt(document.getElementById('atYears').value,10) : null,
-      garments_count: document.getElementById('atGarments').value || null,
-      apprentices_count: document.getElementById('atApprentices').value || null,
-      established_year: document.getElementById('atEstablished').value || null,
-      bio: document.getElementById('atBio').value || null,
-      specialties: parseTailorJSONField('atSpecialties','Specialties'),
-      timeline: parseTailorJSONField('atTimeline','Career timeline'),
-      gallery: parseTailorJSONField('atGallery','Lookbook gallery photos'),
-      testimonials: parseTailorJSONField('atTestimonials','Testimonials'),
-      active: true
-    };
-  }
-
   function fillForm(p){
     document.getElementById('apEditingId').value = p.id;
     document.getElementById('apName').value = p.name;
@@ -1313,8 +874,7 @@ function initAdminPage(){
     document.getElementById('apGoogleCategory').value = p.google_product_category || '';
     document.getElementById('apProductType').value = p.product_type || '';
     document.getElementById('apLink').value = p.link || '';
-    const apTailorEl = document.getElementById('apTailor');
-    if(apTailorEl) apTailorEl.value = p.tailor || '';
+    document.getElementById('apFeatures').value = p.features ? p.features.split('|').join('\n') : '';
     document.getElementById('apFormTitle').textContent = 'Editing: '+p.name;
   }
   function resetForm(){
@@ -1350,7 +910,8 @@ function initAdminPage(){
       google_product_category: document.getElementById('apGoogleCategory').value || null,
       product_type: document.getElementById('apProductType').value || null,
       link: document.getElementById('apLink').value || null,
-      tailor: document.getElementById('apTailor')?.value || null,
+      features: document.getElementById('apFeatures').value
+        .split('\n').map(s=>s.trim()).filter(Boolean).join('|') || null,
       active: true
     };
   }
@@ -1362,8 +923,6 @@ function initAdminPage(){
     document.getElementById('adminGate').style.display = 'none';
     document.getElementById('adminPanel').style.display = 'block';
     refreshList();
-    refreshTailorDropdown();
-    refreshTailorList();
   });
 
   document.getElementById('productForm')?.addEventListener('submit', async (e)=>{
@@ -1379,23 +938,6 @@ function initAdminPage(){
     }catch(e){ /* apiCall already toasts on 401 */ }
   });
   document.getElementById('apCancelEdit')?.addEventListener('click', resetForm);
-
-  document.getElementById('tailorForm')?.addEventListener('submit', async (e)=>{
-    e.preventDefault();
-    const editingId = document.getElementById('atEditingId').value;
-    let payload;
-    try{ payload = tailorFormToPayload(); }
-    catch(err){ showToast(err.message); return; }
-    try{
-      if(editingId) await apiCall('/api/tailors/'+editingId, 'PUT', payload);
-      else await apiCall('/api/tailors', 'POST', payload);
-      showToast('Saved');
-      resetTailorForm();
-      refreshTailorList();
-      refreshTailorDropdown();
-    }catch(e){ /* apiCall already toasts on 401 */ }
-  });
-  document.getElementById('atCancelEdit')?.addEventListener('click', resetTailorForm);
 
   /* ---------- bulk import (CSV / XML) ---------- */
   // Maps common Google Shopping / Meta Catalog feed column names onto our
@@ -1431,6 +973,9 @@ function initAdminPage(){
       gender: get('gender'),
       age_group: get('age_group') || 'kids',
       item_group_id: get('item_group_id'),
+      // Feature boxes shown on the product page — accepts "|" or ";"
+      // separated values in a single "features" column.
+      features: get('features') ? get('features').split(/[|;]/).map(s=>s.trim()).filter(Boolean).join('|') : null,
       category: get('product_type','category') ? (get('product_type','category').split('>').pop() || '').trim() : 'Other',
       currency: 'PKR',
       active: true
@@ -1490,8 +1035,6 @@ function initAdminPage(){
     document.getElementById('adminGate').style.display = 'none';
     document.getElementById('adminPanel').style.display = 'block';
     refreshList();
-    refreshTailorDropdown();
-    refreshTailorList();
   }
 }
 
@@ -1872,10 +1415,6 @@ function initCheckoutPage(){
 document.addEventListener('DOMContentLoaded', ()=>{
   if(typeof rsPage === 'function') rsPage();
   applyConfig();
-  initHeroGallery();
-  initHomeGallery();
-  initTailorPage();
-  initTailorsDirectoryPage();
   initShopPage();
   initMeasurementsPage();
   initBookingPage();
