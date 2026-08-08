@@ -407,12 +407,16 @@ footer.site{border-top:1px solid var(--line);padding:52px 0 40px;margin-top:60px
 .pd-feature span{font-size:10.8px;font-weight:600;color:var(--ink-soft);line-height:1.3;}
 
 /* Product-specific selling points (from the admin "Features" box) — a new
-   standalone section under the Details/Materials/Sizing accordion, styled
-   as a simple checklist to match it. */
-.pd-features-section{margin-top:28px;padding-top:24px;border-top:1px dashed var(--line);}
-.pd-feature-list p{font-size:13.5px;color:var(--ink-soft);line-height:1.6;margin-top:10px;}
-.pd-feature-list p:first-child{margin-top:0;}
-.pd-feature-list b{color:var(--ink);}
+   full-width section under the product grid, each feature in its own
+   tick-marked card. */
+.pd-features-section{margin-top:44px;padding-top:34px;border-top:1px dashed var(--line);}
+.pd-features-section .eyebrow{margin-bottom:14px;}
+.pd-feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;}
+.pd-feature-card{background:var(--bg-alt);border-radius:var(--radius);padding:18px 20px;display:flex;gap:12px;align-items:flex-start;}
+.pd-feature-card .tick{flex:none;width:22px;height:22px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;margin-top:1px;}
+.pd-feature-card .tick svg{width:12px;height:12px;stroke:var(--bg);}
+.pd-feature-card .pd-fc-title{font-size:14px;font-weight:700;color:var(--ink);line-height:1.4;}
+.pd-feature-card .pd-fc-desc{font-size:12.8px;color:var(--ink-soft);line-height:1.55;margin-top:4px;}
 
 .pd-qty-row{display:flex;align-items:center;gap:10px;margin-top:26px;margin-bottom:14px;}
 .pd-qty-row label{font-size:12.5px;font-weight:600;color:var(--ink-soft);}

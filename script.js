@@ -923,9 +923,14 @@ async function initProductPage(){
   const featuresSection = document.getElementById('pdFeaturesSection');
   if(featuresSection){
     if(p.features && p.features.length){
-      document.getElementById('pdFeatureList').innerHTML = p.features.map(f=>
-        `<p>✓ <b>${f.title}</b>${f.description ? ' — '+f.description : ''}</p>`
-      ).join('');
+      document.getElementById('pdFeatureList').innerHTML = p.features.map(f=>`
+        <div class="pd-feature-card">
+          <span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span>
+          <div>
+            <div class="pd-fc-title">${f.title}</div>
+            ${f.description ? `<div class="pd-fc-desc">${f.description}</div>` : ''}
+          </div>
+        </div>`).join('');
       featuresSection.style.display = 'block';
     } else {
       featuresSection.style.display = 'none';
