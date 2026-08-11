@@ -299,18 +299,19 @@ footer.site{border-top:1px solid var(--line);padding:52px 0 40px;margin-top:60px
 
 /* =============== WHATSAPP FLOAT BUTTON =============== */
 .whatsapp-float{
-  position:fixed;bottom:24px;right:24px;z-index:700;
+  position:fixed;bottom:calc(24px + env(safe-area-inset-bottom));right:24px;z-index:700;
   width:56px;height:56px;border-radius:50%;
   background:#25D366;color:#fff;
   display:flex;align-items:center;justify-content:center;
   box-shadow:0 8px 24px -6px rgba(37,211,102,.55), 0 2px 8px rgba(0,0,0,.12);
   text-decoration:none;
   animation:wa-pulse 2.6s infinite;
+  transition:bottom .2s var(--ease);
 }
 .whatsapp-float:hover{background:#1EBE5A;}
 .whatsapp-float svg{width:28px;height:28px;}
 .whatsapp-tip{
-  position:fixed;bottom:38px;right:88px;z-index:700;
+  position:fixed;bottom:calc(38px + env(safe-area-inset-bottom));right:88px;z-index:700;
   background:var(--ink);color:#fff;font-size:12.8px;font-weight:600;
   padding:8px 14px;border-radius:8px;white-space:nowrap;
   opacity:0;pointer-events:none;transform:translateX(6px);
@@ -323,9 +324,18 @@ footer.site{border-top:1px solid var(--line);padding:52px 0 40px;margin-top:60px
   50%{box-shadow:0 8px 24px -6px rgba(37,211,102,.55), 0 0 0 10px rgba(37,211,102,0);}
 }
 @media (max-width:560px){
-  .whatsapp-float{bottom:18px;right:18px;width:50px;height:50px;}
+  .whatsapp-float{bottom:calc(18px + env(safe-area-inset-bottom));right:18px;width:50px;height:50px;}
   .whatsapp-float svg{width:25px;height:25px;}
   .whatsapp-tip{display:none;}
+}
+/* When the product page's sticky "Add to cart" bar is showing, lift the
+   WhatsApp button clear above it so the two never overlap. The offset is
+   generous (bar height + margin) and stacks with the safe-area inset so
+   it still clears the bar on notched/home-indicator phones. */
+body.has-sticky-cta .whatsapp-float{bottom:calc(96px + env(safe-area-inset-bottom));}
+body.has-sticky-cta .whatsapp-tip{bottom:calc(110px + env(safe-area-inset-bottom));}
+@media (max-width:560px){
+  body.has-sticky-cta .whatsapp-float{bottom:calc(88px + env(safe-area-inset-bottom));}
 }
 
 /* =============== CONTACT PAGE =============== */
@@ -349,7 +359,7 @@ footer.site{border-top:1px solid var(--line);padding:52px 0 40px;margin-top:60px
 .pd-size-note b{font-family:'IBM Plex Mono',monospace;}
 .pd-size-note a{color:var(--primary-dark);font-weight:600;text-decoration:none;font-size:12.5px;}
 
-.pd-sticky-bar{position:fixed;left:0;right:0;bottom:0;background:var(--bg);border-top:1px solid var(--line);box-shadow:0 -8px 24px -12px rgba(31,42,61,.18);padding:12px 24px;z-index:400;transform:translateY(100%);transition:transform .25s var(--ease);}
+.pd-sticky-bar{position:fixed;left:0;right:0;bottom:0;background:var(--bg);border-top:1px solid var(--line);box-shadow:0 -8px 24px -12px rgba(31,42,61,.18);padding:12px 24px calc(12px + env(safe-area-inset-bottom));z-index:400;transform:translateY(100%);transition:transform .25s var(--ease);}
 .pd-sticky-bar.show{transform:translateY(0);}
 .pd-sticky-inner{max-width:1180px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;}
 .pd-sticky-inner .info{display:flex;align-items:center;gap:12px;min-width:0;}
