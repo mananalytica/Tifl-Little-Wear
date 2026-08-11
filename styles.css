@@ -101,7 +101,7 @@ header.site{
   height:64px;display:flex;align-items:center;justify-content:space-between;gap:24px;
 }
 .brand{display:flex;align-items:center;gap:9px;text-decoration:none;}
-.brand-logo{height:38px;width:auto;display:block;}
+.brand-logo{height:48px;width:auto;display:block;}
 .brand .sub{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);align-self:flex-end;margin-bottom:6px;}
 
 nav.tabs{display:flex;gap:2px;}

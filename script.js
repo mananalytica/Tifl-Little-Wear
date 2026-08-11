@@ -23,10 +23,10 @@ if (typeof window.rsIdentify !== 'function') window.rsIdentify = function(){};
    hunt through every HTML file.
 ============================================================= */
 const CONFIG = {
-  phone: '+92 42 1234 5678',
-  phoneHref: 'tel:+924212345678',
-  whatsappNumber: '924212345678',        // country code + number, no + or spaces
-  email: 'studio@tiflwear.pk',
+  phone: '+92 304 5519335',
+  phoneHref: 'tel:+923045519335',
+  whatsappNumber: '923045519335',        // country code + number, no + or spaces
+  email: 'studio@tifllittlewear.com',
   address: 'Tifl Little Wear, MM Alam Road area, Gulberg III, Lahore, Pakistan.',
   hours: 'Open Tue–Sun, 11am – 8pm.',
   currency: 'PKR'
@@ -1253,7 +1253,7 @@ async function initProductPage(){
         priceLine,
         window.location.href
       ];
-      return `https://wa.me/924212345678?text=${encodeURIComponent(lines.join('\n'))}`;
+      return `https://wa.me/923045519335?text=${encodeURIComponent(lines.join('\n'))}`;
     }
     waBtn.href = buildWhatsappHref();
     document.getElementById('pdQty')?.addEventListener('input', ()=>{ waBtn.href = buildWhatsappHref(); });
