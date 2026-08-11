@@ -309,6 +309,11 @@ def ensure_schema(conn):
     # name, so renaming a tailor never breaks product attribution. Resolved
     # to a name + link on product.html via /api/tailors/{slug}.
     alter_statements.append("ALTER TABLE products ADD COLUMN IF NOT EXISTS tailor VARCHAR;")
+    # Numeric units on hand for a ready-to-wear listing. Left blank/NULL means
+    # "not tracked" (unlimited-style ready stock); a number lets the product
+    # page show low-stock urgency (e.g. "Only 1 left") and lets it auto-flip
+    # to "out of stock" at zero — see pdAddBtn logic in script.js.
+    alter_statements.append("ALTER TABLE products ADD COLUMN IF NOT EXISTS stock_quantity INTEGER;")
     # Which tailor a booking was requested with (their name, for readability
     # in the bookings list) — set when someone books from a tailor's own
     # "Book with [Name]" form on master-tailor.html (blank for a normal
@@ -492,6 +497,10 @@ class Product(BaseModel):
     # Selling-point bullets shown as the checkmark strip on product.html,
     # e.g. [{"title": "Premium Jacquard Fabric", "description": "Crafted from..."}].
     features: list[ProductFeature] | None = None
+    # Units on hand for this listing. None = not tracked (no stock badge
+    # shown, Add to cart always active). A number drives the low-stock
+    # badge on product.html and flips Add to cart to "out of stock" at 0.
+    stock_quantity: int | None = None
 
 
 class TailorSpecialty(BaseModel):
@@ -964,7 +973,7 @@ def products_feed_csv():
         "id", "title", "description", "link", "image_link", "additional_image_link",
         "availability", "price", "sale_price", "brand", "condition", "gtin", "mpn",
         "google_product_category", "product_type", "color", "size", "gender",
-        "age_group", "item_group_id",
+        "age_group", "item_group_id", "stock_quantity",
     ]
     buf = io.StringIO()
     writer = csv.writer(buf)
@@ -995,6 +1004,7 @@ def products_feed_csv():
             p.get("gender") or "",
             p.get("age_group") or "kids",
             p.get("item_group_id") or "",
+            p.get("stock_quantity") if p.get("stock_quantity") is not None else "",
         ])
     return Response(content=buf.getvalue(), media_type="text/csv")
 
@@ -1020,7 +1030,7 @@ PRODUCT_FIELDS = [
     "sku", "stock_status", "active", "link", "additional_image_link", "availability",
     "sale_price", "gtin", "mpn", "condition", "google_product_category", "product_type",
     "color", "size", "gender", "age_group", "item_group_id", "material", "tailor",
-    "features",
+    "features", "stock_quantity",
 ]
 PRODUCT_JSON_FIELDS = {"features"}
 

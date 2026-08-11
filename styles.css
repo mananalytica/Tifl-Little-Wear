@@ -421,6 +421,27 @@ footer.site{border-top:1px solid var(--line);padding:52px 0 40px;margin-top:60px
 .pd-qty-row{display:flex;align-items:center;gap:10px;margin-top:26px;margin-bottom:14px;}
 .pd-qty-row label{font-size:12.5px;font-weight:600;color:var(--ink-soft);}
 .pd-qty-row input{width:70px;border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 10px;font-size:14px;}
+
+/* Stock urgency badge — "Only N left", "In stock", or an out-of-stock note */
+.pd-stock-badge{display:none;align-items:center;gap:6px;font-size:12.5px;font-weight:600;margin-top:14px;padding:0;}
+.pd-stock-badge::before{content:"";width:7px;height:7px;border-radius:50%;flex:none;}
+.pd-stock-badge.low{color:#B4530A;}
+.pd-stock-badge.low::before{background:#E8890C;}
+.pd-stock-badge.ok{color:var(--primary-dark);}
+.pd-stock-badge.ok::before{background:var(--primary);}
+.pd-stock-badge.out{color:var(--ink-soft);}
+.pd-stock-badge.out::before{background:var(--ink-soft);}
+
+/* Add to cart + "need a custom size" sit as two equally-weighted actions,
+   so made-to-measure never reads as an afterthought next to buying. */
+.pd-cta-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media (max-width:520px){ .pd-cta-row{grid-template-columns:1fr;} }
+.pd-cta-row .btn{text-align:center;}
+
+/* Out-of-stock state for the Add to cart button — greyed and relabelled to
+   "Request custom stitch" rather than left as a dead buy button. */
+.btn-outofstock{background:var(--bg-alt) !important;color:var(--ink-soft) !important;border:1px solid var(--line) !important;}
+.btn-outofstock:hover{background:var(--line) !important;}
 .pd-meta-list{margin-top:24px;display:flex;flex-direction:column;gap:8px;}
 .pd-meta-list p{font-size:13px;color:var(--ink-soft);}
 

@@ -59,7 +59,6 @@
       <p class="pd-price" id="pdPrice"></p>
       <p class="pd-desc" id="pdDescription"></p>
       <div id="pdAttributes" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;"></div>
-      <a id="pdTailorLink" href="master-tailor.html" class="pd-tailor-credit" style="display:none;"></a>
 
       <div class="pd-feature-strip">
         <div class="pd-feature">
@@ -85,28 +84,19 @@
         <a href="measurements.html">Need a different size? →</a>
       </div>
 
-      <div class="pd-qty-row">
+      <p class="pd-stock-badge" id="pdStockBadge" style="display:none;"></p>
+
+      <div class="pd-qty-row" id="pdQtyRow">
         <label for="pdQty">Qty</label>
         <input type="number" id="pdQty" value="1" min="1" max="10">
       </div>
-      <button class="btn btn-primary btn-block" id="pdAddBtn">Add to cart</button>
-      <p style="text-align:center;font-size:12px;color:var(--ink-soft);margin-top:10px;">Prefer made-to-measure instead? <a href="booking.html" style="color:var(--primary-dark);">Book a fitting →</a></p>
+      <div class="pd-cta-row">
+        <button class="btn btn-primary btn-block" id="pdAddBtn">Add to cart</button>
+        <a class="btn btn-ghost btn-block" id="pdCustomSizeBtn" href="booking.html">Need a custom size? Book a fitting</a>
+      </div>
 
       <div class="pd-accordion">
         <div class="pd-acc-item open">
-          <button class="pd-acc-trigger" data-acc="details">
-            Details
-            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <div class="pd-acc-panel">
-            <div class="pd-acc-panel-inner">
-              <p>✓ Checked for fit and finish before listing</p>
-              <p style="margin-top:6px;">✓ Need a custom size instead? <a href="booking.html" style="color:var(--primary-dark);">Book a made-to-measure fitting</a></p>
-            </div>
-          </div>
-        </div>
-
-        <div class="pd-acc-item">
           <button class="pd-acc-trigger" data-acc="materials">
             Materials &amp; Care
             <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
@@ -115,19 +105,6 @@
             <div class="pd-acc-panel-inner">
               <p id="pdMaterialText">Material details available on request.</p>
               <p style="margin-top:10px;">Machine wash cold, inside out. Line dry in shade. Cool iron if needed — avoid ironing directly over embroidery.</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="pd-acc-item">
-          <button class="pd-acc-trigger" data-acc="sizing">
-            Sizing
-            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <div class="pd-acc-panel">
-            <div class="pd-acc-panel-inner">
-              <div class="pd-detail-grid" id="pdDetailGrid"></div>
-              <a class="pd-sizing-link" href="measurements.html">View our full sizing chart →</a>
             </div>
           </div>
         </div>
@@ -145,12 +122,6 @@
   <div id="productEmpty" style="display:none;padding:60px 0;text-align:center;color:var(--ink-soft);">
     <p>We couldn't find that product — it may have been removed.</p>
     <a class="btn btn-ghost" href="shop.html" style="margin-top:16px;">Back to shop</a>
-  </div>
-
-  <div class="pd-cross-section" id="pdCompleteSetSection" style="display:none;">
-    <div class="eyebrow">Complete the set</div>
-    <h2>Pairs well with this piece.</h2>
-    <div id="pdCompleteSet"></div>
   </div>
 
   <div class="pd-cross-section" id="pdWearWithSection" style="display:none;">

@@ -202,7 +202,11 @@ function normalizeProduct(p){
     age_group: p.age_group || 'kids',
     item_group_id: p.item_group_id || '',
     material: p.material || '',
-    tailor: p.tailor || ''   // tailor SLUG, e.g. "abdul-sattar" — resolve via TAILORS/loadTailors()
+    tailor: p.tailor || '',   // tailor SLUG, e.g. "abdul-sattar" — resolve via TAILORS/loadTailors()
+    // Units on hand. null/undefined = not tracked (no stock badge, Add to
+    // cart always enabled). A number drives the low-stock badge and the
+    // out-of-stock button swap on product.html.
+    stock_quantity: (p.stock_quantity === null || p.stock_quantity === undefined || p.stock_quantity === '') ? null : Number(p.stock_quantity)
   };
 }
 
@@ -937,21 +941,10 @@ async function initProductPage(){
     }
   }
 
-  const tailorLink = document.getElementById('pdTailorLink');
-  if(tailorLink){
-    if(p.tailor){
-      await loadTailors();
-      const t = TAILORS.find(x=>x.slug===p.tailor);
-      const displayName = t ? t.name : p.tailor;
-      tailorLink.href = 'master-tailor.html?slug='+encodeURIComponent(p.tailor);
-      tailorLink.style.display = 'inline-flex';
-      tailorLink.innerHTML = `
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M4 21v-6a4 4 0 014-4h8a4 4 0 014 4v6M9 11V7a3 3 0 016 0v4"/></svg>
-        Designed &amp; stitched by <b>${displayName}</b> — view profile →`;
-    } else {
-      tailorLink.style.display = 'none';
-    }
-  }
+  // Note: the "Designed & stitched by <tailor>" credit line was removed
+  // from this page (it was confusing next to the ready-to-wear purchase
+  // flow) — tailor attribution still lives on master-tailor.html and the
+  // tailors directory, this page just no longer surfaces it inline.
 
   const AGE_GROUP_LABELS = {
     newborn: 'Newborn (0–3 months)', infant: 'Infant (3–12 months)',
@@ -965,11 +958,14 @@ async function initProductPage(){
     { label:'Recommended age', value: AGE_GROUP_LABELS[p.age_group] || 'See sizing chart' },
     { label:'Size', value: p.size || 'See sizing chart for measurements' }
   ];
-  document.getElementById('pdDetailGrid').innerHTML = details.map(d=>`
-    <div class="pd-detail-item">
-      <div class="label">${d.label}</div>
-      <div class="value">${d.value}</div>
-    </div>`).join('');
+  const detailGrid = document.getElementById('pdDetailGrid');
+  if(detailGrid){
+    detailGrid.innerHTML = details.map(d=>`
+      <div class="pd-detail-item">
+        <div class="label">${d.label}</div>
+        <div class="value">${d.value}</div>
+      </div>`).join('');
+  }
 
   // Accordion — one panel open at a time, first one starts open.
   document.querySelectorAll('.pd-acc-trigger').forEach(btn=>{
@@ -981,10 +977,48 @@ async function initProductPage(){
     });
   });
 
-  document.getElementById('pdAddBtn').addEventListener('click', ()=>{
-    const qty = parseInt(document.getElementById('pdQty').value, 10) || 1;
-    addToCart(p, qty);
-  });
+  // ---- Stock-aware CTA: low-stock urgency badge + out-of-stock swap -----
+  // Out of stock is true if the admin flagged availability directly, or the
+  // tracked unit count has hit zero (stock_quantity is only tracked when the
+  // admin set it — null means "not tracked", so it never forces this state).
+  const isOutOfStock = p.availability === 'out of stock' || p.stock_quantity === 0;
+  const stockBadge = document.getElementById('pdStockBadge');
+  const qtyRow = document.getElementById('pdQtyRow');
+
+  // Wires a single "Add to cart" button (the main one, and the sticky-bar
+  // copy) so both reflect the same stock state and do the same thing.
+  function wireAddButton(btn){
+    if(!btn) return;
+    if(isOutOfStock){
+      btn.textContent = 'Request custom stitch';
+      btn.classList.add('btn-outofstock');
+      btn.addEventListener('click', ()=>{ window.location.href = 'booking.html'; });
+    } else {
+      btn.addEventListener('click', ()=>{
+        const qty = parseInt(document.getElementById('pdQty').value, 10) || 1;
+        addToCart(p, qty);
+      });
+    }
+  }
+  wireAddButton(document.getElementById('pdAddBtn'));
+
+  if(isOutOfStock){
+    if(qtyRow) qtyRow.style.display = 'none';
+    if(stockBadge){
+      stockBadge.textContent = 'Out of stock — book a made-to-measure fitting instead';
+      stockBadge.classList.add('out');
+      stockBadge.style.display = 'inline-flex';
+    }
+  } else if(stockBadge && p.stock_quantity != null && p.stock_quantity > 0){
+    if(p.stock_quantity <= 5){
+      stockBadge.textContent = p.stock_quantity === 1 ? 'Only 1 left in stock' : `Only ${p.stock_quantity} left in stock`;
+      stockBadge.classList.add('low');
+    } else {
+      stockBadge.textContent = 'In stock';
+      stockBadge.classList.add('ok');
+    }
+    stockBadge.style.display = 'inline-flex';
+  }
 
   // SEO/AEO: update title, meta description and inject Product JSON-LD now
   // that we know which product this is — useful for search, Google/Meta
@@ -1080,32 +1114,10 @@ async function initProductPage(){
     document.getElementById('pdSizeValue').textContent = p.size;
   }
 
-  // Complete the set — one suggestion from a different category, so it
-  // reads as a genuine pairing rather than "more of the same."
-  const completeSetRoot = document.getElementById('pdCompleteSet');
-  if(completeSetRoot){
-    const pick = PRODUCTS.find(x=>x.id!==p.id && x.category!==p.category);
-    if(pick){
-      completeSetRoot.innerHTML = `
-        <div class="pd-cross-row" data-id="${pick.id}" style="cursor:pointer;">
-          <div class="thumb">${productThumbHTML(pick,'70%')}</div>
-          <div class="info">
-            <div class="name">${pick.name}</div>
-            <div class="meta">${pick.brand} · ${pick.category}</div>
-          </div>
-          <span class="price">PKR ${pick.price.toLocaleString()}</span>
-          <button class="btn btn-ghost btn-sm" data-add="${pick.id}">Add to cart</button>
-        </div>`;
-      completeSetRoot.querySelector('.pd-cross-row').addEventListener('click', (e)=>{
-        if(e.target.closest('[data-add]')) return;
-        window.location.href = 'product.html?id='+pick.id;
-      });
-      completeSetRoot.querySelector('[data-add]').addEventListener('click', (e)=>{
-        e.stopPropagation(); addToCart(pick, 1);
-      });
-      document.getElementById('pdCompleteSetSection').style.display = 'block';
-    }
-  }
+  // Note: the "Complete the set" cross-sell block was removed from this
+  // page (it read as confusing/unrelated next to the main product) — the
+  // broader "Wear it with" and "Browse the rest of the shop" rails below
+  // still handle cross-selling.
 
   // Broader browse strip — everything else in the shop, excluding this item.
   const uniformStrip = document.getElementById('pdUniformStrip');
@@ -1135,10 +1147,7 @@ async function initProductPage(){
     document.getElementById('pdStickyThumb').innerHTML = productThumbHTML(p, '70%');
     document.getElementById('pdStickyName').textContent = p.name;
     document.getElementById('pdStickyPrice').textContent = p.currency+' '+(p.sale_price || p.price).toLocaleString();
-    document.getElementById('pdStickyAddBtn').addEventListener('click', ()=>{
-      const qty = parseInt(document.getElementById('pdQty').value, 10) || 1;
-      addToCart(p, qty);
-    });
+    wireAddButton(document.getElementById('pdStickyAddBtn'));
     const mainAddBtn = document.getElementById('pdAddBtn');
     const observer = new IntersectionObserver(([entry])=>{
       stickyBar.classList.toggle('show', !entry.isIntersecting);
@@ -1346,6 +1355,8 @@ function initAdminPage(){
     document.getElementById('apMpn').value = p.mpn || '';
     document.getElementById('apItemGroupId').value = p.item_group_id || '';
     document.getElementById('apAvailability').value = p.availability || 'in stock';
+    const apStockEl = document.getElementById('apStockQuantity');
+    if(apStockEl) apStockEl.value = (p.stock_quantity === null || p.stock_quantity === undefined) ? '' : p.stock_quantity;
     document.getElementById('apCondition').value = p.condition || 'new';
     document.getElementById('apColorAttr').value = p.color || '';
     document.getElementById('apSize').value = p.size || '';
@@ -1385,6 +1396,8 @@ function initAdminPage(){
       mpn: document.getElementById('apMpn').value || null,
       item_group_id: document.getElementById('apItemGroupId').value || null,
       availability: document.getElementById('apAvailability').value,
+      stock_quantity: document.getElementById('apStockQuantity')?.value !== '' && document.getElementById('apStockQuantity')?.value != null
+        ? parseInt(document.getElementById('apStockQuantity').value, 10) : null,
       condition: document.getElementById('apCondition').value,
       color: document.getElementById('apColorAttr').value || null,
       size: document.getElementById('apSize').value || null,
@@ -1490,6 +1503,7 @@ function initAdminPage(){
       gender: get('gender'),
       age_group: get('age_group') || 'kids',
       item_group_id: get('item_group_id'),
+      stock_quantity: get('stock_quantity') !== null && get('stock_quantity') !== '' ? parseInt(get('stock_quantity'), 10) : null,
       category: get('product_type','category') ? (get('product_type','category').split('>').pop() || '').trim() : 'Other',
       currency: 'PKR',
       active: true

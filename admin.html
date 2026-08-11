@@ -50,7 +50,7 @@
       <h3>Bulk upload (CSV or XML)</h3>
       <p style="margin-bottom:16px;">Upload a Google Shopping-style feed file to add or update many products at once. Matching is done by <b>SKU</b> — if a row's SKU matches an existing product, that product is updated instead of duplicated, so it's safe to re-upload the same file later.</p>
       <p style="font-size:12.5px;color:var(--ink-soft);margin-bottom:8px;">
-        Expected columns (CSV header row, or XML <code>&lt;item&gt;</code> tags): <code>id, title, description, link, image_link, additional_image_link, price, sale_price, availability, brand, condition, gtin, mpn, google_product_category, product_type, color, size, material, gender, age_group, item_group_id, features</code>.
+        Expected columns (CSV header row, or XML <code>&lt;item&gt;</code> tags): <code>id, title, description, link, image_link, additional_image_link, price, sale_price, availability, brand, condition, gtin, mpn, google_product_category, product_type, color, size, material, gender, age_group, item_group_id, stock_quantity, features</code>.
         <code>id</code> is used as the SKU. Missing columns are fine — only <code>title</code> and <code>price</code> are required.
       </p>
       <p style="font-size:12.5px;color:var(--ink-soft);margin-bottom:14px;">
@@ -118,7 +118,7 @@
             <div class="field"><label for="apItemGroupId">Item group ID</label><input id="apItemGroupId" type="text" placeholder="Same value across size/colour variants"></div>
           </div>
 
-          <p class="eyebrow">Shopping attributes</p>
+          <p class="eyebrow">Shopping attributes <span style="text-transform:none;letter-spacing:0;color:var(--ink-soft);">("Units in stock" is optional — set it to show a low-stock badge (e.g. "1 left") on the product page, and 0 will automatically grey out Add to cart and swap it for a "Request custom stitch" button.)</span></p>
           <div class="form-grid">
             <div class="field"><label for="apAvailability">Availability</label>
               <select id="apAvailability">
@@ -128,6 +128,7 @@
                 <option value="backorder">Backorder</option>
               </select>
             </div>
+            <div class="field"><label for="apStockQuantity">Units in stock <span style="color:var(--primary-dark);">(optional)</span></label><input id="apStockQuantity" type="number" min="0" step="1" placeholder="Leave blank if not tracking stock"></div>
             <div class="field"><label for="apCondition">Condition</label>
               <select id="apCondition">
                 <option value="new">New</option>
