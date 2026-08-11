@@ -23,9 +23,9 @@ if (typeof window.rsIdentify !== 'function') window.rsIdentify = function(){};
    hunt through every HTML file.
 ============================================================= */
 const CONFIG = {
-  phone: '+92 304 5519335',
-  phoneHref: 'tel:+923045519335',
-  whatsappNumber: '923045519335',        // country code + number, no + or spaces
+  phone: '+92 305 4110254',
+  phoneHref: 'tel:+923054110254',
+  whatsappNumber: '923054110254',        // country code + number, no + or spaces
   email: 'studio@tifllittlewear.com',
   address: 'Tifl Little Wear, MM Alam Road area, Gulberg III, Lahore, Pakistan.',
   hours: 'Open Tue–Sun, 11am – 8pm.',
