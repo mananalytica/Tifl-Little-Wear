@@ -537,8 +537,18 @@ const FG_SLIDES = [
   }
 ];
 function fgMediaHTML(p, opts){
+  opts = opts || {};
   if(p && p.image_url && !isColor(p.image_url)){
-    return imgTag(p.image_url, '', (opts&&opts.width)||1400, opts);
+    const width = opts.width || 1400;
+    const src = optimizeImageUrl(p.image_url, width);
+    const loading = opts.eager ? 'eager' : 'lazy';
+    const fetchpriority = opts.eager ? ' fetchpriority="high"' : '';
+    // Two layers: a blurred, oversized copy fills the banner as backdrop;
+    // the real photo sits on top fully visible (object-fit:contain) so
+    // nothing gets cropped off, however wide the desktop banner is.
+    return `
+      <div class="fg-media-backdrop" style="background-image:url('${src}')"></div>
+      <div class="fg-media-fg"><img src="${src}" alt="" loading="${loading}" decoding="async"${fetchpriority}></div>`;
   }
   const color = (p && isColor(p.image_url)) ? p.image_url : '#4A93E8';
   return `<div class="fg-media-fallback">${garmentIllustration(color)}</div>`;

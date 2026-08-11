@@ -549,8 +549,16 @@ footer.site{border-top:1px solid var(--line);padding:52px 0 40px;margin-top:60px
 }
 .fg-slide{position:absolute;inset:0;opacity:0;transition:opacity .9s ease;}
 .fg-slide.active{opacity:1;z-index:1;}
-.fg-media{position:absolute;inset:0;width:100%;height:100%;}
-.fg-media img,.fg-media>div{width:100%;height:100%;display:block;}
+.fg-media{position:absolute;inset:0;width:100%;height:100%;overflow:hidden;background:var(--bg-dark);}
+/* Product photos are portrait shots; on a wide short desktop banner a hard
+   cover-crop zooms in and cuts the garment off. Fix: a blurred, oversized
+   copy of the same photo fills the banner as a backdrop, while the real
+   photo sits on top fully visible (object-fit:contain, never cropped). On
+   the narrow mobile viewport this still looks like a normal filled photo,
+   since contain + cover backdrop end up nearly identical there. */
+.fg-media-backdrop{position:absolute;inset:-6%;background-size:cover;background-position:center;filter:blur(32px) brightness(.55) saturate(1.15);transform:scale(1.1);}
+.fg-media-fg{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;padding:2%;}
+.fg-media-fg img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;display:block;box-shadow:0 30px 70px -20px rgba(0,0,0,.5);}
 .fg-media-fallback{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--primary) 0%,var(--bg-dark) 130%);}
 .fg-media-fallback svg{width:34%;height:34%;opacity:.5;}
 .fg-scrim{position:absolute;inset:0;background:linear-gradient(0deg,rgba(16,27,46,.82) 0%,rgba(16,27,46,.42) 38%,rgba(16,27,46,.05) 62%);}
