@@ -1198,7 +1198,6 @@ async function initProductPage(){
     if(!btn) return;
     if(isOutOfStock){
       btn.textContent = label || 'Get Yours Stitched Now';
-      btn.classList.add('btn-outofstock');
       btn.addEventListener('click', ()=>{ window.location.href = 'booking.html'; });
     } else {
       btn.addEventListener('click', ()=>{
@@ -1234,6 +1233,30 @@ async function initProductPage(){
       stockBadge.classList.add('ok');
     }
     stockBadge.style.display = 'inline-flex';
+  }
+
+  // "Order on WhatsApp" — prefills a message with the product name, price
+  // (and quantity, if more than 1) and a link back to this exact page, so
+  // the studio gets full context the moment the chat opens. Re-built
+  // whenever qty changes so the message always matches what's on screen.
+  const waBtn = document.getElementById('pdWhatsappBtn');
+  if(waBtn){
+    function buildWhatsappHref(){
+      const qty = parseInt(document.getElementById('pdQty')?.value, 10) || 1;
+      const priceLine = qty > 1
+        ? `PKR ${p.price.toLocaleString()} × ${qty} = PKR ${(p.price*qty).toLocaleString()}`
+        : `PKR ${p.price.toLocaleString()}`;
+      const lines = [
+        `Hi! I'd like to order this:`,
+        ``,
+        p.name,
+        priceLine,
+        window.location.href
+      ];
+      return `https://wa.me/924212345678?text=${encodeURIComponent(lines.join('\n'))}`;
+    }
+    waBtn.href = buildWhatsappHref();
+    document.getElementById('pdQty')?.addEventListener('input', ()=>{ waBtn.href = buildWhatsappHref(); });
   }
 
   // SEO/AEO: update title, meta description and inject Product JSON-LD now

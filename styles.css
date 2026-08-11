@@ -440,10 +440,12 @@ footer.site{border-top:1px solid var(--line);padding:52px 0 40px;margin-top:60px
 @media (max-width:520px){ .pd-cta-row{grid-template-columns:1fr;} }
 .pd-cta-row .btn{text-align:center;}
 
-/* Out-of-stock state for the Add to cart button — greyed and relabelled to
-   "Request custom stitch" rather than left as a dead buy button. */
-.btn-outofstock{background:var(--bg-alt) !important;color:var(--ink-soft) !important;border:1px solid var(--line) !important;}
-.btn-outofstock:hover{background:var(--line) !important;}
+/* "Order on WhatsApp" — sits below the main CTA row as a third, distinct
+   way to order. Uses WhatsApp's own green (already established site-wide
+   for the floating chat button) so it reads as WhatsApp, not a second
+   brand-blue button competing with Add to cart. */
+.btn-whatsapp{margin-top:10px;background:#25D366;color:#fff;border-color:#25D366;gap:8px;}
+.btn-whatsapp:hover{background:#1EBE5A;border-color:#1EBE5A;}
 .pd-meta-list{margin-top:24px;display:flex;flex-direction:column;gap:8px;}
 .pd-meta-list p{font-size:13px;color:var(--ink-soft);}
 
