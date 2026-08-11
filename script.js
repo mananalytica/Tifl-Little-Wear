@@ -984,13 +984,16 @@ async function initProductPage(){
   const isOutOfStock = p.availability === 'out of stock' || p.stock_quantity === 0;
   const stockBadge = document.getElementById('pdStockBadge');
   const qtyRow = document.getElementById('pdQtyRow');
+  const ctaRow = document.getElementById('pdCtaRow');
+  const customSizeBtn = document.getElementById('pdCustomSizeBtn');
 
   // Wires a single "Add to cart" button (the main one, and the sticky-bar
   // copy) so both reflect the same stock state and do the same thing.
-  function wireAddButton(btn){
+  // `label` lets the compact sticky-bar button use shorter copy.
+  function wireAddButton(btn, label){
     if(!btn) return;
     if(isOutOfStock){
-      btn.textContent = 'Request custom stitch';
+      btn.textContent = label || 'Get Yours Stitched Now';
       btn.classList.add('btn-outofstock');
       btn.addEventListener('click', ()=>{ window.location.href = 'booking.html'; });
     } else {
@@ -1002,10 +1005,19 @@ async function initProductPage(){
   }
   wireAddButton(document.getElementById('pdAddBtn'));
 
+  // Out of stock collapses the two-button row down to one: with nothing
+  // left to buy, "Add to cart" and "Need a custom size?" would say almost
+  // the same thing side by side, so the custom-size button is dropped and
+  // "Get Yours Stitched Now" becomes the single, full-width option.
+  if(isOutOfStock && customSizeBtn){
+    customSizeBtn.style.display = 'none';
+    ctaRow?.classList.add('single');
+  }
+
   if(isOutOfStock){
     if(qtyRow) qtyRow.style.display = 'none';
     if(stockBadge){
-      stockBadge.textContent = 'Out of stock — book a made-to-measure fitting instead';
+      stockBadge.textContent = 'Out of stock — get yours stitched instead';
       stockBadge.classList.add('out');
       stockBadge.style.display = 'inline-flex';
     }
@@ -1147,7 +1159,7 @@ async function initProductPage(){
     document.getElementById('pdStickyThumb').innerHTML = productThumbHTML(p, '70%');
     document.getElementById('pdStickyName').textContent = p.name;
     document.getElementById('pdStickyPrice').textContent = p.currency+' '+(p.sale_price || p.price).toLocaleString();
-    wireAddButton(document.getElementById('pdStickyAddBtn'));
+    wireAddButton(document.getElementById('pdStickyAddBtn'), 'Get Stitched Now');
     const mainAddBtn = document.getElementById('pdAddBtn');
     const observer = new IntersectionObserver(([entry])=>{
       stickyBar.classList.toggle('show', !entry.isIntersecting);

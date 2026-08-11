@@ -435,6 +435,7 @@ footer.site{border-top:1px solid var(--line);padding:52px 0 40px;margin-top:60px
 /* Add to cart + "need a custom size" sit as two equally-weighted actions,
    so made-to-measure never reads as an afterthought next to buying. */
 .pd-cta-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.pd-cta-row.single{grid-template-columns:1fr;}
 @media (max-width:520px){ .pd-cta-row{grid-template-columns:1fr;} }
 .pd-cta-row .btn{text-align:center;}
 
