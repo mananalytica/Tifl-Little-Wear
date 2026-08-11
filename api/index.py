@@ -314,6 +314,12 @@ def ensure_schema(conn):
     # page show low-stock urgency (e.g. "Only 1 left") and lets it auto-flip
     # to "out of stock" at zero — see pdAddBtn logic in script.js.
     alter_statements.append("ALTER TABLE products ADD COLUMN IF NOT EXISTS stock_quantity INTEGER;")
+    # Curation switch for the homepage hero sliders (boxed gallery + the
+    # full-bleed variation) — see initHeroGallery/initFullGalleryHero in
+    # script.js. Without this every product cycles through the hero,
+    # including ones with no real photo yet (a plain colour placeholder),
+    # which reads as the slideshow randomly breaking mid-rotation.
+    alter_statements.append("ALTER TABLE products ADD COLUMN IF NOT EXISTS featured BOOLEAN DEFAULT FALSE;")
     # Which tailor a booking was requested with (their name, for readability
     # in the bookings list) — set when someone books from a tailor's own
     # "Book with [Name]" form on master-tailor.html (blank for a normal
@@ -501,6 +507,11 @@ class Product(BaseModel):
     # shown, Add to cart always active). A number drives the low-stock
     # badge on product.html and flips Add to cart to "out of stock" at 0.
     stock_quantity: int | None = None
+    # Curates which products appear in the homepage hero sliders. False by
+    # default so nothing changes until the admin opts products in — the
+    # gallery falls back to showing everything only if zero products have
+    # ever been marked featured (see curatedProducts() in script.js).
+    featured: bool = False
 
 
 class TailorSpecialty(BaseModel):
@@ -1030,7 +1041,7 @@ PRODUCT_FIELDS = [
     "sku", "stock_status", "active", "link", "additional_image_link", "availability",
     "sale_price", "gtin", "mpn", "condition", "google_product_category", "product_type",
     "color", "size", "gender", "age_group", "item_group_id", "material", "tailor",
-    "features", "stock_quantity",
+    "features", "stock_quantity", "featured",
 ]
 PRODUCT_JSON_FIELDS = {"features"}
 

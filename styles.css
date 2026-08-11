@@ -25,7 +25,7 @@
 }
 
 *,*::before,*::after{box-sizing:border-box;}
-html{scroll-behavior:smooth;}
+html{scroll-behavior:smooth;overflow-x:hidden;}
 body{
   margin:0;
   background:var(--bg);
@@ -34,6 +34,7 @@ body{
   -webkit-font-smoothing:antialiased;
   font-size:16px;
   line-height:1.55;
+  overflow-x:hidden; /* .fg-hero breaks out to 100vw for a full-bleed photo — this stops that (plus any scrollbar-width mismatch) from ever creating page-level horizontal scroll/jitter */
 }
 img,svg{display:block;max-width:100%;}
 a{color:inherit;}

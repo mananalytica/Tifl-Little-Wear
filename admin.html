@@ -14,7 +14,7 @@
 <header class="site">
   <div class="nav-inner">
     <a class="brand" href="index.html">
-      <img src="assets/logo.png" alt="Tifl Little Wear" class="brand-logo">
+      <img src="assets/logo.png" alt="Tifl Little Wear" class="brand-logo" width="120" height="36" decoding="async" fetchpriority="high">
       <span class="sub">Admin</span>
     </a>
     <div class="nav-right">
@@ -116,6 +116,14 @@
             <div class="field"><label for="apGtin">GTIN / barcode</label><input id="apGtin" type="text" placeholder="UPC / EAN, if you have one"></div>
             <div class="field"><label for="apMpn">MPN</label><input id="apMpn" type="text" placeholder="Manufacturer part number"></div>
             <div class="field"><label for="apItemGroupId">Item group ID</label><input id="apItemGroupId" type="text" placeholder="Same value across size/colour variants"></div>
+          </div>
+
+          <p class="eyebrow">Homepage gallery <span style="text-transform:none;letter-spacing:0;color:var(--ink-soft);">(controls the rotating hero on the homepage — leave every product unchecked to let it show everything, or check specific products to curate exactly what appears.)</span></p>
+          <div class="form-grid">
+            <div class="field full" style="flex-direction:row;align-items:center;gap:10px;">
+              <input id="apFeatured" type="checkbox" style="width:auto;">
+              <label for="apFeatured" style="margin:0;">Feature this product in the homepage gallery <span style="color:var(--primary-dark);">(needs a real photo — checking this on a product with only a colour swatch will make the slideshow look broken)</span></label>
+            </div>
           </div>
 
           <p class="eyebrow">Shopping attributes <span style="text-transform:none;letter-spacing:0;color:var(--ink-soft);">("Units in stock" is optional — set it to show a low-stock badge (e.g. "1 left") on the product page, and 0 will automatically grey out Add to cart and swap it for a "Request custom stitch" button.)</span></p>

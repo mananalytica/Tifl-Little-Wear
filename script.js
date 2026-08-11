@@ -206,8 +206,21 @@ function normalizeProduct(p){
     // Units on hand. null/undefined = not tracked (no stock badge, Add to
     // cart always enabled). A number drives the low-stock badge and the
     // out-of-stock button swap on product.html.
-    stock_quantity: (p.stock_quantity === null || p.stock_quantity === undefined || p.stock_quantity === '') ? null : Number(p.stock_quantity)
+    stock_quantity: (p.stock_quantity === null || p.stock_quantity === undefined || p.stock_quantity === '') ? null : Number(p.stock_quantity),
+    // Opts a product into the homepage hero sliders — see curatedProducts().
+    featured: p.featured === true || p.featured === 'true' || p.featured === 1
   };
+}
+// Which products the homepage hero sliders (boxed gallery + the full-bleed
+// variation) are allowed to show. Only products explicitly marked
+// "Feature in homepage gallery" in admin qualify — this is what keeps a
+// slideshow from mixing real product photos with plain colour-placeholder
+// products, which is what made it look like it was randomly breaking mid-
+// rotation. Falls back to every product only if nothing has been curated
+// yet, so a brand-new site isn't left with an empty hero.
+function curatedProducts(){
+  const featured = PRODUCTS.filter(p=>p.featured);
+  return featured.length ? featured : PRODUCTS;
 }
 
 /* ============================================================
@@ -534,6 +547,7 @@ async function initFullGalleryHero(){
   const root = document.getElementById('fgSlides');
   if(!root) return;
   await loadProducts();
+  const backdrops = curatedProducts(); // only "Feature in homepage gallery" products — see admin
 
   const dotsHTML = FG_SLIDES.map((_,i)=>`<span class="${i===0?'active':''}" data-i="${i}"></span>`).join('');
   root.innerHTML = FG_SLIDES.map((s,i)=>`
@@ -550,37 +564,55 @@ async function initFullGalleryHero(){
 
   const slides = root.querySelectorAll('.fg-slide');
   const dots = document.getElementById('fgDots').querySelectorAll('span');
-  let current = 0, timer = null;
+  let current = 0, timer = null, transitioning = false;
 
   // Backdrop photos are only fetched for the active slide (+ the next one,
-  // preloaded just ahead of its turn) — same reasoning as the boxed hero
-  // gallery: never mount every slide's photo at once.
+  // preloaded just ahead of its turn) — never mount every slide's photo at
+  // once. Returns a promise so goTo() can wait for it before revealing.
   function loadSlideMedia(i){
     const slide = slides[i];
-    if(!slide || slide.dataset.loaded) return;
+    if(!slide) return Promise.resolve();
+    if(slide.dataset.loaded) return Promise.resolve();
     slide.dataset.loaded = '1';
-    const product = PRODUCTS.length ? PRODUCTS[i % PRODUCTS.length] : null;
-    slide.querySelector('.fg-media').innerHTML = fgMediaHTML(product, {width:1400, eager: i===0});
+    const product = backdrops.length ? backdrops[i % backdrops.length] : null;
+    const media = slide.querySelector('.fg-media');
+    media.innerHTML = fgMediaHTML(product, {width:1400, eager: i===0});
+    const img = media.querySelector('img');
+    if(!img) return Promise.resolve(); // colour fallback — nothing to wait for
+    if(img.complete) return Promise.resolve();
+    return new Promise(resolve=>{
+      img.addEventListener('load', resolve, {once:true});
+      img.addEventListener('error', resolve, {once:true}); // don't hang the slider on a broken photo
+    });
   }
-  function goTo(i){
+  // Loads the target slide's photo BEFORE the crossfade starts, so the
+  // incoming slide never shows a blank frame mid-transition (that blank
+  // flash — old photo gone, new one not painted yet — is what read as the
+  // gallery "reverting"). A transitioning guard stops rapid clicks from
+  // starting a second crossfade before the first one has settled.
+  async function goTo(i){
+    if(transitioning) return;
+    transitioning = true;
+    const target = (i+slides.length) % slides.length;
+    await loadSlideMedia(target);
     slides[current].classList.remove('active');
     dots[current].classList.remove('active');
-    current = (i+slides.length) % slides.length;
+    current = target;
     slides[current].classList.add('active');
     dots[current].classList.add('active');
-    loadSlideMedia(current);
-    loadSlideMedia((current+1) % slides.length);
+    loadSlideMedia((current+1) % slides.length); // preload the one after, in the background
+    setTimeout(()=>{ transitioning = false; }, 950); // matches the .9s CSS fade
   }
   function next(){ goTo(current+1); }
-  function start(){ if(slides.length>1) timer = setInterval(next, 5000); }
-  function stop(){ clearInterval(timer); }
+  function start(){ stop(); if(slides.length>1) timer = setInterval(next, 5000); }
+  function stop(){ clearInterval(timer); timer = null; }
 
   loadSlideMedia(0);
   loadSlideMedia(1 % slides.length);
 
-  document.getElementById('fgPrev')?.addEventListener('click', ()=>{ goTo(current-1); stop(); start(); });
-  document.getElementById('fgNext')?.addEventListener('click', ()=>{ goTo(current+1); stop(); start(); });
-  dots.forEach(dot=>dot.addEventListener('click', ()=>{ goTo(parseInt(dot.dataset.i,10)); stop(); start(); }));
+  document.getElementById('fgPrev')?.addEventListener('click', ()=>{ goTo(current-1); start(); });
+  document.getElementById('fgNext')?.addEventListener('click', ()=>{ goTo(current+1); start(); });
+  dots.forEach(dot=>dot.addEventListener('click', ()=>{ goTo(parseInt(dot.dataset.i,10)); start(); }));
 
   const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if(!reduceMotion) start();
@@ -597,7 +629,8 @@ async function initHeroGallery(){
   const root = document.getElementById('heroGallery');
   if(!root) return;
   await loadProducts();
-  if(!PRODUCTS.length) return;
+  const items = curatedProducts(); // only "Feature in homepage gallery" products — see admin
+  if(!items.length) return;
 
   root.innerHTML = `
     <div class="hero-gallery-dots" id="heroGalleryDots"></div>
@@ -609,7 +642,7 @@ async function initHeroGallery(){
   // below). Without this, a slow-loading page turned out to be one page
   // silently downloading every product photo in the gallery at once, even
   // though only one slide is ever visible.
-  PRODUCTS.forEach((p, i)=>{
+  items.forEach((p, i)=>{
     const slide = document.createElement('div');
     slide.className = 'hero-gallery-slide' + (i===0 ? ' active' : '');
     slide.innerHTML = `
@@ -626,34 +659,50 @@ async function initHeroGallery(){
 
     const dot = document.createElement('span');
     if(i===0) dot.className = 'active';
-    dot.addEventListener('click', (e)=>{ e.stopPropagation(); goToSlide(i); });
+    dot.addEventListener('click', (e)=>{ e.stopPropagation(); goToSlide(i); start(); });
     dotsRoot.appendChild(dot);
   });
 
   const slides = root.querySelectorAll('.hero-gallery-slide');
   const dots = dotsRoot.querySelectorAll('span');
-  let current = 0;
-  let timer = null;
+  let current = 0, timer = null, transitioning = false;
 
   function loadSlideMedia(i){
     const slide = slides[i];
-    if(!slide || slide.dataset.loaded) return;
+    if(!slide) return Promise.resolve();
+    if(slide.dataset.loaded) return Promise.resolve();
     slide.dataset.loaded = '1';
-    slide.querySelector('.hgs-media').innerHTML = productThumbHTML(PRODUCTS[i], '46%', {width:900, eager: i===0});
+    const media = slide.querySelector('.hgs-media');
+    media.innerHTML = productThumbHTML(items[i], '46%', {width:900, eager: i===0});
+    const img = media.querySelector('img');
+    if(!img) return Promise.resolve();
+    if(img.complete) return Promise.resolve();
+    return new Promise(resolve=>{
+      img.addEventListener('load', resolve, {once:true});
+      img.addEventListener('error', resolve, {once:true});
+    });
   }
 
-  function goToSlide(i){
+  // Waits for the target slide's photo to finish loading before starting
+  // the crossfade — otherwise the incoming slide briefly shows nothing
+  // (old photo gone, new one not painted yet), which reads as the
+  // slideshow glitching or snapping back. A transitioning guard also
+  // stops overlapping crossfades if the user clicks through quickly.
+  async function goToSlide(i){
+    if(transitioning) return;
+    transitioning = true;
+    await loadSlideMedia(i);
     slides[current].classList.remove('active');
     dots[current].classList.remove('active');
     current = i;
     slides[current].classList.add('active');
     dots[current].classList.add('active');
-    loadSlideMedia(current);
     loadSlideMedia((current+1) % slides.length); // have the next one ready before it's needed
+    setTimeout(()=>{ transitioning = false; }, 850); // matches the .8s CSS fade
   }
   function next(){ goToSlide((current+1) % slides.length); }
-  function start(){ if(slides.length>1) timer = setInterval(next, 3200); }
-  function stop(){ clearInterval(timer); }
+  function start(){ stop(); if(slides.length>1) timer = setInterval(next, 3200); }
+  function stop(){ clearInterval(timer); timer = null; }
 
   loadSlideMedia(0);
   loadSlideMedia(1 % slides.length);
@@ -1514,6 +1563,8 @@ function initAdminPage(){
     document.getElementById('apAvailability').value = p.availability || 'in stock';
     const apStockEl = document.getElementById('apStockQuantity');
     if(apStockEl) apStockEl.value = (p.stock_quantity === null || p.stock_quantity === undefined) ? '' : p.stock_quantity;
+    const apFeaturedEl = document.getElementById('apFeatured');
+    if(apFeaturedEl) apFeaturedEl.checked = !!p.featured;
     document.getElementById('apCondition').value = p.condition || 'new';
     document.getElementById('apColorAttr').value = p.color || '';
     document.getElementById('apSize').value = p.size || '';
@@ -1555,6 +1606,7 @@ function initAdminPage(){
       availability: document.getElementById('apAvailability').value,
       stock_quantity: document.getElementById('apStockQuantity')?.value !== '' && document.getElementById('apStockQuantity')?.value != null
         ? parseInt(document.getElementById('apStockQuantity').value, 10) : null,
+      featured: document.getElementById('apFeatured')?.checked || false,
       condition: document.getElementById('apCondition').value,
       color: document.getElementById('apColorAttr').value || null,
       size: document.getElementById('apSize').value || null,
