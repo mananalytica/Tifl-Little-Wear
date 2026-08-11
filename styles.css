@@ -512,6 +512,9 @@ footer.site{border-top:1px solid var(--line);padding:52px 0 40px;margin-top:60px
   .mode-grid, .mode-grid.two-col{grid-template-columns:1fr;}
   .review-grid{grid-template-columns:1fr 1fr;}
   .review-card.featured{grid-row:span 1;grid-column:1/-1;}
+  .fg-hero{height:min(72vh,620px);}
+  .fg-content{max-width:88%;}
+  .fg-arrow{width:38px;height:38px;}
 }
 @media (max-width: 560px){
   .process-rail{grid-template-columns:1fr 1fr;}
@@ -520,4 +523,54 @@ footer.site{border-top:1px solid var(--line);padding:52px 0 40px;margin-top:60px
   .review-grid{grid-template-columns:1fr;}
   .reviews-head{flex-direction:column;align-items:flex-start;}
   .blog-grid{grid-template-columns:1fr;}
+  .fg-hero{height:min(66vh,540px);min-height:420px;border-radius:0;}
+  .fg-content{padding:26px 22px;max-width:100%;}
+  .fg-arrow.prev{left:10px;}
+  .fg-arrow.next{right:10px;}
+  .fg-dots{right:22px;bottom:20px;}
 }
+
+/* ============================================================
+   HOMEPAGE VARIATION — full-bleed photo hero (index-full-gallery.html)
+   A structural alternative to the boxed .hero-gallery slideshow: one
+   large edge-to-edge cross-fading photo with overlay text, prev/next
+   arrows and a progress-style dot strip. Built to match this site's
+   existing design tokens (Fredoka headings, brand blue CTA, the same
+   .eyebrow/.btn components used everywhere else) — see DESIGN-GUIDE.md.
+   Scoped entirely to .fg-* classes so it can't affect any other page.
+============================================================= */
+.fg-hero{
+  position:relative;
+  width:100vw;margin-left:calc(50% - 50vw); /* full-bleed: break out of .wrap */
+  height:min(78vh,720px);min-height:480px;
+  overflow:hidden;margin-top:4px;margin-bottom:8px;
+  background:var(--bg-dark);
+}
+.fg-slide{position:absolute;inset:0;opacity:0;transition:opacity .9s ease;}
+.fg-slide.active{opacity:1;z-index:1;}
+.fg-media{position:absolute;inset:0;width:100%;height:100%;}
+.fg-media img,.fg-media>div{width:100%;height:100%;display:block;}
+.fg-media-fallback{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--primary) 0%,var(--bg-dark) 130%);}
+.fg-media-fallback svg{width:34%;height:34%;opacity:.5;}
+.fg-scrim{position:absolute;inset:0;background:linear-gradient(0deg,rgba(16,27,46,.82) 0%,rgba(16,27,46,.42) 38%,rgba(16,27,46,.05) 62%);}
+.fg-content{position:absolute;left:0;bottom:0;padding:min(6vw,56px);max-width:600px;z-index:2;}
+.fg-content .eyebrow{margin-bottom:16px;}
+.fg-content h2{font-size:clamp(30px,4.4vw,52px);line-height:1.06;letter-spacing:-.02em;color:#fff;}
+.fg-content p{margin-top:16px;font-size:16px;line-height:1.55;color:var(--ink-on-dark-soft);max-width:460px;}
+.fg-content .btn{margin-top:28px;}
+.fg-arrow{
+  position:absolute;top:50%;transform:translateY(-50%);z-index:3;
+  width:44px;height:44px;border-radius:999px;
+  background:rgba(16,27,46,.4);border:1px solid rgba(241,246,253,.3);color:#fff;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  transition:background .2s,transform .18s var(--ease);
+}
+.fg-arrow:hover{background:rgba(16,27,46,.68);}
+.fg-arrow:active{transform:translateY(-50%) scale(.94);}
+.fg-arrow svg{width:18px;height:18px;}
+.fg-arrow.prev{left:20px;}
+.fg-arrow.next{right:20px;}
+.fg-dots{position:absolute;right:min(6vw,56px);bottom:30px;display:flex;gap:8px;z-index:3;}
+.fg-dots span{width:30px;height:4px;border-radius:999px;background:rgba(241,246,253,.35);cursor:pointer;transition:background .2s,width .2s;}
+.fg-dots span.active{background:#fff;width:42px;}
+@media (prefers-reduced-motion: reduce){.fg-slide{transition:none;}}

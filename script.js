@@ -267,9 +267,10 @@ function normalizeTailor(t){
 // Returns HTML for a tailor's hero photo: a real image if photo_url is a
 // URL, otherwise a soft initials placeholder in that colour (same
 // fallback idea as productThumbHTML, so onboarding works before headshots exist).
-function tailorPhotoHTML(t){
+function tailorPhotoHTML(t, opts){
+  opts = opts || {};
   if(t.photo_url && !isColor(t.photo_url)){
-    return `<img src="${t.photo_url}" alt="${t.name}" style="width:100%;height:100%;object-fit:cover;">`;
+    return imgTag(t.photo_url, t.name, opts.width || 700, opts);
   }
   const color = isColor(t.photo_url) ? t.photo_url : '#101B2E';
   const initials = (t.name||'').split(' ').filter(Boolean).slice(-2).map(w=>w[0]).join('').toUpperCase();
@@ -278,9 +279,10 @@ function tailorPhotoHTML(t){
   </div>`;
 }
 // Returns HTML for a lookbook gallery tile (real photo or a colour swatch).
-function tailorGalleryTileHTML(item){
+function tailorGalleryTileHTML(item, opts){
+  opts = opts || {};
   if(item.image_url && !isColor(item.image_url)){
-    return `<img src="${item.image_url}" alt="${item.title||''}" style="width:100%;height:100%;object-fit:cover;">`;
+    return imgTag(item.image_url, item.title||'', opts.width || 500, opts);
   }
   const color = isColor(item.image_url) ? item.image_url : '#8FB7E8';
   return `<div style="background:${color};width:100%;height:100%;"></div>`;
@@ -332,16 +334,51 @@ function firePurchase(cart, transactionId){
    SHOP + PRODUCT DETAIL
 ============================================================= */
 function isColor(value){ return typeof value === 'string' && value.startsWith('#'); }
+
+/* ------------------------------------------------------------------------
+   IMAGE PERFORMANCE
+   Two problems, two fixes:
+   1) Photos are shown small (card/thumb size) but often uploaded at full
+      camera resolution — every one of those bytes still has to download.
+      optimizeImageUrl() routes remote photos through images.weserv.nl, a
+      free image proxy, requesting only the pixel width actually needed,
+      re-encoded as WebP. Local/relative paths (e.g. "assets/...") and
+      data: URIs are left untouched since the proxy can't reach them.
+   2) Every <img> was being requested immediately, even ones nowhere near
+      the viewport (off-screen carousel slides, cards far down the page).
+      imgTag() defaults every image to loading="lazy" decoding="async" —
+      pass {eager:true} for the one image on a page that's visible
+      immediately on load (hero banner, main product photo) so THAT one
+      loads with priority instead of competing with everything else.
+------------------------------------------------------------------------ */
+function optimizeImageUrl(url, width){
+  if(!url || typeof url !== 'string') return url;
+  if(!/^https?:\/\//i.test(url)) return url; // relative/local/data: — leave alone
+  const bare = url.replace(/^https?:\/\//i, '');
+  const w = Math.round(width || 600);
+  return `https://images.weserv.nl/?url=${encodeURIComponent(bare)}&w=${w}&q=76&output=webp&fit=cover`;
+}
+function imgTag(url, alt, width, opts){
+  opts = opts || {};
+  const src = optimizeImageUrl(url, width);
+  const loading = opts.eager ? 'eager' : 'lazy';
+  const fetchpriority = opts.eager ? ' fetchpriority="high"' : '';
+  const safeAlt = (alt||'').replace(/"/g,'&quot;');
+  return `<img src="${src}" alt="${safeAlt}" loading="${loading}" decoding="async"${fetchpriority} style="width:100%;height:100%;object-fit:cover;">`;
+}
 function garmentIllustration(color){
   return `<svg viewBox="0 0 100 100" width="46%" height="46%"><path d="M50 10 L35 22 L20 18 L10 34 L22 42 L22 90 L78 90 L78 42 L90 34 L80 18 L65 22 Z" fill="${color}" opacity="0.85"/></svg>`;
 }
 // Returns thumbnail HTML for a product: a real photo if image_url is a URL,
 // otherwise a simple colour illustration (useful for products added before
-// photography exists).
-function productThumbHTML(p, size){
+// photography exists). `width` is the actual rendered pixel width the photo
+// needs (used to request a right-sized image); pass {eager:true} only for
+// the single product photo that's on-screen the moment the page loads.
+function productThumbHTML(p, size, opts){
   size = size || '46%';
+  opts = opts || {};
   if(p.image_url && !isColor(p.image_url)){
-    return `<img src="${p.image_url}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;">`;
+    return imgTag(p.image_url, p.name, opts.width || 480, opts);
   }
   const color = isColor(p.image_url) ? p.image_url : '#4A93E8';
   return `<div style="background:${color}1A;width:100%;height:100%;display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 100 100" width="${size}" height="${size}"><path d="M50 10 L35 22 L20 18 L10 34 L22 42 L22 90 L78 90 L78 42 L90 34 L80 18 L65 22 Z" fill="${color}" opacity="0.85"/></svg></div>`;
@@ -403,7 +440,7 @@ function updateCartUI(){
   } else {
     itemsEl.innerHTML = cart.map(c=>`
       <div class="cart-line">
-        <div class="cart-thumb" style="overflow:hidden;">${productThumbHTML(c,'70%')}</div>
+        <div class="cart-thumb" style="overflow:hidden;">${productThumbHTML(c,'70%',{width:140})}</div>
         <div style="flex:1;">
           <div class="ci-name">${c.name}</div>
           <div class="ci-meta">${c.brand} · PKR ${c.price.toLocaleString()}</div>
@@ -437,7 +474,7 @@ function renderProducts(cat){
     card.innerHTML = `
       <div class="p-thumb">
         <span class="brand-tag">${p.brand}</span>
-        ${productThumbHTML(p)}
+        ${productThumbHTML(p,'46%',{width:380})}
       </div>
       <div class="p-info">
         <div class="pname">${p.name}</div>
@@ -461,6 +498,97 @@ function renderProducts(cat){
 }
 
 /* ============================================================
+   HOMEPAGE VARIATION — full-bleed photo hero (index-full-gallery.html)
+   Self-contained: only runs if #fgSlides exists, so it can't affect
+   the production homepage's .hero-gallery. Reuses PRODUCTS photos as
+   backdrops behind curated brand copy (see FG_SLIDES below).
+============================================================= */
+const FG_SLIDES = [
+  {
+    eyebrow: 'Studio · Lahore',
+    heading: 'Clothes cut for a child who <span class="accent">won\'t</span> sit still.',
+    body: 'Tifl Little Wear is a made-to-measure kidswear studio. We take real measurements, draft a real pattern, and hand-finish every seam.',
+    ctaLabel: 'Book a fitting', ctaHref: 'booking.html'
+  },
+  {
+    eyebrow: 'Hand-finished',
+    heading: 'Every seam, finished by hand.',
+    body: 'French seams on everyday wear, hand-set embroidery on occasion pieces — finished by tailors we\'ve worked with for years.',
+    ctaLabel: 'Meet our tailors', ctaHref: 'tailors.html'
+  },
+  {
+    eyebrow: 'From the shop',
+    heading: 'Ready pieces, worn today.',
+    body: 'Alongside our stitching line, we carry ready pieces from Lahore-based kidswear labels we trust.',
+    ctaLabel: 'Browse the shop', ctaHref: 'shop.html'
+  }
+];
+function fgMediaHTML(p, opts){
+  if(p && p.image_url && !isColor(p.image_url)){
+    return imgTag(p.image_url, '', (opts&&opts.width)||1400, opts);
+  }
+  const color = (p && isColor(p.image_url)) ? p.image_url : '#4A93E8';
+  return `<div class="fg-media-fallback">${garmentIllustration(color)}</div>`;
+}
+async function initFullGalleryHero(){
+  const root = document.getElementById('fgSlides');
+  if(!root) return;
+  await loadProducts();
+
+  const dotsHTML = FG_SLIDES.map((_,i)=>`<span class="${i===0?'active':''}" data-i="${i}"></span>`).join('');
+  root.innerHTML = FG_SLIDES.map((s,i)=>`
+    <div class="fg-slide${i===0?' active':''}" data-i="${i}">
+      <div class="fg-media"></div>
+      <div class="fg-scrim"></div>
+      <div class="fg-content">
+        <div class="eyebrow on-dark">${s.eyebrow}</div>
+        <h2>${s.heading}</h2>
+        <p>${s.body}</p>
+        <a class="btn btn-primary" href="${s.ctaHref}">${s.ctaLabel} →</a>
+      </div>
+    </div>`).join('') + `<div class="fg-dots" id="fgDots">${dotsHTML}</div>`;
+
+  const slides = root.querySelectorAll('.fg-slide');
+  const dots = document.getElementById('fgDots').querySelectorAll('span');
+  let current = 0, timer = null;
+
+  // Backdrop photos are only fetched for the active slide (+ the next one,
+  // preloaded just ahead of its turn) — same reasoning as the boxed hero
+  // gallery: never mount every slide's photo at once.
+  function loadSlideMedia(i){
+    const slide = slides[i];
+    if(!slide || slide.dataset.loaded) return;
+    slide.dataset.loaded = '1';
+    const product = PRODUCTS.length ? PRODUCTS[i % PRODUCTS.length] : null;
+    slide.querySelector('.fg-media').innerHTML = fgMediaHTML(product, {width:1400, eager: i===0});
+  }
+  function goTo(i){
+    slides[current].classList.remove('active');
+    dots[current].classList.remove('active');
+    current = (i+slides.length) % slides.length;
+    slides[current].classList.add('active');
+    dots[current].classList.add('active');
+    loadSlideMedia(current);
+    loadSlideMedia((current+1) % slides.length);
+  }
+  function next(){ goTo(current+1); }
+  function start(){ if(slides.length>1) timer = setInterval(next, 5000); }
+  function stop(){ clearInterval(timer); }
+
+  loadSlideMedia(0);
+  loadSlideMedia(1 % slides.length);
+
+  document.getElementById('fgPrev')?.addEventListener('click', ()=>{ goTo(current-1); stop(); start(); });
+  document.getElementById('fgNext')?.addEventListener('click', ()=>{ goTo(current+1); stop(); start(); });
+  dots.forEach(dot=>dot.addEventListener('click', ()=>{ goTo(parseInt(dot.dataset.i,10)); stop(); start(); }));
+
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(!reduceMotion) start();
+  root.closest('.fg-hero')?.addEventListener('mouseenter', stop);
+  root.closest('.fg-hero')?.addEventListener('mouseleave', ()=>{ if(!reduceMotion) start(); });
+}
+
+/* ============================================================
    HOMEPAGE — hero gallery: single-image auto-cycling slideshow
    (crossfades through every product photo, clicking one goes to
    that exact product) + the horizontal "From the shop" strip
@@ -476,11 +604,16 @@ async function initHeroGallery(){
   `;
   const dotsRoot = document.getElementById('heroGalleryDots');
 
+  // Each slide starts with an empty media slot — its photo is only
+  // requested when the slide is about to be shown (see loadSlideMedia
+  // below). Without this, a slow-loading page turned out to be one page
+  // silently downloading every product photo in the gallery at once, even
+  // though only one slide is ever visible.
   PRODUCTS.forEach((p, i)=>{
     const slide = document.createElement('div');
     slide.className = 'hero-gallery-slide' + (i===0 ? ' active' : '');
     slide.innerHTML = `
-      ${productThumbHTML(p)}
+      <div class="hgs-media"></div>
       <div class="hero-gallery-cap">
         <div class="hgc-name">${p.name}</div>
         <div class="hgc-price">PKR ${p.price.toLocaleString()}</div>
@@ -502,16 +635,28 @@ async function initHeroGallery(){
   let current = 0;
   let timer = null;
 
+  function loadSlideMedia(i){
+    const slide = slides[i];
+    if(!slide || slide.dataset.loaded) return;
+    slide.dataset.loaded = '1';
+    slide.querySelector('.hgs-media').innerHTML = productThumbHTML(PRODUCTS[i], '46%', {width:900, eager: i===0});
+  }
+
   function goToSlide(i){
     slides[current].classList.remove('active');
     dots[current].classList.remove('active');
     current = i;
     slides[current].classList.add('active');
     dots[current].classList.add('active');
+    loadSlideMedia(current);
+    loadSlideMedia((current+1) % slides.length); // have the next one ready before it's needed
   }
   function next(){ goToSlide((current+1) % slides.length); }
   function start(){ if(slides.length>1) timer = setInterval(next, 3200); }
   function stop(){ clearInterval(timer); }
+
+  loadSlideMedia(0);
+  loadSlideMedia(1 % slides.length);
 
   const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if(!reduceMotion) start();
@@ -527,7 +672,7 @@ async function initHomeGallery(){
 
   const cardHTML = p => `
     <a class="hg-card" href="product.html?id=${encodeURIComponent(p.id)}" data-id="${p.id}">
-      <div class="hg-thumb">${productThumbHTML(p)}</div>
+      <div class="hg-thumb">${productThumbHTML(p,'46%',{width:380})}</div>
       <div class="hg-name">${p.name}</div>
       <div class="hg-price">PKR ${p.price.toLocaleString()}</div>
     </a>`;
@@ -563,7 +708,7 @@ async function initTailorPage(){
   document.title = t.name+', '+t.title+' — Tifl Little Wear, Lahore';
 
   // ---- Hero: photo one side, name + experience + stats the other ----
-  document.getElementById('tpPhoto').innerHTML = tailorPhotoHTML(t);
+  document.getElementById('tpPhoto').innerHTML = tailorPhotoHTML(t, {width:900, eager:true});
   document.getElementById('tpEyebrow').textContent = (t.title||'Master Tailor')+(t.established_year ? ' · Est. '+t.established_year+' at Tifl' : '');
   document.getElementById('tpName').innerHTML = t.name+(t.tagline ? ' — <span class="accent">'+t.tagline+'</span>' : '');
   document.getElementById('tpBio').textContent = t.bio || '';
@@ -625,7 +770,7 @@ async function initTailorPage(){
     </a>`;
   function lbTile(item, cls){
     return `<div class="mt-lb-tile ${cls}">
-      ${tailorGalleryTileHTML(item)}
+      ${tailorGalleryTileHTML(item, {width:500})}
       ${item.tag ? `<span class="mt-lb-badge">${item.tag}</span>` : ''}
       <div class="mt-lb-caption"><b>${item.title||''}</b>${item.caption?`<span>${item.caption}</span>`:''}</div>
     </div>`;
@@ -650,7 +795,7 @@ async function initTailorPage(){
       <div class="p-card" data-id="${p.id}">
         <div class="p-thumb">
           <span class="brand-tag">${p.brand || 'Tifl Little Wear'}</span>
-          ${productThumbHTML(p)}
+          ${productThumbHTML(p,'46%',{width:380})}
         </div>
         <div class="p-info">
           <div class="pname">${p.name}</div>
@@ -701,7 +846,7 @@ async function initTailorsDirectoryPage(){
   }
   grid.innerHTML = TAILORS.map(t=>`
     <a class="td-card" href="master-tailor.html?slug=${encodeURIComponent(t.slug)}">
-      <div class="td-photo">${tailorPhotoHTML(t)}</div>
+      <div class="td-photo">${tailorPhotoHTML(t, {width:380})}</div>
       <div class="td-info">
         <div class="td-name">${t.name}</div>
         <div class="td-title">${t.title}${t.years_experience ? ' · '+t.years_experience+' yrs experience' : ''}</div>
@@ -904,7 +1049,7 @@ async function initProductPage(){
   }
 
   // Fill in the page
-  document.getElementById('pdMedia').innerHTML = productThumbHTML(p, '55%');
+  document.getElementById('pdMedia').innerHTML = productThumbHTML(p, '55%', {width:900, eager:true});
   document.getElementById('pdBrand').textContent = p.brand;
   document.getElementById('pdName').textContent = p.name;
   document.getElementById('pdCategory').textContent = p.category;
@@ -1086,7 +1231,7 @@ async function initProductPage(){
   if(relatedRoot && related.length){
     relatedRoot.innerHTML = related.map(r=>`
       <div class="p-card" data-id="${r.id}">
-        <div class="p-thumb"><span class="brand-tag">${r.brand}</span>${productThumbHTML(r)}</div>
+        <div class="p-thumb"><span class="brand-tag">${r.brand}</span>${productThumbHTML(r,'46%',{width:380})}</div>
         <div class="p-info">
           <div class="pname">${r.name}</div>
           <div class="pcat">${r.category}</div>
@@ -1107,13 +1252,13 @@ async function initProductPage(){
     const images = [p.image_url, ...(p.additional_images || [])].filter(Boolean);
     thumbsRoot.innerHTML = images.map((img,i)=>`
       <div class="pd-thumb ${i===0?'active':''}" data-img="${img}">
-        ${productThumbHTML(Object.assign({}, p, {image_url: img}), '70%')}
+        ${productThumbHTML(Object.assign({}, p, {image_url: img}), '70%', {width:140})}
       </div>`).join('');
     thumbsRoot.querySelectorAll('.pd-thumb').forEach(t=>{
       t.addEventListener('click', ()=>{
         thumbsRoot.querySelectorAll('.pd-thumb').forEach(x=>x.classList.remove('active'));
         t.classList.add('active');
-        document.getElementById('pdMedia').innerHTML = productThumbHTML(Object.assign({}, p, {image_url: t.dataset.img}), '55%');
+        document.getElementById('pdMedia').innerHTML = productThumbHTML(Object.assign({}, p, {image_url: t.dataset.img}), '55%', {width:900, eager:true});
       });
     });
   }
@@ -1138,7 +1283,7 @@ async function initProductPage(){
     if(others.length){
       uniformStrip.innerHTML = others.map(o=>`
         <div class="p-card" data-id="${o.id}">
-          <div class="p-thumb"><span class="brand-tag">${o.brand}</span>${productThumbHTML(o)}</div>
+          <div class="p-thumb"><span class="brand-tag">${o.brand}</span>${productThumbHTML(o,'46%',{width:380})}</div>
           <div class="p-info">
             <div class="pname">${o.name}</div>
             <div class="pcat">${o.category}</div>
@@ -1156,7 +1301,7 @@ async function initProductPage(){
   // scrolls out of view, matching the reference's mobile-friendly pattern.
   const stickyBar = document.getElementById('pdStickyBar');
   if(stickyBar){
-    document.getElementById('pdStickyThumb').innerHTML = productThumbHTML(p, '70%');
+    document.getElementById('pdStickyThumb').innerHTML = productThumbHTML(p, '70%', {width:100});
     document.getElementById('pdStickyName').textContent = p.name;
     document.getElementById('pdStickyPrice').textContent = p.currency+' '+(p.sale_price || p.price).toLocaleString();
     wireAddButton(document.getElementById('pdStickyAddBtn'), 'Get Stitched Now');
@@ -1206,7 +1351,7 @@ function initAdminPage(){
     }
     listRoot.innerHTML = products.map(p=>`
       <div class="admin-row" data-id="${p.id}">
-        <div class="admin-row-thumb">${productThumbHTML(p,'70%')}</div>
+        <div class="admin-row-thumb">${productThumbHTML(p,'70%',{width:140})}</div>
         <div class="admin-row-info">
           <div class="admin-row-name">${p.name}</div>
           <div class="admin-row-meta">${p.brand} · ${p.category} · ${p.currency} ${p.price.toLocaleString()}${p.sku ? ' · SKU '+p.sku : ''}</div>
@@ -1254,7 +1399,7 @@ function initAdminPage(){
     }
     listRoot.innerHTML = tailors.map(t=>`
       <div class="admin-row" data-id="${t.id}">
-        <div class="admin-row-thumb">${tailorPhotoHTML(t)}</div>
+        <div class="admin-row-thumb">${tailorPhotoHTML(t, {width:140})}</div>
         <div class="admin-row-info">
           <div class="admin-row-name">${t.name}</div>
           <div class="admin-row-meta">${t.title}${t.years_experience ? ' · '+t.years_experience+' yrs' : ''} · /master-tailor.html?slug=${t.slug}</div>
@@ -1609,7 +1754,7 @@ function renderLiveTimeline(){
   root.innerHTML = LIVE_ITEMS.map(p=>`
     <div class="timeline-item" data-id="${p.id}">
       <div class="timeline-item-grid">
-        <div class="timeline-thumb">${productThumbHTML(p,'80%')}</div>
+        <div class="timeline-thumb">${productThumbHTML(p,'80%',{width:380})}</div>
         <div class="timeline-info">
           <div class="name">${p.name}</div>
           <div class="time">${p.brand}</div>
@@ -1891,7 +2036,7 @@ function renderCheckoutSummary(){
   } else {
     listEl.innerHTML = cart.map(c=>`
       <div class="cart-line">
-        <div class="cart-thumb" style="overflow:hidden;">${productThumbHTML(c,'70%')}</div>
+        <div class="cart-thumb" style="overflow:hidden;">${productThumbHTML(c,'70%',{width:140})}</div>
         <div style="flex:1;">
           <div class="ci-name">${c.name}</div>
           <div class="ci-meta">${c.brand} · PKR ${c.price.toLocaleString()} × ${c.qty}</div>
@@ -1965,6 +2110,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   if(typeof rsPage === 'function') rsPage();
   applyConfig();
   initHeroGallery();
+  initFullGalleryHero();
   initHomeGallery();
   initTailorPage();
   initTailorsDirectoryPage();
