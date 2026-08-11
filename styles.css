@@ -329,14 +329,13 @@ footer.site{border-top:1px solid var(--line);padding:52px 0 40px;margin-top:60px
   .whatsapp-tip{display:none;}
 }
 /* When the product page's sticky "Add to cart" bar is showing, lift the
-   WhatsApp button clear above it so the two never overlap. The offset is
-   generous (bar height + margin) and stacks with the safe-area inset so
-   it still clears the bar on notched/home-indicator phones. */
-body.has-sticky-cta .whatsapp-float{bottom:calc(96px + env(safe-area-inset-bottom));}
-body.has-sticky-cta .whatsapp-tip{bottom:calc(110px + env(safe-area-inset-bottom));}
-@media (max-width:560px){
-  body.has-sticky-cta .whatsapp-float{bottom:calc(88px + env(safe-area-inset-bottom));}
-}
+   WhatsApp button clear above it so the two never overlap. --sticky-bar-h
+   is set by script.js from the bar's *actual* rendered height (it already
+   includes the safe-area inset baked into its own padding), so this stays
+   correct no matter the device or how much the bar's content wraps.
+   The 96px fallback only applies if JS hasn't run yet. */
+body.has-sticky-cta .whatsapp-float{bottom:calc(var(--sticky-bar-h, 96px) + 16px);}
+body.has-sticky-cta .whatsapp-tip{bottom:calc(var(--sticky-bar-h, 96px) + 30px);}
 
 /* =============== CONTACT PAGE =============== */
 .contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start;margin-bottom:80px;}

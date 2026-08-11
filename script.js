@@ -23,7 +23,7 @@ if (typeof window.rsIdentify !== 'function') window.rsIdentify = function(){};
    hunt through every HTML file.
 ============================================================= */
 const CONFIG = {
-  phone: '+92 305 4110254',
+  phone: '+92 304 5519335',
   phoneHref: 'tel:+923054110254',
   whatsappNumber: '923054110254',        // country code + number, no + or spaces
   email: 'studio@tifllittlewear.com',
@@ -1253,7 +1253,7 @@ async function initProductPage(){
         priceLine,
         window.location.href
       ];
-      return `https://wa.me/923045519335?text=${encodeURIComponent(lines.join('\n'))}`;
+      return `https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(lines.join('\n'))}`;
     }
     waBtn.href = buildWhatsappHref();
     document.getElementById('pdQty')?.addEventListener('input', ()=>{ waBtn.href = buildWhatsappHref(); });
@@ -1388,8 +1388,22 @@ async function initProductPage(){
     document.getElementById('pdStickyPrice').textContent = p.currency+' '+(p.sale_price || p.price).toLocaleString();
     wireAddButton(document.getElementById('pdStickyAddBtn'), 'Get Stitched Now');
     const mainAddBtn = document.getElementById('pdAddBtn');
+    // Measure the sticky bar's actual rendered height (rather than assuming
+    // a fixed number) and expose it as a CSS var, so the WhatsApp float can
+    // sit exactly above it — this stays correct even if the bar's content
+    // wraps to two lines or the safe-area inset changes its height.
+    const setStickyLift = ()=>{
+      document.documentElement.style.setProperty('--sticky-bar-h', stickyBar.offsetHeight + 'px');
+    };
+    const resizeObserver = new ResizeObserver(setStickyLift);
+    resizeObserver.observe(stickyBar);
     const observer = new IntersectionObserver(([entry])=>{
-      stickyBar.classList.toggle('show', !entry.isIntersecting);
+      const showing = !entry.isIntersecting;
+      if(showing) setStickyLift();
+      stickyBar.classList.toggle('show', showing);
+      // Nudge the WhatsApp float button up so it doesn't sit on top of
+      // the "Add to cart" button in the sticky bar on small screens.
+      document.body.classList.toggle('has-sticky-cta', showing);
     }, {threshold:0});
     observer.observe(mainAddBtn);
   }
