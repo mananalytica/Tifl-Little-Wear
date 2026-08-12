@@ -23,7 +23,7 @@ if (typeof window.rsIdentify !== 'function') window.rsIdentify = function(){};
    hunt through every HTML file.
 ============================================================= */
 const CONFIG = {
-  phone: '+92 304 5519335',
+  phone: '+92 305 4110254',
   phoneHref: 'tel:+923054110254',
   whatsappNumber: '923054110254',        // country code + number, no + or spaces
   email: 'studio@tifllittlewear.com',
@@ -1899,6 +1899,7 @@ async function placeLiveOrder(product, buyer){
   const payload = Object.assign({
     payment_method: 'Cash on delivery',
     notes: 'Live sale — instant buy',
+    source: 'live_sell',
     items: [{id:product.id, name:product.name, brand:product.brand, price:product.price, qty:1, image_url:product.image_url}],
     subtotal: product.price, shipping_fee: 0, total: product.price, currency:'PKR',
     anonymous_id: rsGetAnonymousId(), attribution: rsGetAttribution()

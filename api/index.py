@@ -193,6 +193,116 @@ def _pretty_date(d) -> str:
     except Exception:
         return str(d)
 
+# ================= DISCORD NOTIFICATIONS =================
+# One private Discord server, one webhook per channel — orders, bookings,
+# newsletters (quiz leads, for now — no dedicated newsletter form exists
+# yet), live-sell instant buys, and everything else (contact form). Same
+# "never break the real request" philosophy as everything above.
+# ⚙️ EDIT ME: create a Discord server, add 5 text channels, and for each
+# one: Channel Settings → Integrations → Webhooks → New Webhook → Copy
+# Webhook URL. Paste the 5 URLs into these env vars in Vercel.
+DISCORD_WEBHOOK_ORDERS = os.environ.get("DISCORD_WEBHOOK_ORDERS", "")
+DISCORD_WEBHOOK_BOOKINGS = os.environ.get("DISCORD_WEBHOOK_BOOKINGS", "")
+DISCORD_WEBHOOK_NEWSLETTERS = os.environ.get("DISCORD_WEBHOOK_NEWSLETTERS", "")
+DISCORD_WEBHOOK_LIVESELLS = os.environ.get("DISCORD_WEBHOOK_LIVESELLS", "")
+DISCORD_WEBHOOK_OTHER = os.environ.get("DISCORD_WEBHOOK_OTHER", "")
+
+def send_discord_notification(webhook_url: str, title: str, color: int, fields: list, footer: str = ""):
+    if not webhook_url:
+        return  # that channel isn't configured yet — no-op rather than error
+    try:
+        embed = {
+            "title": title,
+            "color": color,
+            "fields": [
+                {"name": name, "value": str(value) if value not in (None, "") else "—", "inline": inline}
+                for (name, value, inline) in fields
+            ],
+            "timestamp": datetime.now().isoformat(),
+        }
+        if footer:
+            embed["footer"] = {"text": footer}
+        data = json.dumps({"embeds": [embed]}).encode("utf-8")
+        req = urllib.request.Request(
+            webhook_url, data=data, headers={"Content-Type": "application/json"}, method="POST"
+        )
+        urllib.request.urlopen(req, timeout=5)
+    except urllib.error.HTTPError as e:
+        try:
+            body = e.read().decode("utf-8", "replace")
+        except Exception:
+            body = "<could not read response body>"
+        print(f"[send_discord_notification] Discord rejected webhook post: HTTP {e.code} — {body}")
+    except Exception as e:
+        print(f"[send_discord_notification] failed: {e}")
+
+# Brand-ish color coding per channel (Discord embed colors are decimal,
+# not hex — these are #4A93E8 blue, #3BA776 green, #C77DFF purple,
+# #2FB8C6 teal, #8C97AC gray).
+_COLOR_ORDER = 4886760
+_COLOR_BOOKING = 3906422
+_COLOR_LIVESELL = 13056511
+_COLOR_NEWSLETTER = 3113414
+_COLOR_OTHER = 9210284
+
+def notify_discord_order(order_id: str, o: dict):
+    is_live = o.get("source") == "live_sell"
+    webhook = DISCORD_WEBHOOK_LIVESELLS if is_live else DISCORD_WEBHOOK_ORDERS
+    items = o.get("items") or []
+    item_summary = ", ".join(f"{i.get('name')} x{i.get('qty')}" for i in items) or "—"
+    send_discord_notification(
+        webhook,
+        title=f"{'🔴 Live-sale order' if is_live else '🧾 New order'} — {order_id}",
+        color=_COLOR_LIVESELL if is_live else _COLOR_ORDER,
+        fields=[
+            ("Customer", f"{o.get('customer_name')} ({o.get('phone')})", False),
+            ("Items", item_summary, False),
+            ("Total", f"{o.get('currency', 'PKR')} {o.get('total')}", True),
+            ("Payment", o.get("payment_method"), True),
+            ("Ship to", f"{o.get('address')}, {o.get('city')}", False),
+        ],
+        footer="Tifl Little Wear",
+    )
+
+def notify_discord_booking(booking_id: str, b: dict):
+    send_discord_notification(
+        DISCORD_WEBHOOK_BOOKINGS,
+        title=f"📅 New booking — {booking_id}",
+        color=_COLOR_BOOKING,
+        fields=[
+            ("Parent", f"{b.get('parent_name')} ({b.get('phone')})", False),
+            ("Child", b.get("child_name"), True),
+            ("Garment", b.get("garment_type"), True),
+            ("When", f"{_pretty_date(b.get('date'))} at {b.get('time_slot') or 'TBC'}", False),
+            ("Mode", b.get("mode"), True),
+            ("Tailor", b.get("preferred_tailor") or "unassigned", True),
+        ],
+        footer="Tifl Little Wear",
+    )
+
+def notify_discord_newsletter(lead_id: str, l: dict):
+    send_discord_notification(
+        DISCORD_WEBHOOK_NEWSLETTERS,
+        title=f"📬 New quiz lead — {lead_id}",
+        color=_COLOR_NEWSLETTER,
+        fields=[
+            ("Email", l.get("email"), False),
+            ("Occasion", l.get("occasion"), True),
+            ("Age band", l.get("age_band"), True),
+            ("Recommended", l.get("recommended"), False),
+        ],
+        footer="Tifl Little Wear · no dedicated newsletter form exists yet — this is the fabric quiz",
+    )
+
+def notify_discord_other(ref_id: str, kind: str, fields: list):
+    send_discord_notification(
+        DISCORD_WEBHOOK_OTHER,
+        title=f"✉️ {kind} — {ref_id}",
+        color=_COLOR_OTHER,
+        fields=fields,
+        footer="Tifl Little Wear",
+    )
+
 # Shared HTML shell both templates fill in — colors/fonts pulled straight
 # from DESIGN-GUIDE.md (Fredoka headings, Inter body, IBM Plex Mono for
 # any number/reference, --bg-dark for the confirmation card) so these
@@ -997,6 +1107,7 @@ class Order(BaseModel):
     shipping_fee: float | None = 0
     total: float
     currency: str | None = "PKR"
+    source: str | None = "checkout"  # "checkout" or "live_sell" — used to route notifications
     anonymous_id: str | None = None
     attribution: dict | None = None
 
@@ -1208,6 +1319,16 @@ def create_booking(booking: Booking):
             "preferred_tailor": booking.preferred_tailor,
         }),
     )
+    notify_discord_booking(booking_id, {
+        "parent_name": booking.parent_name,
+        "child_name": booking.child_name,
+        "phone": booking.phone,
+        "garment_type": booking.garment_type,
+        "mode": booking.mode,
+        "date": booking.date,
+        "time_slot": booking.time_slot,
+        "preferred_tailor": booking.preferred_tailor,
+    })
     return {"booking_id": booking_id, "status": "confirmed"}
 
 
@@ -1232,6 +1353,10 @@ def create_contact_message(msg: ContactMessage):
     rs_track(msg.email or msg.phone or message_id, "Contact Form Submitted",
               dict({"message_id": message_id, "name": msg.name}, **flatten_attribution(msg.attribution)),
               anonymous_id=msg.anonymous_id)
+    notify_discord_other(message_id, "New contact form message", [
+        ("From", f"{msg.name} ({msg.phone or msg.email or 'no contact info'})", False),
+        ("Message", msg.message, False),
+    ])
     return {"message_id": message_id, "status": "received"}
 
 
@@ -1668,6 +1793,17 @@ def create_order(order: Order, authorization: str | None = Header(default=None))
             "payment_method": order.payment_method,
         }),
     )
+    notify_discord_order(order_id, {
+        "customer_name": order.customer_name,
+        "phone": order.phone,
+        "items": [{"name": i.name, "qty": i.qty} for i in order.items],
+        "total": order.total,
+        "currency": order.currency,
+        "payment_method": order.payment_method,
+        "address": order.address,
+        "city": order.city,
+        "source": order.source,
+    })
     return {"order_id": order_id, "status": "received"}
 
 
@@ -1801,4 +1937,10 @@ def create_quiz_lead(lead: QuizLead):
         "age_band": lead.age_band, "occasion": lead.occasion,
         "activity": lead.activity, "care": lead.care, "recommended": lead.recommended,
     }, anonymous_id=lead.anonymous_id)
+    notify_discord_newsletter(lead_id, {
+        "email": lead.email,
+        "occasion": lead.occasion,
+        "age_band": lead.age_band,
+        "recommended": lead.recommended,
+    })
     return {"lead_id": lead_id, "status": "received"}
