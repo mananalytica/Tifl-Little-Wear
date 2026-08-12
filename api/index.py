@@ -813,6 +813,37 @@ def ensure_schema(conn):
             testimonials       JSON,
             active             BOOLEAN
         );""",
+        # A child's measurements, decoupled from any single booking so they
+        # can be reused across future bookings/orders instead of re-typed
+        # every time. Two very different sources feed this table:
+        #   - "self_reported": a parent fills in the 4 easy-to-self-measure
+        #     points (chest/waist/height/inseam) on measurements.html.
+        #   - "tailor_fitting": the full 11-point professional measurement,
+        #     entered by a tailor right after an in-person fitting (was
+        #     previously only ever recorded on a paper card, never digitally
+        #     — see admin.html's Fittings panel).
+        """CREATE TABLE IF NOT EXISTS measurements (
+            measurement_id   VARCHAR PRIMARY KEY,
+            created_at       TIMESTAMP,
+            customer_id      VARCHAR,
+            booking_id       VARCHAR,
+            child_name       VARCHAR,
+            age              VARCHAR,
+            chest            VARCHAR,
+            waist            VARCHAR,
+            hip              VARCHAR,
+            shoulder_width   VARCHAR,
+            sleeve_length    VARCHAR,
+            neck             VARCHAR,
+            back_length      VARCHAR,
+            front_length     VARCHAR,
+            inseam           VARCHAR,
+            outseam          VARCHAR,
+            height           VARCHAR,
+            source           VARCHAR,
+            recorded_by      VARCHAR,
+            notes            VARCHAR
+        );""",
     ]
     try:
         conn.execute("\n".join(create_statements))
@@ -974,6 +1005,32 @@ class Measurements(BaseModel):
     waist: str | None = None
     height: str | None = None
     inseam: str | None = None
+
+
+# Full 11-point record — a superset of the old inline `Measurements` above
+# (kept for backward compatibility with the `bookings.measurements` JSON
+# column). This is what actually gets stored in the new `measurements`
+# table. Every field but child_name is optional because a self-report
+# submission only ever fills 4-5 of the 11, and that's fine — the
+# remaining points get filled in later by a tailor's fitting record
+# referencing the same child/booking.
+class MeasurementRecord(BaseModel):
+    child_name: str
+    age: str | None = None
+    chest: str | None = None
+    waist: str | None = None
+    hip: str | None = None
+    shoulder_width: str | None = None
+    sleeve_length: str | None = None
+    neck: str | None = None
+    back_length: str | None = None
+    front_length: str | None = None
+    inseam: str | None = None
+    outseam: str | None = None
+    height: str | None = None
+    booking_id: str | None = None
+    notes: str | None = None
+    anonymous_id: str | None = None
 
 
 class Booking(BaseModel):
@@ -1357,6 +1414,102 @@ def list_bookings():
     cols = [c[0] for c in conn.description]
     conn.close()
     return [dict(zip(cols, row)) for row in rows]
+
+
+# ================= MEASUREMENTS =================
+# See the `measurements` table comment in ensure_schema for the two very
+# different sources (self-reported vs tailor-recorded) that feed this.
+def _insert_measurement(m: MeasurementRecord, source: str, customer_id: str | None, recorded_by: str | None) -> str:
+    measurement_id = "MEAS-" + uuid.uuid4().hex[:10].upper()
+    conn = get_conn()
+    conn.execute(
+        """
+        INSERT INTO measurements
+            (measurement_id, created_at, customer_id, booking_id, child_name, age,
+             chest, waist, hip, shoulder_width, sleeve_length, neck,
+             back_length, front_length, inseam, outseam, height,
+             source, recorded_by, notes)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        [
+            measurement_id, datetime.now(), customer_id, m.booking_id, m.child_name, m.age,
+            m.chest, m.waist, m.hip, m.shoulder_width, m.sleeve_length, m.neck,
+            m.back_length, m.front_length, m.inseam, m.outseam, m.height,
+            source, recorded_by, m.notes,
+        ],
+    )
+    conn.close()
+    return measurement_id
+
+
+@app.post("/api/measurements")
+def create_self_reported_measurement(m: MeasurementRecord, authorization: str | None = Header(default=None)):
+    """Self-report flow from measurements.html. Works for guests (no
+    account needed, matching guest checkout) and for logged-in customers
+    (whose customer_id gets attached automatically, so it's retrievable
+    cross-device via GET /api/measurements/mine instead of only living in
+    that one browser's localStorage)."""
+    customer = get_current_customer(authorization)
+    measurement_id = _insert_measurement(
+        m, source="self_reported",
+        customer_id=customer["customer_id"] if customer else None,
+        recorded_by=None,
+    )
+    rs_track(customer["email"] if customer else m.anonymous_id, "Measurements Self-Reported",
+              {"measurement_id": measurement_id, "child_name": m.child_name}, anonymous_id=m.anonymous_id)
+    return {"measurement_id": measurement_id, "status": "saved"}
+
+
+@app.get("/api/measurements/mine")
+def my_measurements(authorization: str | None = Header(default=None)):
+    customer = require_customer(authorization)
+    conn = get_conn()
+    rows = conn.execute(
+        "SELECT * FROM measurements WHERE customer_id = ? ORDER BY created_at DESC", [customer["customer_id"]]
+    ).fetchall()
+    cols = [c[0] for c in conn.description]
+    conn.close()
+    return [dict(zip(cols, row)) for row in rows]
+
+
+class TailorFittingRecord(MeasurementRecord):
+    recorded_by: str  # tailor's name — required for this flow, unlike self-report
+
+
+@app.post("/api/measurements/fitting")
+def create_tailor_fitting(m: TailorFittingRecord, x_admin_key: str | None = Header(default=None)):
+    """The full 11-point professional measurement, entered by a tailor
+    right after an in-person fitting. Admin-key protected — same auth
+    model as the products/tailors management endpoints, since this is an
+    internal operational form, not something a customer submits."""
+    require_admin(x_admin_key)
+    measurement_id = _insert_measurement(m, source="tailor_fitting", customer_id=None, recorded_by=m.recorded_by)
+    notify_discord_other(measurement_id, "New tailor fitting recorded", [
+        ("Child", m.child_name, True),
+        ("Recorded by", m.recorded_by, True),
+        ("Points filled", str(sum(1 for v in [m.chest, m.waist, m.hip, m.shoulder_width, m.sleeve_length,
+                                                m.neck, m.back_length, m.front_length, m.inseam, m.outseam, m.height] if v)) + " / 11", False),
+    ])
+    return {"measurement_id": measurement_id, "status": "saved"}
+
+
+@app.get("/api/measurements")
+def list_measurements(x_admin_key: str | None = Header(default=None)):
+    require_admin(x_admin_key)
+    conn = get_conn()
+    rows = conn.execute("SELECT * FROM measurements ORDER BY created_at DESC").fetchall()
+    cols = [c[0] for c in conn.description]
+    conn.close()
+    return [dict(zip(cols, row)) for row in rows]
+
+
+@app.delete("/api/measurements/{measurement_id}")
+def delete_measurement(measurement_id: str, x_admin_key: str | None = Header(default=None)):
+    require_admin(x_admin_key)
+    conn = get_conn()
+    conn.execute("DELETE FROM measurements WHERE measurement_id = ?", [measurement_id])
+    conn.close()
+    return {"status": "deleted"}
 
 
 @app.post("/api/contact")

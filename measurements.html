@@ -64,10 +64,8 @@
     </a>
     <nav class="tabs" id="navTabs">
       <a href="index.html">Home</a>
-      <a href="measurements.html" aria-current="page">Measurements</a>
       <a href="booking.html">Booking</a>
       <a href="shop.html">Shop</a>
-      <a href="live-sell.html">Live Sale</a>
       <a href="design-studio.html">Design Studio</a>
       <a href="blog.html">Blog</a>
       <a href="contact.html">Contact</a>
@@ -124,18 +122,18 @@
       <h2>Save your child's measurements</h2>
       <p class="lede">Fill this in after your fitting and we'll carry it straight into your booking — no re-typing.</p>
       <div class="form-grid">
-        <div class="field"><label for="mChild">Child's name</label><input id="mChild" type="text" placeholder="e.g. Zoya"></div>
+        <div class="field"><label for="mChild">Child's name</label><input id="mChild" type="text" placeholder="e.g. Zoya" required></div>
         <div class="field"><label for="mAge">Age</label><input id="mAge" type="number" min="0" max="16" placeholder="6"></div>
-        <div class="field"><label for="mChest">Chest (cm)</label><input id="mChest" type="number" placeholder="58"></div>
-        <div class="field"><label for="mWaist">Waist (cm)</label><input id="mWaist" type="number" placeholder="52"></div>
-        <div class="field"><label for="mHeight">Height (cm)</label><input id="mHeight" type="number" placeholder="112"></div>
-        <div class="field"><label for="mInseam">Inseam (cm)</label><input id="mInseam" type="number" placeholder="46"></div>
+        <div class="field"><label for="mChest">Chest (cm)</label><input id="mChest" type="number" placeholder="58" required></div>
+        <div class="field"><label for="mWaist">Waist (cm)</label><input id="mWaist" type="number" placeholder="52" required></div>
+        <div class="field"><label for="mHeight">Height (cm)</label><input id="mHeight" type="number" placeholder="112" required></div>
+        <div class="field"><label for="mInseam">Inseam (cm)</label><input id="mInseam" type="number" placeholder="46" required></div>
       </div>
       <div class="calc-actions">
         <button class="btn btn-primary btn-sm" id="saveMeasureBtn">Save measurements</button>
         <button class="btn btn-ghost btn-sm" id="carryToBookingBtn">Save &amp; go to booking</button>
       </div>
-      <p class="saved-note" id="savedNote">Saved on this device — ready to attach to a booking.</p>
+      <p class="saved-note" id="savedNote">Saved to your account — ready to attach to a booking, on any device.</p>
     </div>
   </div>
 
@@ -200,7 +198,7 @@
   </div>
 </footer>
 
-<a class="whatsapp-float" href="https://wa.me/923054110254" target="_blank" rel="noopener" aria-label="Chat with us on WhatsApp">
+<a class="whatsapp-float" href="https://wa.me/923045519335" target="_blank" rel="noopener" aria-label="Chat with us on WhatsApp">
   <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.6 15L2 22l5.2-1.4A10 10 0 1012 2zm5.7 14.2c-.2.6-1.3 1.2-1.8 1.3-.5.1-1 .2-3.3-.7-2.8-1.1-4.6-3.9-4.7-4.1-.1-.2-1.1-1.5-1.1-2.9 0-1.4.7-2 1-2.3.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5.2.5.7 1.8.8 1.9.1.2.1.3 0 .5-.1.2-.2.3-.3.5-.2.2-.3.3-.5.5-.2.2-.3.4-.2.6.3.5.9 1.5 1.9 2.4 1.3 1.2 2.4 1.5 2.7 1.7.3.2.5.1.7-.1.2-.2.8-.9 1-1.2.2-.3.4-.2.7-.1.3.1 1.8.9 2.1 1 .3.1.5.2.6.3.1.2.1.7-.1 1.3z"/></svg>
 </a>
 <span class="whatsapp-tip">Chat with us</span>

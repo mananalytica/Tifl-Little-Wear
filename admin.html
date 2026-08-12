@@ -245,6 +245,58 @@
         <div id="adminTailorList" class="admin-list"></div>
       </div>
     </div>
+
+    <!-- ===== Fittings ===== -->
+    <hr class="seam" style="margin:50px 0;">
+    <div class="eyebrow">Record a fitting</div>
+    <h2 style="font-size:22px;margin-bottom:8px;">Log a child's 11-point measurement</h2>
+    <p style="color:var(--ink-soft);font-size:14.5px;max-width:640px;margin-bottom:28px;">
+      The 4 basics (chest, waist, height, inseam) can come from a parent's self-report on
+      <code>measurements.html</code> — everything else here is only ever taken in person, by hand, at a fitting.
+      Log it here right after so it's on record instead of only living on a paper card.
+    </p>
+
+    <div class="contact-grid">
+      <div class="contact-form" style="background:var(--bg-alt);">
+        <h2 style="font-size:18px;margin-bottom:16px;">New fitting record</h2>
+        <form id="fittingForm">
+          <p class="eyebrow" style="margin-top:0;">Who</p>
+          <div class="form-grid">
+            <div class="field"><label for="fChildName">Child's name</label><input id="fChildName" required type="text" placeholder="e.g. Zoya"></div>
+            <div class="field"><label for="fAge">Age</label><input id="fAge" type="text" placeholder="6"></div>
+            <div class="field"><label for="fRecordedBy">Tailor's name</label><input id="fRecordedBy" required type="text" placeholder="e.g. Ustad Abdul Sattar"></div>
+            <div class="field"><label for="fBookingId">Booking ID <span style="color:var(--primary-dark);">(optional — links this to a specific booking)</span></label><input id="fBookingId" type="text" placeholder="e.g. TLW-9F3A2B1C"></div>
+          </div>
+
+          <p class="eyebrow">The 11 points (cm)</p>
+          <div class="form-grid">
+            <div class="field"><label for="fChest">01 · Chest</label><input id="fChest" type="number" placeholder="58"></div>
+            <div class="field"><label for="fWaist">02 · Waist</label><input id="fWaist" type="number" placeholder="52"></div>
+            <div class="field"><label for="fHip">03 · Hip</label><input id="fHip" type="number" placeholder="60"></div>
+            <div class="field"><label for="fShoulder">04 · Shoulder width</label><input id="fShoulder" type="number" placeholder="30"></div>
+            <div class="field"><label for="fSleeve">05 · Sleeve length</label><input id="fSleeve" type="number" placeholder="38"></div>
+            <div class="field"><label for="fNeck">06 · Neck</label><input id="fNeck" type="number" placeholder="28"></div>
+            <div class="field"><label for="fBackLength">07 · Back length</label><input id="fBackLength" type="number" placeholder="34"></div>
+            <div class="field"><label for="fFrontLength">08 · Front length</label><input id="fFrontLength" type="number" placeholder="36"></div>
+            <div class="field"><label for="fInseam">09 · Inseam</label><input id="fInseam" type="number" placeholder="46"></div>
+            <div class="field"><label for="fOutseam">10 · Outseam</label><input id="fOutseam" type="number" placeholder="68"></div>
+            <div class="field"><label for="fHeight">11 · Height</label><input id="fHeight" type="number" placeholder="112"></div>
+          </div>
+
+          <div class="field full" style="margin-top:6px;"><label for="fNotes">Notes</label><textarea id="fNotes" rows="2" placeholder="Anything the next fitting should know — growth room added, a preference, etc."></textarea></div>
+
+          <div style="display:flex;gap:10px;margin-top:18px;">
+            <button type="button" class="btn btn-ghost" id="fCancelEdit">Clear</button>
+            <button type="submit" class="btn btn-primary btn-block">Save fitting</button>
+          </div>
+        </form>
+      </div>
+
+      <div>
+        <h2 style="font-size:18px;margin-bottom:16px;">Recent fittings</h2>
+        <div id="adminFittingList" class="admin-list"></div>
+      </div>
+    </div>
   </div>
 </main>
 

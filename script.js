@@ -23,7 +23,7 @@ if (typeof window.rsIdentify !== 'function') window.rsIdentify = function(){};
    hunt through every HTML file.
 ============================================================= */
 const CONFIG = {
-  phone: '+92 305 4110254',
+  phone: '+92 304 5519335',
   phoneHref: 'tel:+923054110254',
   whatsappNumber: '923054110254',        // country code + number, no + or spaces
   email: 'studio@tifllittlewear.com',
@@ -937,7 +937,7 @@ function initMeasurementsPage(){
   if(!saveBtn) return;
   function collect(){
     return {
-      child: document.getElementById('mChild').value || 'Unnamed',
+      child: document.getElementById('mChild').value.trim() || 'Unnamed',
       age: document.getElementById('mAge').value,
       chest: document.getElementById('mChest').value,
       waist: document.getElementById('mWaist').value,
@@ -945,12 +945,52 @@ function initMeasurementsPage(){
       inseam: document.getElementById('mInseam').value
     };
   }
-  saveBtn.addEventListener('click', ()=>{
-    Store.set('tifl_measurements', collect());
+  // No <form> wraps this card (it's a plain div), so native HTML
+  // "required" attributes never trigger browser validation on their own —
+  // check explicitly before saving.
+  function validate(m){
+    const missing = [];
+    if(!m.child || m.child === 'Unnamed') missing.push('child\u2019s name');
+    if(!m.chest) missing.push('chest');
+    if(!m.waist) missing.push('waist');
+    if(!m.height) missing.push('height');
+    if(!m.inseam) missing.push('inseam');
+    return missing;
+  }
+  // Saves to the server (so it's not lost on device switch / cache clear)
+  // AND to localStorage (kept purely for the "carry straight into booking"
+  // prefill convenience on this same device — the server copy is now the
+  // real source of truth, this is just a nice-to-have shortcut).
+  async function persist(m){
+    Store.set('tifl_measurements', m);
+    try{
+      await fetch('/api/measurements', {
+        method: 'POST',
+        headers: Object.assign({'Content-Type':'application/json'}, Auth.authHeader()),
+        body: JSON.stringify({
+          child_name: m.child, age: m.age || null, chest: m.chest || null,
+          waist: m.waist || null, height: m.height || null, inseam: m.inseam || null,
+          anonymous_id: rsGetAnonymousId()
+        })
+      });
+    }catch(e){
+      // Still saved locally even if the network call failed — don't block
+      // the "carry to booking" flow over a flaky connection.
+      showToast('Saved on this device, but couldn\u2019t reach the server — try again when you\u2019re back online.');
+    }
+  }
+  saveBtn.addEventListener('click', async ()=>{
+    const m = collect();
+    const missing = validate(m);
+    if(missing.length){ showToast('Please fill in: '+missing.join(', ')); return; }
+    await persist(m);
     document.getElementById('savedNote').classList.add('show');
   });
-  document.getElementById('carryToBookingBtn')?.addEventListener('click', ()=>{
-    Store.set('tifl_measurements', collect());
+  document.getElementById('carryToBookingBtn')?.addEventListener('click', async ()=>{
+    const m = collect();
+    const missing = validate(m);
+    if(missing.length){ showToast('Please fill in: '+missing.join(', ')); return; }
+    await persist(m);
     window.location.href = 'booking.html';
   });
 }
@@ -962,11 +1002,38 @@ function initBookingPage(){
   const form = document.getElementById('bookingForm');
   if(!form) return;
 
-  const m = Store.get('tifl_measurements', null);
-  const attachedEl = document.getElementById('attachedMeasureText');
-  if(m && attachedEl){
+  function renderAttachedMeasurement(m){
+    const attachedEl = document.getElementById('attachedMeasureText');
+    if(!m || !attachedEl) return;
     attachedEl.innerHTML = `<b>${m.child}</b> · chest ${m.chest||'—'}cm · waist ${m.waist||'—'}cm · height ${m.height||'—'}cm · inseam ${m.inseam||'—'}cm`;
     if(m.child && m.child!=='Unnamed') document.getElementById('bChild').value = m.child;
+  }
+
+  const local = Store.get('tifl_measurements', null);
+  if(local){
+    renderAttachedMeasurement(local);
+  }else if(Auth.isLoggedIn()){
+    // Nothing on this device, but they're signed in — check the server so
+    // measurements saved on a different device (e.g. filled in on their
+    // phone, now booking from a laptop) still show up here instead of
+    // silently coming up empty.
+    fetch('/api/measurements/mine', {headers: Auth.authHeader()})
+      .then(res => res.ok ? res.json() : [])
+      .then(records => {
+        const latest = records.find(r => r.source === 'self_reported') || records[0];
+        if(latest){
+          const m = {
+            child: latest.child_name, age: latest.age, chest: latest.chest,
+            waist: latest.waist, height: latest.height, inseam: latest.inseam
+          };
+          // Write it into the same local store the submit handler reads
+          // from — otherwise the banner would show correctly but the
+          // actual booking would silently submit with measurements: null.
+          Store.set('tifl_measurements', m);
+          renderAttachedMeasurement(m);
+        }
+      })
+      .catch(()=>{});
   }
 
   try{
@@ -1677,6 +1744,7 @@ function initAdminPage(){
     refreshList();
     refreshTailorDropdown();
     refreshTailorList();
+    refreshFittingList();
   });
 
   document.getElementById('productForm')?.addEventListener('submit', async (e)=>{
@@ -1822,12 +1890,86 @@ function initAdminPage(){
     }catch(e){ /* apiCall already toasts on 401 */ }
   });
 
+  // ---- Fittings panel: log the full 11-point measurement a tailor takes
+  // in person, decoupled from any single booking so it's reusable.
+  async function refreshFittingList(){
+    const listRoot = document.getElementById('adminFittingList');
+    if(!listRoot) return;
+    listRoot.innerHTML = '<p style="color:var(--ink-soft);">Loading…</p>';
+    let fittings;
+    try{
+      fittings = await apiCall('/api/measurements', 'GET');
+    }catch(e){
+      listRoot.innerHTML = '<p style="color:var(--primary-dark);">Could not load fittings from the server.</p>';
+      return;
+    }
+    const pointKeys = ['chest','waist','hip','shoulder_width','sleeve_length','neck','back_length','front_length','inseam','outseam','height'];
+    listRoot.innerHTML = fittings.map(f=>{
+      const filled = pointKeys.filter(k=>f[k]).length;
+      const when = f.created_at ? new Date(f.created_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : '';
+      return `
+      <div class="admin-row" data-id="${f.measurement_id}">
+        <div class="admin-row-info">
+          <div class="admin-row-name">${f.child_name}${f.source==='tailor_fitting' ? ' · in-person fitting' : ' · self-reported'}</div>
+          <div class="admin-row-meta">${filled}/11 points · ${f.recorded_by ? 'by '+f.recorded_by : 'parent self-report'} · ${when}${f.booking_id ? ' · booking '+f.booking_id : ''}</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" data-del="${f.measurement_id}">Delete</button>
+      </div>`;
+    }).join('') || '<p style="color:var(--ink-soft);">No fittings logged yet.</p>';
+
+    listRoot.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click', async ()=>{
+      if(!confirm('Delete this fitting record?')) return;
+      try{ await apiCall('/api/measurements/'+b.dataset.del, 'DELETE'); showToast('Deleted'); refreshFittingList(); }
+      catch(e){}
+    }));
+  }
+
+  function fittingFormToPayload(){
+    const childName = document.getElementById('fChildName').value.trim();
+    const recordedBy = document.getElementById('fRecordedBy').value.trim();
+    if(!childName) throw new Error('Child\u2019s name is required');
+    if(!recordedBy) throw new Error('Tailor\u2019s name is required');
+    return {
+      child_name: childName,
+      age: document.getElementById('fAge').value || null,
+      recorded_by: recordedBy,
+      booking_id: document.getElementById('fBookingId').value.trim() || null,
+      chest: document.getElementById('fChest').value || null,
+      waist: document.getElementById('fWaist').value || null,
+      hip: document.getElementById('fHip').value || null,
+      shoulder_width: document.getElementById('fShoulder').value || null,
+      sleeve_length: document.getElementById('fSleeve').value || null,
+      neck: document.getElementById('fNeck').value || null,
+      back_length: document.getElementById('fBackLength').value || null,
+      front_length: document.getElementById('fFrontLength').value || null,
+      inseam: document.getElementById('fInseam').value || null,
+      outseam: document.getElementById('fOutseam').value || null,
+      height: document.getElementById('fHeight').value || null,
+      notes: document.getElementById('fNotes').value || null
+    };
+  }
+
+  document.getElementById('fittingForm')?.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    let payload;
+    try{ payload = fittingFormToPayload(); }
+    catch(err){ showToast(err.message); return; }
+    try{
+      await apiCall('/api/measurements/fitting', 'POST', payload);
+      showToast('Fitting saved');
+      document.getElementById('fittingForm').reset();
+      refreshFittingList();
+    }catch(e){ /* apiCall already toasts on 401 */ }
+  });
+  document.getElementById('fCancelEdit')?.addEventListener('click', ()=>document.getElementById('fittingForm').reset());
+
   if(getKey()){
     document.getElementById('adminGate').style.display = 'none';
     document.getElementById('adminPanel').style.display = 'block';
     refreshList();
     refreshTailorDropdown();
     refreshTailorList();
+    refreshFittingList();
   }
 }
 
