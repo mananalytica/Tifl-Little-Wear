@@ -24,7 +24,9 @@ import hashlib
 import json
 import os
 import secrets
+import urllib.request
 import uuid
+from html import escape
 from datetime import datetime, timedelta
 
 # Vercel's serverless filesystem is read-only except /tmp. DuckDB looks up
@@ -96,6 +98,405 @@ def rs_identify(user_id: str, traits: dict, anonymous_id: str | None = None):
         rudder_analytics.flush()  # see note in rs_track above
     except Exception:
         pass
+
+# ================= N8N NOTIFICATIONS (WhatsApp / Telegram) =================
+# Fires a webhook into n8n right after a booking or order is written, so
+# n8n can send the customer a WhatsApp confirmation and ping the studio.
+# Same philosophy as rs_track above: a notification failure must never
+# break the actual booking/order — always fails silently.
+# ⚙️ EDIT ME: set these two in Vercel → Settings → Environment Variables,
+# using the "Production URL" of each Webhook node in the n8n workflow
+# (Booking Webhook and Order Webhook respectively).
+N8N_BOOKING_WEBHOOK_URL = os.environ.get("N8N_BOOKING_WEBHOOK_URL", "")
+N8N_ORDER_WEBHOOK_URL = os.environ.get("N8N_ORDER_WEBHOOK_URL", "")
+
+def notify_n8n(url: str, payload: dict):
+    if not url:
+        return  # not configured yet — no-op rather than error
+    try:
+        data = json.dumps(payload, default=str).encode("utf-8")
+        req = urllib.request.Request(
+            url, data=data, headers={"Content-Type": "application/json"}, method="POST"
+        )
+        # Short timeout on purpose: the n8n Webhook node responds
+        # immediately (responseMode "onReceived") before it even sends
+        # the WhatsApp/Telegram messages, so this call returns fast —
+        # we're not waiting on WhatsApp delivery inside the request path.
+        urllib.request.urlopen(req, timeout=5)
+    except Exception:
+        pass
+
+# ================= BREVO TRANSACTIONAL EMAIL =================
+# Sends booking/order confirmation emails straight from the backend —
+# no n8n involved. Same "never break the real request" philosophy as
+# rs_track/notify_n8n above.
+# ⚙️ EDIT ME: set these in Vercel → Settings → Environment Variables.
+# BREVO_API_KEY is required; the sender fields have sane defaults but you
+# can override them. The sender email MUST be a verified sender (or
+# authenticated domain) in your Brevo account, or sends will fail.
+BREVO_API_KEY = os.environ.get("BREVO_API_KEY", "")
+BREVO_SENDER_EMAIL = os.environ.get("BREVO_SENDER_EMAIL", "studio@tifllittlewear.com")
+BREVO_SENDER_NAME = os.environ.get("BREVO_SENDER_NAME", "Tifl Little Wear")
+
+def send_brevo_email(to_email: str, to_name: str, subject: str, html_content: str):
+    if not BREVO_API_KEY or not to_email:
+        return  # not configured, or no address to send to — no-op rather than error
+    try:
+        payload = {
+            "sender": {"name": BREVO_SENDER_NAME, "email": BREVO_SENDER_EMAIL},
+            "to": [{"email": to_email, "name": to_name or "there"}],
+            "subject": subject,
+            "htmlContent": html_content,
+        }
+        data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(
+            "https://api.brevo.com/v3/smtp/email",
+            data=data,
+            headers={
+                "Content-Type": "application/json",
+                "accept": "application/json",
+                "api-key": BREVO_API_KEY,
+            },
+            method="POST",
+        )
+        urllib.request.urlopen(req, timeout=8)
+    except Exception as e:
+        # Visible in Vercel function logs so a bad API key or unverified
+        # sender is easy to spot, without ever raising into the actual
+        # booking/order request.
+        print(f"[send_brevo_email] failed to send to {to_email!r}: {e}")
+
+def _e(v) -> str:
+    """HTML-escape a value for safe interpolation into an email template."""
+    if v is None:
+        return ""
+    return escape(str(v))
+
+def _pretty_date(d) -> str:
+    if not d:
+        return "a date to be confirmed"
+    try:
+        dt = datetime.strptime(str(d)[:10], "%Y-%m-%d")
+        return dt.strftime("%A, %d %B %Y")
+    except Exception:
+        return str(d)
+
+# Shared HTML shell both templates fill in — colors/fonts pulled straight
+# from DESIGN-GUIDE.md (Fredoka headings, Inter body, IBM Plex Mono for
+# any number/reference, --bg-dark for the confirmation card) so these
+# actually match the site rather than looking like generic transactional
+# emails. Uses %%TOKEN%% placeholders + str.replace rather than
+# .format()/f-strings, since the embedded CSS is full of literal { }
+# that would otherwise need escaping everywhere.
+_BOOKING_EMAIL_TEMPLATE = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your Tifl Little Wear fitting is confirmed</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap');
+  body { margin:0; padding:0; background:#F2F8FE; }
+  table { border-collapse:collapse; }
+  img { border:0; display:block; }
+  a { text-decoration:none; }
+  @media only screen and (max-width:600px) {
+    .container { width:100% !important; }
+    .stack-pad { padding-left:20px !important; padding-right:20px !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#F2F8FE;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F2F8FE;">
+    <tr><td align="center" style="padding:36px 16px;">
+
+      <table role="presentation" class="container" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:600px;background:#FFFFFF;border-radius:16px;overflow:hidden;">
+
+        <tr>
+          <td align="center" style="padding:32px 40px 20px;">
+            <img src="https://www.tifllittlewear.com/assets/logo.png" width="52" height="52" alt="Tifl Little Wear" style="border-radius:12px;">
+          </td>
+        </tr>
+
+        <tr>
+          <td class="stack-pad" align="center" style="padding:0 40px;">
+            <div style="font-family:'IBM Plex Mono',Consolas,monospace;font-size:11.5px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:#4A93E8;margin-bottom:10px;">
+              Booking confirmed
+            </div>
+            <h1 style="margin:0 0 12px;font-family:'Fredoka',Verdana,sans-serif;font-weight:700;font-size:26px;line-height:1.25;color:#1F2A3D;">
+              Your fitting is booked!
+            </h1>
+            <p style="margin:0 0 28px;font-family:'Inter',Arial,sans-serif;font-size:14.5px;line-height:1.6;color:#5C6B85;">
+              Hi %%PARENT_NAME%%, we can't wait to see %%CHILD_NAME%% for their fitting. Here's everything you need — see you soon!
+            </p>
+          </td>
+        </tr>
+
+        <tr>
+          <td class="stack-pad" style="padding:0 40px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#16233B;border-radius:14px;">
+              <tr>
+                <td style="padding:26px 26px 22px;">
+                  <div style="font-family:'IBM Plex Mono',Consolas,monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#9FB1CC;margin-bottom:4px;">Booking reference</div>
+                  <div style="font-family:'IBM Plex Mono',Consolas,monospace;font-size:19px;font-weight:500;color:#F1F6FD;margin-bottom:20px;">%%BOOKING_ID%%</div>
+
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td width="50%" style="padding-bottom:16px;vertical-align:top;">
+                        <div style="font-family:'IBM Plex Mono',Consolas,monospace;font-size:10.5px;letter-spacing:.5px;text-transform:uppercase;color:#9FB1CC;margin-bottom:4px;">Date</div>
+                        <div style="font-family:'Inter',Arial,sans-serif;font-size:14px;font-weight:600;color:#F1F6FD;">%%DATE%%</div>
+                      </td>
+                      <td width="50%" style="padding-bottom:16px;vertical-align:top;">
+                        <div style="font-family:'IBM Plex Mono',Consolas,monospace;font-size:10.5px;letter-spacing:.5px;text-transform:uppercase;color:#9FB1CC;margin-bottom:4px;">Time</div>
+                        <div style="font-family:'IBM Plex Mono',Consolas,monospace;font-size:14px;font-weight:500;color:#F1F6FD;">%%TIME_SLOT%%</div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td width="50%" style="vertical-align:top;">
+                        <div style="font-family:'IBM Plex Mono',Consolas,monospace;font-size:10.5px;letter-spacing:.5px;text-transform:uppercase;color:#9FB1CC;margin-bottom:4px;">Garment</div>
+                        <div style="font-family:'Inter',Arial,sans-serif;font-size:14px;font-weight:600;color:#F1F6FD;">%%GARMENT_TYPE%%</div>
+                      </td>
+                      <td width="50%" style="vertical-align:top;">
+                        <div style="font-family:'IBM Plex Mono',Consolas,monospace;font-size:10.5px;letter-spacing:.5px;text-transform:uppercase;color:#9FB1CC;margin-bottom:4px;">Mode</div>
+                        <div style="font-family:'Inter',Arial,sans-serif;font-size:14px;font-weight:600;color:#F1F6FD;">%%MODE%%</div>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <tr>
+          <td class="stack-pad" style="padding:28px 40px 0;">
+            <div style="border-top:1.5px dashed #E1E8F2;"></div>
+          </td>
+        </tr>
+
+        <tr>
+          <td class="stack-pad" style="padding:22px 40px 6px;">
+            <div style="font-family:'Fredoka',Verdana,sans-serif;font-weight:600;font-size:15px;color:#1F2A3D;margin-bottom:12px;">What happens next</div>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="padding:6px 0;font-family:'Inter',Arial,sans-serif;font-size:13.5px;color:#5C6B85;line-height:1.6;">
+                  <span style="color:#4A93E8;font-weight:600;">1.</span>&nbsp; We'll call %%PHONE%% shortly to confirm the slot.
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:6px 0;font-family:'Inter',Arial,sans-serif;font-size:13.5px;color:#5C6B85;line-height:1.6;">
+                  <span style="color:#4A93E8;font-weight:600;">2.</span>&nbsp; %%TAILOR_LINE%%
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:6px 0 0;font-family:'Inter',Arial,sans-serif;font-size:13.5px;color:#5C6B85;line-height:1.6;">
+                  <span style="color:#4A93E8;font-weight:600;">3.</span>&nbsp; Bring %%CHILD_NAME%% in comfortable clothes — measuring only takes a few minutes.
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <tr>
+          <td align="center" style="padding:30px 40px 8px;">
+            <a href="https://www.tifllittlewear.com/account.html" style="display:inline-block;background:#4A93E8;color:#FFFFFF;font-family:'Inter',Arial,sans-serif;font-size:14px;font-weight:600;padding:13px 30px;border-radius:10px;">Manage your booking</a>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:36px 40px 32px;">
+            <div style="border-top:1px solid #E1E8F2;padding-top:22px;text-align:center;">
+              <img src="https://www.tifllittlewear.com/assets/logo.png" width="28" height="28" alt="" style="margin:0 auto 10px;border-radius:7px;">
+              <p style="margin:0 0 4px;font-family:'Inter',Arial,sans-serif;font-size:12px;color:#5C6B85;">Tifl Little Wear · Gulberg, Lahore</p>
+              <p style="margin:0;font-family:'Inter',Arial,sans-serif;font-size:12px;color:#5C6B85;">
+                <a href="mailto:studio@tifllittlewear.com" style="color:#4A93E8;">studio@tifllittlewear.com</a> &nbsp;·&nbsp;
+                <a href="tel:+923054110254" style="color:#4A93E8;">+92 305 4110254</a>
+              </p>
+            </div>
+          </td>
+        </tr>
+
+      </table>
+
+    </td></tr>
+  </table>
+</body>
+</html>"""
+
+def build_booking_email_html(b: dict) -> str:
+    tailor = b.get("preferred_tailor")
+    tailor_line = f"You're booked with {_e(tailor)}." if tailor else "We'll match you with the right master tailor."
+    html_out = _BOOKING_EMAIL_TEMPLATE
+    replacements = {
+        "%%PARENT_NAME%%": _e(b.get("parent_name")) or "there",
+        "%%CHILD_NAME%%": _e(b.get("child_name")) or "your little one",
+        "%%BOOKING_ID%%": _e(b.get("booking_id")),
+        "%%DATE%%": _e(_pretty_date(b.get("date"))),
+        "%%TIME_SLOT%%": _e(b.get("time_slot")) or "TBC",
+        "%%GARMENT_TYPE%%": _e(b.get("garment_type")) or "—",
+        "%%MODE%%": _e(b.get("mode")) or "In-studio",
+        "%%PHONE%%": _e(b.get("phone")) or "you",
+        "%%TAILOR_LINE%%": tailor_line,
+    }
+    for token, value in replacements.items():
+        html_out = html_out.replace(token, value)
+    return html_out
+
+_ORDER_EMAIL_TEMPLATE = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your Tifl Little Wear order is confirmed</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap');
+  body { margin:0; padding:0; background:#F2F8FE; }
+  table { border-collapse:collapse; }
+  img { border:0; display:block; }
+  a { text-decoration:none; }
+  @media only screen and (max-width:600px) {
+    .container { width:100% !important; }
+    .stack-pad { padding-left:20px !important; padding-right:20px !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#F2F8FE;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F2F8FE;">
+    <tr><td align="center" style="padding:36px 16px;">
+
+      <table role="presentation" class="container" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:600px;background:#FFFFFF;border-radius:16px;overflow:hidden;">
+
+        <tr>
+          <td align="center" style="padding:32px 40px 20px;">
+            <img src="https://www.tifllittlewear.com/assets/logo.png" width="52" height="52" alt="Tifl Little Wear" style="border-radius:12px;">
+          </td>
+        </tr>
+
+        <tr>
+          <td class="stack-pad" align="center" style="padding:0 40px;">
+            <div style="font-family:'IBM Plex Mono',Consolas,monospace;font-size:11.5px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:#4A93E8;margin-bottom:10px;">
+              Order confirmed
+            </div>
+            <h1 style="margin:0 0 12px;font-family:'Fredoka',Verdana,sans-serif;font-weight:700;font-size:26px;line-height:1.25;color:#1F2A3D;">
+              Thank you — your order is in.
+            </h1>
+            <p style="margin:0 0 28px;font-family:'Inter',Arial,sans-serif;font-size:14.5px;line-height:1.6;color:#5C6B85;">
+              Hi %%CUSTOMER_NAME%%, we'll call to confirm delivery. Keep your order number handy if you need to reach us about it.
+            </p>
+          </td>
+        </tr>
+
+        <tr>
+          <td class="stack-pad" style="padding:0 40px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#16233B;border-radius:14px;">
+              <tr>
+                <td style="padding:26px 26px 22px;">
+                  <div style="font-family:'IBM Plex Mono',Consolas,monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#9FB1CC;margin-bottom:4px;">Order number</div>
+                  <div style="font-family:'IBM Plex Mono',Consolas,monospace;font-size:19px;font-weight:500;color:#F1F6FD;margin-bottom:18px;">%%ORDER_ID%%</div>
+
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                    %%ITEM_ROWS%%
+                  </table>
+
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:14px;">
+                    <tr>
+                      <td style="padding:3px 0;font-family:'Inter',Arial,sans-serif;font-size:12.5px;color:#9FB1CC;">Subtotal</td>
+                      <td align="right" style="padding:3px 0;font-family:'IBM Plex Mono',Consolas,monospace;font-size:12.5px;color:#9FB1CC;">%%CURRENCY%% %%SUBTOTAL%%</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:3px 0;font-family:'Inter',Arial,sans-serif;font-size:12.5px;color:#9FB1CC;">Shipping</td>
+                      <td align="right" style="padding:3px 0;font-family:'IBM Plex Mono',Consolas,monospace;font-size:12.5px;color:#9FB1CC;">%%CURRENCY%% %%SHIPPING_FEE%%</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:10px 0 0;font-family:'Inter',Arial,sans-serif;font-size:15px;font-weight:700;color:#F1F6FD;">Total</td>
+                      <td align="right" style="padding:10px 0 0;font-family:'IBM Plex Mono',Consolas,monospace;font-size:17px;font-weight:500;color:#F1F6FD;">%%CURRENCY%% %%TOTAL%%</td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <tr>
+          <td class="stack-pad" style="padding:28px 40px 0;">
+            <div style="border-top:1.5px dashed #E1E8F2;"></div>
+          </td>
+        </tr>
+
+        <tr>
+          <td class="stack-pad" style="padding:22px 40px 6px;">
+            <div style="font-family:'Fredoka',Verdana,sans-serif;font-weight:600;font-size:15px;color:#1F2A3D;margin-bottom:10px;">Delivering to</div>
+            <p style="margin:0;font-family:'Inter',Arial,sans-serif;font-size:13.5px;color:#5C6B85;line-height:1.6;">
+              %%ADDRESS%%
+            </p>
+            <p style="margin:4px 0 0;font-family:'Inter',Arial,sans-serif;font-size:13.5px;color:#5C6B85;line-height:1.6;">
+              Payment: %%PAYMENT_METHOD%%
+            </p>
+          </td>
+        </tr>
+
+        <tr>
+          <td align="center" style="padding:30px 40px 8px;">
+            <a href="https://www.tifllittlewear.com/account.html" style="display:inline-block;background:#4A93E8;color:#FFFFFF;font-family:'Inter',Arial,sans-serif;font-size:14px;font-weight:600;padding:13px 30px;border-radius:10px;">Track your order</a>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:36px 40px 32px;">
+            <div style="border-top:1px solid #E1E8F2;padding-top:22px;text-align:center;">
+              <img src="https://www.tifllittlewear.com/assets/logo.png" width="28" height="28" alt="" style="margin:0 auto 10px;border-radius:7px;">
+              <p style="margin:0 0 4px;font-family:'Inter',Arial,sans-serif;font-size:12px;color:#5C6B85;">Tifl Little Wear · Gulberg, Lahore</p>
+              <p style="margin:0;font-family:'Inter',Arial,sans-serif;font-size:12px;color:#5C6B85;">
+                <a href="mailto:studio@tifllittlewear.com" style="color:#4A93E8;">studio@tifllittlewear.com</a> &nbsp;·&nbsp;
+                <a href="tel:+923054110254" style="color:#4A93E8;">+92 305 4110254</a>
+              </p>
+            </div>
+          </td>
+        </tr>
+
+      </table>
+
+    </td></tr>
+  </table>
+</body>
+</html>"""
+
+def build_order_email_html(o: dict) -> str:
+    items = o.get("items") or []
+    currency = o.get("currency") or "PKR"
+
+    item_rows = ""
+    for i in items:
+        item_rows += f"""
+                    <tr>
+                      <td style="padding:10px 0;border-bottom:1px solid #233553;font-family:'Inter',Arial,sans-serif;font-size:13.5px;color:#F1F6FD;">
+                        {_e(i.get('name'))} <span style="color:#9FB1CC;">&times;{_e(i.get('qty'))}</span>
+                      </td>
+                      <td align="right" style="padding:10px 0;border-bottom:1px solid #233553;font-family:'IBM Plex Mono',Consolas,monospace;font-size:13.5px;color:#F1F6FD;white-space:nowrap;">
+                        {currency} {_e(i.get('price'))}
+                      </td>
+                    </tr>"""
+
+    address_line = _e(o.get("address")) or "—"
+    if o.get("city"):
+        address_line += f", {_e(o.get('city'))}"
+
+    html_out = _ORDER_EMAIL_TEMPLATE
+    replacements = {
+        "%%CUSTOMER_NAME%%": _e(o.get("customer_name")) or "there",
+        "%%ORDER_ID%%": _e(o.get("order_id")),
+        "%%ITEM_ROWS%%": item_rows,
+        "%%CURRENCY%%": _e(currency),
+        "%%SUBTOTAL%%": _e(o.get("subtotal")),
+        "%%SHIPPING_FEE%%": _e(o.get("shipping_fee")),
+        "%%TOTAL%%": _e(o.get("total")),
+        "%%ADDRESS%%": address_line,
+        "%%PAYMENT_METHOD%%": _e(o.get("payment_method")) or "—",
+    }
+    for token, value in replacements.items():
+        html_out = html_out.replace(token, value)
+    return html_out
 
 # Flattens the { first_touch: {...}, last_touch: {...} } attribution
 # object from the browser into event properties, e.g.
@@ -766,6 +1167,35 @@ def create_booking(booking: Booking):
                   "preferred_tailor": booking.preferred_tailor,
               }, **flatten_attribution(booking.attribution)),
               anonymous_id=booking.anonymous_id)
+    notify_n8n(N8N_BOOKING_WEBHOOK_URL, {
+        "booking_id": booking_id,
+        "parent_name": booking.parent_name,
+        "child_name": booking.child_name,
+        "phone": booking.phone,
+        "email": booking.email,
+        "garment_type": booking.garment_type,
+        "mode": booking.mode,
+        "date": booking.date,
+        "time_slot": booking.time_slot,
+        "notes": booking.notes,
+        "preferred_tailor": booking.preferred_tailor,
+    })
+    send_brevo_email(
+        to_email=booking.email,
+        to_name=booking.parent_name,
+        subject=f"Your Tifl Little Wear fitting is confirmed — {booking_id}",
+        html_content=build_booking_email_html({
+            "booking_id": booking_id,
+            "parent_name": booking.parent_name,
+            "child_name": booking.child_name,
+            "phone": booking.phone,
+            "garment_type": booking.garment_type,
+            "mode": booking.mode,
+            "date": booking.date,
+            "time_slot": booking.time_slot,
+            "preferred_tailor": booking.preferred_tailor,
+        }),
+    )
     return {"booking_id": booking_id, "status": "confirmed"}
 
 
@@ -1182,6 +1612,37 @@ def create_order(order: Order, authorization: str | None = Header(default=None))
                   ],
               }, **flatten_attribution(order.attribution)),
               anonymous_id=order.anonymous_id)
+    notify_n8n(N8N_ORDER_WEBHOOK_URL, {
+        "order_id": order_id,
+        "customer_name": order.customer_name,
+        "phone": order.phone,
+        "email": order.email,
+        "city": order.city,
+        "address": order.address,
+        "items": [{"name": i.name, "qty": i.qty, "price": i.price} for i in order.items],
+        "subtotal": order.subtotal,
+        "shipping_fee": order.shipping_fee,
+        "total": order.total,
+        "currency": order.currency,
+        "payment_method": order.payment_method,
+    })
+    send_brevo_email(
+        to_email=order.email,
+        to_name=order.customer_name,
+        subject=f"Order confirmed — {order_id} — Tifl Little Wear",
+        html_content=build_order_email_html({
+            "order_id": order_id,
+            "customer_name": order.customer_name,
+            "items": [{"name": i.name, "qty": i.qty, "price": i.price} for i in order.items],
+            "subtotal": order.subtotal,
+            "shipping_fee": order.shipping_fee,
+            "total": order.total,
+            "currency": order.currency,
+            "address": order.address,
+            "city": order.city,
+            "payment_method": order.payment_method,
+        }),
+    )
     return {"order_id": order_id, "status": "received"}
 
 
