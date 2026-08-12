@@ -45,6 +45,16 @@
 
   <div id="adminPanel" style="display:none;margin-top:34px;">
 
+    <div class="admin-tabs" role="tablist">
+      <button class="admin-tab active" data-tab="products" role="tab">Products</button>
+      <button class="admin-tab" data-tab="tailors" role="tab">Tailors</button>
+      <button class="admin-tab" data-tab="fabrics" role="tab">Fabrics</button>
+      <button class="admin-tab" data-tab="fittings" role="tab">Fittings</button>
+    </div>
+
+    <!-- ===== Products ===== -->
+    <div class="admin-tab-panel active" data-panel="products">
+
     <!-- ===== Bulk import ===== -->
     <div class="side-card" style="margin-bottom:40px;">
       <h3>Bulk upload (CSV or XML)</h3>
@@ -181,9 +191,11 @@
         <div id="adminProductList" class="admin-list"></div>
       </div>
     </div>
+    </div>
+    <!-- /Products panel -->
 
     <!-- ===== Tailors ===== -->
-    <hr class="seam" style="margin:50px 0;">
+    <div class="admin-tab-panel" data-panel="tailors">
     <div class="eyebrow">Onboard a tailor</div>
     <h2 style="font-size:22px;margin-bottom:8px;">Add and manage master tailors</h2>
     <p style="color:var(--ink-soft);font-size:14.5px;max-width:640px;margin-bottom:28px;">
@@ -245,9 +257,58 @@
         <div id="adminTailorList" class="admin-list"></div>
       </div>
     </div>
+    </div>
+    <!-- /Tailors panel -->
+
+    <!-- ===== Fabrics ===== -->
+    <div class="admin-tab-panel" data-panel="fabrics">
+    <div class="eyebrow">Fabric catalog</div>
+    <h2 style="font-size:22px;margin-bottom:8px;">Add and manage fabrics</h2>
+    <p style="color:var(--ink-soft);font-size:14.5px;max-width:640px;margin-bottom:28px;">
+      Width and pattern repeat are what real yardage estimates are built from — worth filling in accurately for
+      every fabric you stock. This catalog feeds the tech pack generator.
+    </p>
+
+    <div class="contact-grid">
+      <div class="contact-form" style="background:var(--bg-alt);">
+        <h2 id="afFormTitle" style="font-size:18px;margin-bottom:16px;">Add a fabric</h2>
+        <form id="fabricForm">
+          <input type="hidden" id="afEditingId">
+          <div class="form-grid">
+            <div class="field full"><label for="afName">Fabric name</label><input id="afName" required type="text" placeholder="e.g. Raw Silk — Emerald"></div>
+            <div class="field"><label for="afComposition">Composition</label><input id="afComposition" type="text" placeholder="e.g. 100% Silk"></div>
+            <div class="field"><label for="afDrapeType">Drape type</label>
+              <select id="afDrapeType">
+                <option value="">— select —</option>
+                <option value="crisp">Crisp</option>
+                <option value="structured">Structured</option>
+                <option value="fluid">Fluid</option>
+                <option value="stretch">Stretch</option>
+              </select>
+            </div>
+            <div class="field"><label for="afWidth">Fabric width (cm)</label><input id="afWidth" type="number" step="0.1" placeholder="112"></div>
+            <div class="field"><label for="afRepeat">Pattern repeat (cm) <span style="color:var(--primary-dark);">(0 if plain/no repeat)</span></label><input id="afRepeat" type="number" step="0.1" placeholder="0"></div>
+            <div class="field"><label for="afCost">Cost per yard (PKR)</label><input id="afCost" type="number" step="0.01" placeholder="1800"></div>
+            <div class="field"><label for="afSupplier">Supplier</label><input id="afSupplier" type="text" placeholder="e.g. Liberty Market"></div>
+            <div class="field full"><label for="afNotes">Notes</label><textarea id="afNotes" rows="2" placeholder="Care notes, shrinkage, anything a tailor should know."></textarea></div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:18px;">
+            <button type="button" class="btn btn-ghost" id="afCancelEdit">Clear</button>
+            <button type="submit" class="btn btn-primary btn-block">Save fabric</button>
+          </div>
+        </form>
+      </div>
+
+      <div>
+        <h2 style="font-size:18px;margin-bottom:16px;">Current fabrics</h2>
+        <div id="adminFabricList" class="admin-list"></div>
+      </div>
+    </div>
+    </div>
+    <!-- /Fabrics panel -->
 
     <!-- ===== Fittings ===== -->
-    <hr class="seam" style="margin:50px 0;">
+    <div class="admin-tab-panel" data-panel="fittings">
     <div class="eyebrow">Record a fitting</div>
     <h2 style="font-size:22px;margin-bottom:8px;">Log a child's 11-point measurement</h2>
     <p style="color:var(--ink-soft);font-size:14.5px;max-width:640px;margin-bottom:28px;">
@@ -297,6 +358,9 @@
         <div id="adminFittingList" class="admin-list"></div>
       </div>
     </div>
+    </div>
+    <!-- /Fittings panel -->
+
   </div>
 </main>
 

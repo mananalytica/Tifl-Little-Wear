@@ -844,6 +844,22 @@ def ensure_schema(conn):
             recorded_by      VARCHAR,
             notes            VARCHAR
         );""",
+        # Real fabric catalog (Phase 1 of the tech pack generator) — width
+        # and pattern repeat are what actual yardage math depends on, which
+        # a free-text material description on `products` can't give.
+        """CREATE TABLE IF NOT EXISTS fabrics (
+            fabric_id           VARCHAR PRIMARY KEY,
+            created_at          TIMESTAMP,
+            name                VARCHAR,
+            composition         VARCHAR,
+            width_cm            DOUBLE,
+            pattern_repeat_cm   DOUBLE,
+            drape_type          VARCHAR,
+            cost_per_yard       DOUBLE,
+            supplier            VARCHAR,
+            notes               VARCHAR,
+            active              BOOLEAN
+        );""",
     ]
     try:
         conn.execute("\n".join(create_statements))
@@ -1623,6 +1639,78 @@ def delete_tailor(tailor_id: str, x_admin_key: str | None = Header(default=None)
     conn.execute("DELETE FROM tailors WHERE tailor_id = ?", [tailor_id])
     conn.close()
     return {"tailor_id": tailor_id, "status": "deleted"}
+
+
+# ================= FABRICS =================
+# Phase 1 of the tech pack generator: a real catalog with the actual
+# numbers yardage math depends on (width, pattern repeat), instead of the
+# free-text `products.material` field. GET is public (Phase 3's tech-pack
+# generation and the product form both need to read this); writes are
+# admin-key protected, same as tailors/products.
+class Fabric(BaseModel):
+    name: str
+    composition: str | None = None
+    width_cm: float | None = None
+    pattern_repeat_cm: float | None = None
+    drape_type: str | None = None  # crisp | structured | fluid | stretch
+    cost_per_yard: float | None = None
+    supplier: str | None = None
+    notes: str | None = None
+    active: bool | None = True
+
+
+FABRIC_FIELDS = ["name", "composition", "width_cm", "pattern_repeat_cm",
+                  "drape_type", "cost_per_yard", "supplier", "notes", "active"]
+
+def fabric_values(f: Fabric) -> list:
+    return [f.name, f.composition, f.width_cm, f.pattern_repeat_cm,
+            f.drape_type, f.cost_per_yard, f.supplier, f.notes, f.active]
+
+
+@app.get("/api/fabrics")
+def list_fabrics():
+    conn = get_conn()
+    rows = conn.execute("SELECT * FROM fabrics WHERE active = true ORDER BY created_at DESC").fetchall()
+    cols = [c[0] for c in conn.description]
+    conn.close()
+    return [dict(zip(cols, row)) for row in rows]
+
+
+@app.post("/api/fabrics")
+def create_fabric(fabric: Fabric, x_admin_key: str | None = Header(default=None)):
+    require_admin(x_admin_key)
+    fabric_id = "fab-" + uuid.uuid4().hex[:8]
+    conn = get_conn()
+    cols = ", ".join(FABRIC_FIELDS)
+    placeholders = ", ".join(["?"] * len(FABRIC_FIELDS))
+    conn.execute(
+        f"INSERT INTO fabrics (fabric_id, created_at, {cols}) VALUES (?, ?, {placeholders})",
+        [fabric_id, datetime.now()] + fabric_values(fabric),
+    )
+    conn.close()
+    return {"fabric_id": fabric_id, "status": "created"}
+
+
+@app.put("/api/fabrics/{fabric_id}")
+def update_fabric(fabric_id: str, fabric: Fabric, x_admin_key: str | None = Header(default=None)):
+    require_admin(x_admin_key)
+    conn = get_conn()
+    set_clause = ", ".join([f"{f}=?" for f in FABRIC_FIELDS])
+    conn.execute(
+        f"UPDATE fabrics SET {set_clause} WHERE fabric_id=?",
+        fabric_values(fabric) + [fabric_id],
+    )
+    conn.close()
+    return {"fabric_id": fabric_id, "status": "updated"}
+
+
+@app.delete("/api/fabrics/{fabric_id}")
+def delete_fabric(fabric_id: str, x_admin_key: str | None = Header(default=None)):
+    require_admin(x_admin_key)
+    conn = get_conn()
+    conn.execute("DELETE FROM fabrics WHERE fabric_id = ?", [fabric_id])
+    conn.close()
+    return {"fabric_id": fabric_id, "status": "deleted"}
 
 
 @app.get("/api/products")

@@ -1487,6 +1487,18 @@ function initAdminPage(){
   const root = document.getElementById('adminRoot');
   if(!root) return;
 
+  // ---- Tab switching. Every panel's data is loaded up front on unlock
+  // (same as before) — tabs only toggle visibility via CSS, so switching
+  // is instant and there's no per-tab loading state to manage.
+  document.querySelectorAll('.admin-tab').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.admin-tab').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.admin-tab-panel').forEach(p=>p.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelector(`.admin-tab-panel[data-panel="${btn.dataset.tab}"]`)?.classList.add('active');
+    });
+  });
+
   function getKey(){ return sessionStorage.getItem('tifl_admin_key') || ''; }
   function setKey(k){ try{ sessionStorage.setItem('tifl_admin_key', k); }catch(e){} }
 
@@ -1744,6 +1756,7 @@ function initAdminPage(){
     refreshList();
     refreshTailorDropdown();
     refreshTailorList();
+    refreshFabricList();
     refreshFittingList();
   });
 
@@ -1777,6 +1790,90 @@ function initAdminPage(){
     }catch(e){ /* apiCall already toasts on 401 */ }
   });
   document.getElementById('atCancelEdit')?.addEventListener('click', resetTailorForm);
+
+  // ---- Fabrics panel: same add/edit/delete pattern as tailors. ----
+  async function refreshFabricList(){
+    const listRoot = document.getElementById('adminFabricList');
+    if(!listRoot) return;
+    listRoot.innerHTML = '<p style="color:var(--ink-soft);">Loading…</p>';
+    let fabrics;
+    try{
+      const res = await fetch('/api/fabrics');
+      if(!res.ok) throw new Error('status '+res.status);
+      fabrics = await res.json();
+    }catch(e){
+      listRoot.innerHTML = '<p style="color:var(--primary-dark);">Could not load fabrics from the server ('+e.message+').</p>';
+      return;
+    }
+    listRoot.innerHTML = fabrics.map(f=>`
+      <div class="admin-row" data-id="${f.fabric_id}">
+        <div class="admin-row-info">
+          <div class="admin-row-name">${f.name}</div>
+          <div class="admin-row-meta">${f.composition || 'composition not set'}${f.width_cm ? ' · '+f.width_cm+'cm wide' : ''}${f.pattern_repeat_cm ? ' · '+f.pattern_repeat_cm+'cm repeat' : ''}${f.drape_type ? ' · '+f.drape_type : ''}</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" data-edit="${f.fabric_id}">Edit</button>
+        <button class="btn btn-ghost btn-sm" data-del="${f.fabric_id}">Delete</button>
+      </div>`).join('') || '<p style="color:var(--ink-soft);">No fabrics yet — add your first one above.</p>';
+
+    listRoot.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click', ()=>{
+      const f = fabrics.find(x=>x.fabric_id===b.dataset.edit);
+      fillFabricForm(f);
+      window.scrollTo({top: document.getElementById('fabricForm').getBoundingClientRect().top + window.scrollY - 20, behavior:'smooth'});
+    }));
+    listRoot.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click', async ()=>{
+      if(!confirm('Delete this fabric?')) return;
+      try{ await apiCall('/api/fabrics/'+b.dataset.del, 'DELETE'); showToast('Deleted'); refreshFabricList(); }
+      catch(e){}
+    }));
+  }
+
+  function fillFabricForm(f){
+    document.getElementById('afEditingId').value = f.fabric_id;
+    document.getElementById('afName').value = f.name;
+    document.getElementById('afComposition').value = f.composition || '';
+    document.getElementById('afDrapeType').value = f.drape_type || '';
+    document.getElementById('afWidth').value = f.width_cm ?? '';
+    document.getElementById('afRepeat').value = f.pattern_repeat_cm ?? '';
+    document.getElementById('afCost').value = f.cost_per_yard ?? '';
+    document.getElementById('afSupplier').value = f.supplier || '';
+    document.getElementById('afNotes').value = f.notes || '';
+    document.getElementById('afFormTitle').textContent = 'Editing: '+f.name;
+  }
+  function resetFabricForm(){
+    document.getElementById('fabricForm').reset();
+    document.getElementById('afEditingId').value = '';
+    document.getElementById('afFormTitle').textContent = 'Add a fabric';
+  }
+  function fabricFormToPayload(){
+    const name = document.getElementById('afName').value.trim();
+    if(!name) throw new Error('Fabric name is required');
+    return {
+      name,
+      composition: document.getElementById('afComposition').value || null,
+      drape_type: document.getElementById('afDrapeType').value || null,
+      width_cm: document.getElementById('afWidth').value ? parseFloat(document.getElementById('afWidth').value) : null,
+      pattern_repeat_cm: document.getElementById('afRepeat').value ? parseFloat(document.getElementById('afRepeat').value) : null,
+      cost_per_yard: document.getElementById('afCost').value ? parseFloat(document.getElementById('afCost').value) : null,
+      supplier: document.getElementById('afSupplier').value || null,
+      notes: document.getElementById('afNotes').value || null,
+      active: true
+    };
+  }
+  document.getElementById('fabricForm')?.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const editingId = document.getElementById('afEditingId').value;
+    let payload;
+    try{ payload = fabricFormToPayload(); }
+    catch(err){ showToast(err.message); return; }
+    try{
+      if(editingId) await apiCall('/api/fabrics/'+editingId, 'PUT', payload);
+      else await apiCall('/api/fabrics', 'POST', payload);
+      showToast('Saved');
+      resetFabricForm();
+      refreshFabricList();
+    }catch(e){ /* apiCall already toasts on 401 */ }
+  });
+  document.getElementById('afCancelEdit')?.addEventListener('click', resetFabricForm);
 
   /* ---------- bulk import (CSV / XML) ---------- */
   // Maps common Google Shopping / Meta Catalog feed column names onto our
@@ -1969,6 +2066,7 @@ function initAdminPage(){
     refreshList();
     refreshTailorDropdown();
     refreshTailorList();
+    refreshFabricList();
     refreshFittingList();
   }
 }
