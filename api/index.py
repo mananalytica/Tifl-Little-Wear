@@ -117,7 +117,13 @@ def notify_n8n(url: str, payload: dict):
     try:
         data = json.dumps(payload, default=str).encode("utf-8")
         req = urllib.request.Request(
-            url, data=data, headers={"Content-Type": "application/json"}, method="POST"
+            url,
+            data=data,
+            headers={
+                "Content-Type": "application/json",
+                "User-Agent": "TiflLittleWear-Backend/1.0 (+https://www.tifllittlewear.com)",
+            },
+            method="POST",
         )
         # Short timeout on purpose: the n8n Webhook node responds
         # immediately (responseMode "onReceived") before it even sends
@@ -157,6 +163,7 @@ def send_brevo_email(to_email: str, to_name: str, subject: str, html_content: st
                 "Content-Type": "application/json",
                 "accept": "application/json",
                 "api-key": BREVO_API_KEY,
+                "User-Agent": "TiflLittleWear-Backend/1.0 (+https://www.tifllittlewear.com)",
             },
             method="POST",
         )
@@ -224,7 +231,18 @@ def send_discord_notification(webhook_url: str, title: str, color: int, fields: 
             embed["footer"] = {"text": footer}
         data = json.dumps({"embeds": [embed]}).encode("utf-8")
         req = urllib.request.Request(
-            webhook_url, data=data, headers={"Content-Type": "application/json"}, method="POST"
+            webhook_url,
+            data=data,
+            headers={
+                "Content-Type": "application/json",
+                # Discord's API sits behind Cloudflare, which blocks
+                # urllib's default "Python-urllib/3.x" User-Agent as a
+                # bot signature (Cloudflare error 1010) before the
+                # request ever reaches Discord. A normal-looking UA
+                # avoids that edge-level block entirely.
+                "User-Agent": "TiflLittleWear-Backend/1.0 (+https://www.tifllittlewear.com)",
+            },
+            method="POST",
         )
         urllib.request.urlopen(req, timeout=5)
     except urllib.error.HTTPError as e:
