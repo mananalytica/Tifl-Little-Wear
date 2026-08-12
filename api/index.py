@@ -24,6 +24,7 @@ import hashlib
 import json
 import os
 import secrets
+import urllib.error
 import urllib.request
 import uuid
 from html import escape
@@ -159,7 +160,18 @@ def send_brevo_email(to_email: str, to_name: str, subject: str, html_content: st
             },
             method="POST",
         )
-        urllib.request.urlopen(req, timeout=8)
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            print(f"[send_brevo_email] sent to {to_email!r}: HTTP {resp.status} — {resp.read().decode('utf-8', 'replace')}")
+    except urllib.error.HTTPError as e:
+        # HTTPError swallows the response body by default — read it
+        # explicitly, since Brevo's actual reason (e.g. "transactional
+        # platform has not been activated", rejected sender, bad key)
+        # lives in that body, not in the exception's string form.
+        try:
+            body = e.read().decode("utf-8", "replace")
+        except Exception:
+            body = "<could not read response body>"
+        print(f"[send_brevo_email] Brevo rejected email to {to_email!r}: HTTP {e.code} — {body}")
     except Exception as e:
         # Visible in Vercel function logs so a bad API key or unverified
         # sender is easy to spot, without ever raising into the actual
@@ -1593,6 +1605,19 @@ def create_order(order: Order, authorization: str | None = Header(default=None))
          order.shipping_fee, order.total, order.currency,
          customer["customer_id"] if customer else None],
     )
+    # Decrement stock for every ordered item. GREATEST(...,0) clamps at
+    # zero instead of going negative if two orders race for the last
+    # unit. Rows where stock_quantity is NULL are intentionally skipped —
+    # that means "not tracked" (e.g. made-to-order pieces with no fixed
+    # unit count), matching how script.js already treats NULL vs 0
+    # differently on the frontend.
+    for item in order.items:
+        conn.execute(
+            """UPDATE products
+               SET stock_quantity = GREATEST(stock_quantity - ?, 0)
+               WHERE product_id = ? AND stock_quantity IS NOT NULL""",
+            [item.qty, item.id],
+        )
     conn.close()
     order_user_id = customer["email"] if customer else (order.email or order.phone)
     rs_track(order_user_id, "Order Completed",
