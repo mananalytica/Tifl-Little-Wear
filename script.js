@@ -1116,6 +1116,77 @@ function initBookingPage(){
 }
 
 /* ============================================================
+   CUSTOM DESIGN REQUEST PAGE
+   Deliberately separate from initBookingPage() above — a different
+   intent (describe a vision vs. book a known slot), so it gets its own
+   form, own confirmation copy, and posts with source:'custom_design' so
+   Discord/admin can tell the two apart at a glance.
+============================================================= */
+function initCustomDesignPage(){
+  const form = document.getElementById('customDesignForm');
+  if(!form) return;
+
+  // Fabric dropdown is optional context, not required — populate it from
+  // the real catalog (Phase 1) if it's reachable, but never block the
+  // page on it.
+  fetch('/api/fabrics').then(res => res.ok ? res.json() : []).then(fabrics=>{
+    const sel = document.getElementById('cdFabric');
+    fabrics.forEach(f=>{
+      const opt = document.createElement('option');
+      opt.value = f.name;
+      opt.textContent = f.name;
+      sel.appendChild(opt);
+    });
+  }).catch(()=>{});
+
+  let refCounter = 1;
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const payload = {
+      parent_name: document.getElementById('cdParent').value,
+      phone: document.getElementById('cdPhone').value,
+      email: document.getElementById('cdEmail').value,
+      child_name: document.getElementById('cdChild').value,
+      garment_type: document.getElementById('cdGarment').value,
+      design_brief: document.getElementById('cdBrief').value,
+      notes: document.getElementById('cdFabric').value ? ('Fabric in mind: '+document.getElementById('cdFabric').value) : null,
+      source: 'custom_design',
+      anonymous_id: rsGetAnonymousId(), attribution: rsGetAttribution()
+    };
+
+    const btn = document.getElementById('customDesignSubmitBtn');
+    btn.disabled = true; btn.textContent = 'Sending…';
+
+    let ref, wasOnline = false;
+    try{
+      const res = await fetch('/api/bookings', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout ? AbortSignal.timeout(2500) : undefined
+      });
+      if(res.ok){
+        const data = await res.json();
+        ref = data.booking_id || ('TLW-'+(refCounter++));
+        wasOnline = true;
+      } else { throw new Error('non-200'); }
+    }catch(err){
+      ref = 'TLW-'+(refCounter++)+'-OFFLINE';
+    }
+
+    dataLayer.push({event:'generate_lead', lead_type:'custom_design', booking_ref:ref, garment_type:payload.garment_type});
+    rsTrack('generate_lead', {lead_type:'custom_design', booking_ref:ref, garment_type:payload.garment_type});
+
+    document.getElementById('confirmRef').textContent = wasOnline
+      ? 'Reference '+ref+' · with a tailor now'
+      : 'Reference '+ref+' · saved on this device — we will confirm by phone';
+    document.getElementById('confirmCard').classList.add('show');
+    btn.disabled = false; btn.textContent = 'Send my design request';
+    showToast('Design request '+ref+' sent');
+  });
+}
+
+/* ============================================================
    CONTACT PAGE
 ============================================================= */
 function initContactPage(){
@@ -2457,6 +2528,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   initShopPage();
   initMeasurementsPage();
   initBookingPage();
+  initCustomDesignPage();
   initContactPage();
   initProductPage();
   initAdminPage();

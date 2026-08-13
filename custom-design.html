@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Book a Fitting — Tifl Little Wear, Lahore</title>
-<meta name="description" content="Book a made-to-measure kidswear fitting with Tifl Little Wear in Lahore — studio visit, home visit, or video consult.">
-<link rel="canonical" href="https://www.tifllittlewear.com/booking.html">
+<title>Describe Your Custom Design — Tifl Little Wear, Lahore</title>
+<meta name="description" content="Tell us your vision in your own words — an emerald A-line dress, a mandarin collar, gold embroidery — and our master tailors turn it into a made-to-measure piece for your child.">
+<link rel="canonical" href="https://www.tifllittlewear.com/custom-design.html">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Book a Fitting — Tifl Little Wear">
-<meta property="og:description" content="Reserve a studio or home fitting in Lahore for made-to-measure kidswear.">
-<meta property="og:url" content="https://www.tifllittlewear.com/booking.html">
+<meta property="og:title" content="Describe Your Custom Design — Tifl Little Wear">
+<meta property="og:description" content="Tell us your vision in plain words — we'll turn it into a made-to-measure piece.">
+<meta property="og:url" content="https://www.tifllittlewear.com/custom-design.html">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,7 +25,7 @@
     </a>
     <nav class="tabs" id="navTabs">
       <a href="index.html">Home</a>
-      <a href="booking.html" aria-current="page">Booking</a>
+      <a href="booking.html">Booking</a>
       <a href="shop.html">Shop</a>
       <a href="design-studio.html">Design Studio</a>
       <a href="blog.html">Blog</a>
@@ -46,68 +46,55 @@
 
 <main class="wrap">
   <div class="section-head">
-    <div class="eyebrow">Book a fitting</div>
-    <h1>Reserve a studio or home fitting in Lahore.</h1>
-    <p class="lede">Every booking is written straight to our studio's booking database. Pick a mode, a slot, and tell us about the garment — we'll confirm by phone.</p>
+    <div class="eyebrow">Custom design request</div>
+    <h1>Tell us your vision — in your own words.</h1>
+    <p class="lede">No forms full of dropdowns. Just describe what you're picturing — a colour, a fabric, a detail you love — as plainly or as richly as you like. A master tailor reads every word before we call you.</p>
   </div>
 
   <div class="booking-grid">
-    <form class="book-form" id="bookingForm">
-      <div class="eyebrow" style="margin-bottom:6px;">Fitting mode</div>
-      <div class="mode-grid two-col" id="modeGrid">
-        <div class="mode active" data-mode="studio">Studio visit<br><span style="font-size:11px;color:var(--ink-soft);">Gulberg, Lahore</span></div>
-        <div class="mode" data-mode="video">Video consult<br><span style="font-size:11px;color:var(--ink-soft);">Self-measured</span></div>
+    <form class="book-form" id="customDesignForm">
+
+      <div class="field full">
+        <label for="cdBrief">What are you picturing?</label>
+        <textarea id="cdBrief" rows="6" required placeholder="e.g. An emerald green A-line dress with a mandarin collar, raw silk fabric, and minimal gold embroidery on the cuffs — for a 6-year-old, for Eid."></textarea>
+        <p style="font-size:12px;color:var(--ink-soft);margin-top:6px;">The more specific, the better — colour, fabric feel, occasion, any details you have in mind.</p>
       </div>
 
-      <div class="form-grid" style="margin-top:22px;">
-        <div class="field"><label for="bParent">Parent / guardian name</label><input id="bParent" required type="text" placeholder="Full name"></div>
-        <div class="field"><label for="bPhone">Phone number <span style="color:var(--primary-dark);">(used to identify your booking)</span></label><input id="bPhone" required type="tel" placeholder="03xx-xxxxxxx"></div>
-        <div class="field"><label for="bEmail">Email</label><input id="bEmail" type="email" placeholder="you@example.com" required></div>
-        <div class="field"><label for="bChild">Child's name</label><input id="bChild" type="text" placeholder="e.g. Zoya"></div>
-        <div class="field"><label for="bGarment">Garment type</label>
-          <select id="bGarment">
+      <div class="form-grid" style="margin-top:8px;">
+        <div class="field"><label for="cdParent">Parent / guardian name</label><input id="cdParent" required type="text" placeholder="Full name"></div>
+        <div class="field"><label for="cdPhone">Phone number</label><input id="cdPhone" required type="tel" placeholder="03xx-xxxxxxx"></div>
+        <div class="field"><label for="cdEmail">Email</label><input id="cdEmail" required type="email" placeholder="you@example.com"></div>
+        <div class="field"><label for="cdChild">Child's name</label><input id="cdChild" type="text" placeholder="e.g. Zoya"></div>
+        <div class="field"><label for="cdGarment">Garment type</label>
+          <select id="cdGarment">
             <option>Kurta pajama</option>
             <option>Frock</option>
             <option>Occasion / bridal-side wear</option>
             <option>Everyday sets</option>
             <option>Uniform / school wear</option>
+            <option>Something else</option>
           </select>
         </div>
-        <div class="field full">
-          <label for="bDate">Preferred date</label>
-          <input id="bDate" type="date">
+        <div class="field"><label for="cdFabric">Fabric in mind? <span style="color:var(--primary-dark);">(optional)</span></label>
+          <select id="cdFabric">
+            <option value="">Not sure yet — we'll help you choose</option>
+          </select>
         </div>
-        <div class="field full">
-          <label>Preferred time slot</label>
-          <div class="slot-grid" id="slotGrid">
-            <div class="slot active" data-slot="11:00">11:00 AM</div>
-            <div class="slot" data-slot="14:00">2:00 PM</div>
-            <div class="slot" data-slot="17:00">5:00 PM</div>
-            <div class="slot" data-slot="19:00">7:00 PM</div>
-            <div class="slot" data-slot="12:30">12:30 PM</div>
-            <div class="slot" data-slot="16:00">4:00 PM</div>
-          </div>
-        </div>
-        <div class="field full"><label for="bNotes">Notes</label><textarea id="bNotes" rows="3" placeholder="Fabric preference, occasion, colours..."></textarea></div>
       </div>
 
-      <button type="submit" class="btn btn-primary btn-block" style="margin-top:22px;" id="bookSubmitBtn">Confirm booking</button>
+      <button type="submit" class="btn btn-primary btn-block" style="margin-top:22px;" id="customDesignSubmitBtn">Send my design request</button>
 
       <div class="confirm-card" id="confirmCard">
-        <h3 style="color:var(--ink-on-dark);font-size:18px;">Booking received</h3>
-        <p style="color:var(--ink-on-dark-soft);font-size:13.5px;margin-top:8px;">We'll call to confirm your slot. Keep this reference handy.</p>
+        <h3 style="color:var(--ink-on-dark);font-size:18px;">Your vision is with us</h3>
+        <p style="color:var(--ink-on-dark-soft);font-size:13.5px;margin-top:8px;">A master tailor is reading it now. We'll call to talk through fabric, fit, and to book your fitting.</p>
         <p class="ref" id="confirmRef" style="margin-top:14px;"></p>
       </div>
     </form>
 
     <div>
       <div class="side-card">
-        <h3>Attached measurements</h3>
-        <p id="attachedMeasureText">None yet — save measurements on the Measurements page and they'll appear here automatically.</p>
-      </div>
-      <div class="side-card">
-        <h3>Have an idea, not a plan yet?</h3>
-        <p>If you don't know exactly what you want, skip the slot-picking — <a href="custom-design.html" style="color:var(--primary-dark);">describe your vision instead</a> and a tailor will shape it with you first.</p>
+        <h3>How this is different from a fitting booking</h3>
+        <p>A regular <a href="booking.html" style="color:var(--primary-dark);">fitting booking</a> is for when you already know what you want and just need a slot. This is for when you have an idea, not yet a plan — describe it here, and we'll shape it into something real before we ever pick up the tape measure.</p>
       </div>
       <div class="side-card">
         <h3>Studio address</h3>
@@ -130,6 +117,7 @@
         <a href="measurements.html">Our process</a>
         <a href="tailors.html">Master tailors</a>
         <a href="booking.html">Book a fitting</a>
+        <a href="custom-design.html">Custom design request</a>
       </div>
       <div>
         <p class="foot-heading">Shop</p>
