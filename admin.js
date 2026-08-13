@@ -897,6 +897,21 @@ function initAdminPage(){
         <div style="font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--primary-dark);">PKR ${Math.round(p.revenue).toLocaleString()}</div>
       </div>`);
 
+    anRenderList('anRevenueChannel', ecommerce.revenue_by_channel, c=>`
+      <div class="admin-row">
+        <div class="admin-row-info">
+          <div class="admin-row-name">${c.channel}</div>
+          <div class="admin-row-meta">${c.orders} order${c.orders===1?'':'s'}</div>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--primary-dark);">PKR ${Math.round(c.revenue).toLocaleString()}</div>
+      </div>`);
+
+    anRenderList('anBookingsChannel', ecommerce.bookings_by_channel, c=>`
+      <div class="admin-row">
+        <div class="admin-row-info"><div class="admin-row-name">${c.channel}</div></div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--primary-dark);">${c.count}</div>
+      </div>`);
+
     anRenderList('anTopCities', ecommerce.revenue_by_city, c=>`
       <div class="admin-row">
         <div class="admin-row-info">

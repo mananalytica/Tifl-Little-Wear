@@ -655,6 +655,20 @@ def flatten_attribution(attribution: dict | None) -> dict:
             flat[f"{touch_name}_{k}"] = v
     return flat
 
+
+def extract_marketing_channel(attribution: dict | None) -> tuple:
+    """Pulls (utm_source, utm_medium, utm_campaign) out of an attribution
+    dict for storage as real queryable columns — the analytics dashboard
+    deliberately doesn't rely on parsing the RudderStack event stream for
+    revenue-critical breakdowns (see analytics endpoints), so this needs
+    to live on the structured orders/bookings tables directly. Prefers
+    last-touch (closer to the actual conversion) falling back to
+    first-touch, same fallback rsGetAttribution() already does client-side."""
+    if not attribution or not isinstance(attribution, dict):
+        return (None, None, None)
+    touch = attribution.get("last_touch") or attribution.get("first_touch") or {}
+    return (touch.get("utm_source"), touch.get("utm_medium"), touch.get("utm_campaign"))
+
 app = FastAPI(title="Tifl Little Wear — Booking API")
 
 app.add_middleware(
@@ -929,6 +943,12 @@ def ensure_schema(conn):
     # analytics dashboard can segment revenue by source directly from
     # this table instead of depending on the RudderStack event pipeline.
     alter_statements.append("ALTER TABLE orders ADD COLUMN IF NOT EXISTS source VARCHAR;")
+    # Marketing channel (Pinterest/Facebook/Google/etc.) an order's
+    # attribution points to — extracted from rsGetAttribution() at
+    # checkout time. See extract_marketing_channel().
+    alter_statements.append("ALTER TABLE orders ADD COLUMN IF NOT EXISTS utm_source VARCHAR;")
+    alter_statements.append("ALTER TABLE orders ADD COLUMN IF NOT EXISTS utm_medium VARCHAR;")
+    alter_statements.append("ALTER TABLE orders ADD COLUMN IF NOT EXISTS utm_campaign VARCHAR;")
     # Designer/tailor attribution — which master tailor cut and finished this
     # piece. Stores the tailor's SLUG (e.g. "abdul-sattar"), not their display
     # name, so renaming a tailor never breaks product attribution. Resolved
@@ -958,6 +978,9 @@ def ensure_schema(conn):
     # booking.html/master-tailor.html one — same pattern as Order.source
     # for live-sell orders. Lets Discord/admin tell them apart at a glance.
     alter_statements.append("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS source VARCHAR;")
+    alter_statements.append("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS utm_source VARCHAR;")
+    alter_statements.append("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS utm_medium VARCHAR;")
+    alter_statements.append("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS utm_campaign VARCHAR;")
     try:
         conn.execute("\n".join(alter_statements))
     except Exception:
@@ -1401,8 +1424,9 @@ def create_booking(booking: Booking):
         """
         INSERT INTO bookings
             (booking_id, created_at, parent_name, child_name, phone, email,
-             garment_type, mode, date, time_slot, notes, design_brief, measurements, preferred_tailor, source)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             garment_type, mode, date, time_slot, notes, design_brief, measurements, preferred_tailor, source,
+             utm_source, utm_medium, utm_campaign)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         [
             booking_id,
@@ -1420,6 +1444,7 @@ def create_booking(booking: Booking):
             json.dumps(booking.measurements.dict()) if booking.measurements else None,
             booking.preferred_tailor,
             booking.source,
+            *extract_marketing_channel(booking.attribution),
         ],
     )
     conn.close()
@@ -2044,6 +2069,20 @@ def list_products():
 # the feed.
 SITE_URL = "https://www.tifllittlewear.com"
 
+def append_utm(url: str, utm_source: str, utm_medium: str, utm_campaign: str) -> str:
+    """Merges UTM params onto a product link without clobbering any
+    existing query string (some products may have a custom `link`).
+    Each platform's feed URL (see the admin Products tab) passes its own
+    utm_source, so a click from Pinterest lands with utm_source=pinterest
+    already in the URL — rsCaptureAttribution() in rudderstack.js picks
+    this straight up, no other wiring needed on the frontend."""
+    from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
+    parts = urlsplit(url)
+    query = dict(parse_qsl(parts.query))
+    query.update({"utm_source": utm_source, "utm_medium": utm_medium, "utm_campaign": utm_campaign})
+    return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
+
+
 def feed_rows(conn):
     rows = conn.execute(
         "SELECT * FROM products WHERE active = true AND price IS NOT NULL ORDER BY created_at DESC"
@@ -2053,7 +2092,7 @@ def feed_rows(conn):
 
 
 @app.get("/api/products/feed.xml")
-def products_feed_xml():
+def products_feed_xml(utm_source: str = "google", utm_medium: str = "shopping", utm_campaign: str = "product_catalog"):
     import xml.sax.saxutils as sx
     conn = get_conn()
     items = feed_rows(conn)
@@ -2065,6 +2104,7 @@ def products_feed_xml():
     xml_items = []
     for p in items:
         link = p.get("link") or f"{SITE_URL}/product.html?id={p['product_id']}"
+        link = append_utm(link, utm_source, utm_medium, utm_campaign)
         image = p.get("image_url") or ""
         if image.startswith("#"):
             image = ""  # placeholder colour swatches aren't real images — omit rather than send a bad link
@@ -2111,7 +2151,7 @@ def products_feed_xml():
 
 
 @app.get("/api/products/feed.csv")
-def products_feed_csv():
+def products_feed_csv(utm_source: str = "google", utm_medium: str = "shopping", utm_campaign: str = "product_catalog"):
     import io, csv
     conn = get_conn()
     items = feed_rows(conn)
@@ -2128,6 +2168,7 @@ def products_feed_csv():
     writer.writerow(header)
     for p in items:
         link = p.get("link") or f"{SITE_URL}/product.html?id={p['product_id']}"
+        link = append_utm(link, utm_source, utm_medium, utm_campaign)
         image = p.get("image_url") or ""
         if image.startswith("#"):
             image = ""
@@ -2291,14 +2332,15 @@ def create_order(order: Order, authorization: str | None = Header(default=None))
         """INSERT INTO orders
            (order_id, created_at, customer_name, phone, email, address, address_line2, city,
             postal_code, state, country, payment_method, notes, items, subtotal, shipping_fee,
-            total, currency, status, customer_id, source)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'received', ?, ?)""",
+            total, currency, status, customer_id, source, utm_source, utm_medium, utm_campaign)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'received', ?, ?, ?, ?, ?)""",
         [order_id, datetime.now(), order.customer_name, order.phone, order.email,
          order.address, order.address_line2, order.city, order.postal_code, order.state, order.country,
          order.payment_method, order.notes,
          json.dumps([i.dict() for i in order.items]), order.subtotal,
          order.shipping_fee, order.total, order.currency,
-         customer["customer_id"] if customer else None, order.source],
+         customer["customer_id"] if customer else None, order.source,
+         *extract_marketing_channel(order.attribution)],
     )
     # Decrement stock for every ordered item. GREATEST(...,0) clamps at
     # zero instead of going negative if two orders race for the last
@@ -2710,10 +2752,30 @@ def analytics_ecommerce(days: int = 30, x_admin_key: str | None = Header(default
             GROUP BY src
         """).fetchall()
 
+        # Marketing channel — where the money actually came from. Distinct
+        # from revenue_by_source above (that's checkout-vs-livesell, an
+        # order-flow dimension; this is Pinterest/Facebook/Google/etc., a
+        # marketing dimension). Both orders and bookings tracked, since a
+        # booking that never converts to an order still represents real
+        # value a channel drove.
+        revenue_by_channel = conn.execute(f"""
+            SELECT COALESCE(utm_source, 'direct / unknown') AS channel, COUNT(*), COALESCE(SUM(total),0)
+            FROM orders WHERE created_at >= {since}
+            GROUP BY channel ORDER BY 3 DESC
+        """).fetchall()
+
+        bookings_by_channel = conn.execute(f"""
+            SELECT COALESCE(utm_source, 'direct / unknown') AS channel, COUNT(*)
+            FROM bookings WHERE created_at >= {since}
+            GROUP BY channel ORDER BY 2 DESC
+        """).fetchall()
+
         return {
             "window_days": days,
             "revenue_by_day": [{"date": str(r[0]), "revenue": r[1], "orders": r[2]} for r in revenue_by_day],
             "revenue_by_source": [{"source": r[0], "orders": r[1], "revenue": r[2]} for r in revenue_by_source],
+            "revenue_by_channel": [{"channel": r[0], "orders": r[1], "revenue": r[2]} for r in revenue_by_channel],
+            "bookings_by_channel": [{"channel": r[0], "count": r[1]} for r in bookings_by_channel],
             "revenue_by_city": [{"city": r[0], "orders": r[1], "revenue": r[2]} for r in revenue_by_city],
             "top_products": [{"name": r[0], "units": r[1], "revenue": r[2]} for r in top_products],
             "booking_sources": [{"source": r[0], "count": r[1]} for r in booking_sources],

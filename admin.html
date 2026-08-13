@@ -83,10 +83,13 @@
     <!-- ===== Feed links ===== -->
     <div class="side-card" style="margin-bottom:40px;">
       <h3>Shopping feed URLs</h3>
-      <p style="margin-bottom:12px;">Give these directly to Google Merchant Center (Scheduled fetch) or Meta Commerce Manager (Data feed) to keep them synced automatically.</p>
-      <div style="display:flex;flex-direction:column;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:12.8px;">
-        <a id="feedXmlLink" href="/api/products/feed.xml" target="_blank" style="color:var(--primary-dark);">/api/products/feed.xml</a>
-        <a id="feedCsvLink" href="/api/products/feed.csv" target="_blank" style="color:var(--primary-dark);">/api/products/feed.csv</a>
+      <p style="margin-bottom:12px;">Each platform gets its own link, so orders that come from a Pinterest tag vs a Facebook tag vs Google Shopping show up separately in the Analytics tab instead of all blurring into "direct." Give each platform its own link below — don't reuse one URL across multiple platforms, or you'll lose that distinction.</p>
+      <div style="display:flex;flex-direction:column;gap:10px;font-family:'IBM Plex Mono',monospace;font-size:12.3px;">
+        <div><span style="color:var(--ink-soft);font-family:'Inter',sans-serif;font-size:12px;">Google Merchant Center (XML):</span><br><a href="/api/products/feed.xml?utm_source=google&utm_medium=shopping&utm_campaign=product_catalog" target="_blank" style="color:var(--primary-dark);word-break:break-all;">/api/products/feed.xml?utm_source=google&amp;utm_medium=shopping&amp;utm_campaign=product_catalog</a></div>
+        <div><span style="color:var(--ink-soft);font-family:'Inter',sans-serif;font-size:12px;">Meta Commerce Manager — Instagram + Facebook (CSV):</span><br><a href="/api/products/feed.csv?utm_source=facebook&utm_medium=social&utm_campaign=product_catalog" target="_blank" style="color:var(--primary-dark);word-break:break-all;">/api/products/feed.csv?utm_source=facebook&amp;utm_medium=social&amp;utm_campaign=product_catalog</a></div>
+        <div><span style="color:var(--ink-soft);font-family:'Inter',sans-serif;font-size:12px;">Pinterest Catalogs (CSV):</span><br><a href="/api/products/feed.csv?utm_source=pinterest&utm_medium=social&utm_campaign=product_catalog" target="_blank" style="color:var(--primary-dark);word-break:break-all;">/api/products/feed.csv?utm_source=pinterest&amp;utm_medium=social&amp;utm_campaign=product_catalog</a></div>
+        <div><span style="color:var(--ink-soft);font-family:'Inter',sans-serif;font-size:12px;">Snapchat Catalog Manager (CSV):</span><br><a href="/api/products/feed.csv?utm_source=snapchat&utm_medium=social&utm_campaign=product_catalog" target="_blank" style="color:var(--primary-dark);word-break:break-all;">/api/products/feed.csv?utm_source=snapchat&amp;utm_medium=social&amp;utm_campaign=product_catalog</a></div>
+        <div><span style="color:var(--ink-soft);font-family:'Inter',sans-serif;font-size:12px;">YouTube Shopping, via Merchant Center (XML):</span><br><a href="/api/products/feed.xml?utm_source=youtube&utm_medium=social&utm_campaign=product_catalog" target="_blank" style="color:var(--primary-dark);word-break:break-all;">/api/products/feed.xml?utm_source=youtube&amp;utm_medium=social&amp;utm_campaign=product_catalog</a></div>
       </div>
     </div>
 
@@ -483,6 +486,18 @@
         <div class="side-card">
           <h3>Top products</h3>
           <div id="anTopProducts" class="admin-list"></div>
+        </div>
+      </div>
+
+      <div class="an-section-grid" style="margin-top:24px;">
+        <div class="side-card">
+          <h3>Revenue by marketing channel</h3>
+          <p style="font-size:12px;color:var(--ink-soft);margin:-8px 0 12px;">Pinterest, Facebook, Google, etc. — from the UTM tags on each platform's feed link.</p>
+          <div id="anRevenueChannel" class="admin-list"></div>
+        </div>
+        <div class="side-card">
+          <h3>Booking requests by channel</h3>
+          <div id="anBookingsChannel" class="admin-list"></div>
         </div>
       </div>
 
