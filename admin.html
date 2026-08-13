@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Product Admin — Tifl Little Wear</title>
 <meta name="robots" content="noindex, nofollow">
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Nastaliq+Urdu:wght@400;600&display=swap" rel="stylesheet">
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Nastaliq+Urdu:wght@400;600&display=swap">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Nastaliq+Urdu:wght@400;600&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null;">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Nastaliq+Urdu:wght@400;600&display=swap" rel="stylesheet"></noscript>
 <link rel="stylesheet" href="styles.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
@@ -15,7 +17,7 @@
 <header class="site">
   <div class="nav-inner">
     <a class="brand" href="index.html">
-      <img src="assets/logo.png" alt="Tifl Little Wear" class="brand-logo" width="150" height="45" decoding="async" fetchpriority="high">
+      <img src="https://images.weserv.nl/?url=www.tifllittlewear.com/assets/logo.png&w=300&q=82&output=webp" alt="Tifl Little Wear" class="brand-logo" width="150" height="45" decoding="async" fetchpriority="high">
       <span class="sub">Admin</span>
     </a>
     <div class="nav-right">
@@ -524,6 +526,7 @@
 <script src="rudderstack.js"></script>
 <script src="consent.js"></script>
 <script src="script.js"></script>
+<script src="admin.js"></script>
 <script>
   document.getElementById('feedXmlLink').href = window.location.origin + '/api/products/feed.xml';
   document.getElementById('feedCsvLink').href = window.location.origin + '/api/products/feed.csv';
