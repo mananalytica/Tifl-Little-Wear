@@ -10,7 +10,7 @@
 <noscript><link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Nastaliq+Urdu:wght@400;600&display=swap" rel="stylesheet"></noscript>
 <link rel="stylesheet" href="styles.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 </head>
 <body>
 
@@ -475,13 +475,13 @@
 
       <div class="side-card" style="margin-top:24px;">
         <h3>Revenue over time</h3>
-        <canvas id="anRevenueChart" height="90"></canvas>
+        <div id="anRevenueChart"></div>
       </div>
 
       <div class="an-section-grid" style="margin-top:24px;">
         <div class="side-card">
           <h3>Revenue by source</h3>
-          <canvas id="anSourceChart" height="200"></canvas>
+          <div id="anSourceChart"></div>
         </div>
         <div class="side-card">
           <h3>Top products</h3>

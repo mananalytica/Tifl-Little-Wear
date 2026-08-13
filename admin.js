@@ -791,11 +791,71 @@ function initAdminPage(){
     window.print();
   });
 
-  // ---- Analytics dashboard ----
-  let anCharts = {}; // Chart.js instances, kept so re-rendering destroys the old one first
+  // ---- Analytics dashboard (Plotly — interactive: zoom, pan, hover,
+  // exportable PNG, range slider on the time series) ----
+  const AN_COLORS = ['#4A93E8', '#16233B', '#3576C9', '#9FB1CC', '#7BB0EE', '#101B2E'];
+  const AN_FONT = { family: "'Inter', Arial, sans-serif", color: '#5C6B85', size: 12 };
+  const AN_CONFIG = { displayModeBar: true, displaylogo: false, responsive: true,
+    modeBarButtonsToRemove: ['lasso2d', 'select2d'] };
 
-  function anDestroyChart(key){
-    if(anCharts[key]){ anCharts[key].destroy(); delete anCharts[key]; }
+  function anBaseLayout(overrides){
+    return Object.assign({
+      font: AN_FONT,
+      paper_bgcolor: 'rgba(0,0,0,0)',
+      plot_bgcolor: 'rgba(0,0,0,0)',
+      margin: { t: 20, r: 20, b: 40, l: 60 },
+      showlegend: false,
+    }, overrides || {});
+  }
+
+  function anEmpty(divId, msg){
+    document.getElementById(divId).innerHTML = `<p style="color:var(--ink-soft);padding:20px 0;">${msg || 'No data in this window yet.'}</p>`;
+  }
+
+  function anPlotlyLine(divId, dates, values){
+    if(!dates.length){ anEmpty(divId); return; }
+    Plotly.purge(divId);
+    Plotly.newPlot(divId, [{
+      x: dates, y: values, type: 'scatter', mode: 'lines',
+      line: { color: '#4A93E8', width: 2.5, shape: 'spline' },
+      fill: 'tozeroy', fillcolor: 'rgba(74,147,232,0.12)',
+      hovertemplate: 'PKR %{y:,.0f}<extra></extra>',
+    }], anBaseLayout({
+      height: 260,
+      xaxis: { rangeslider: { visible: true, thickness: 0.08 }, showgrid: false },
+      yaxis: { title: 'Revenue (PKR)', tickprefix: '', separatethousands: true, gridcolor: '#E1E8F2' },
+      hovermode: 'x unified',
+      margin: { t: 20, r: 20, b: 70, l: 65 },
+    }), AN_CONFIG);
+  }
+
+  function anPlotlyPie(divId, labels, values, hole){
+    if(!labels.length){ anEmpty(divId); return; }
+    Plotly.purge(divId);
+    Plotly.newPlot(divId, [{
+      labels, values, type: 'pie', hole: hole ?? 0.45,
+      marker: { colors: AN_COLORS },
+      textinfo: 'label+percent', textfont: AN_FONT,
+      hovertemplate: '%{label}: %{value:,.0f}<extra></extra>',
+    }], anBaseLayout({ height: 260, showlegend: true, legend: { orientation: 'h', y: -0.15 } }), AN_CONFIG);
+  }
+
+  // Horizontal bar — categories reversed so the highest value renders at
+  // the TOP (Plotly's default is bottom-to-top for the first item).
+  function anPlotlyBarH(divId, labels, values, opts){
+    opts = opts || {};
+    if(!labels.length){ anEmpty(divId); return; }
+    Plotly.purge(divId);
+    Plotly.newPlot(divId, [{
+      x: [...values].reverse(), y: [...labels].reverse(), type: 'bar', orientation: 'h',
+      marker: { color: '#4A93E8' },
+      hovertemplate: (opts.prefix || '') + '%{x:,.0f}' + (opts.suffix || '') + '<extra></extra>',
+    }], anBaseLayout({
+      height: Math.max(180, labels.length * 38),
+      margin: { t: 10, r: 20, b: 30, l: Math.min(180, Math.max(...labels.map(l=>String(l).length)) * 6.5) },
+      xaxis: { showgrid: true, gridcolor: '#E1E8F2' },
+      yaxis: { automargin: true },
+    }), AN_CONFIG);
   }
 
   function anRenderKpis(overview){
@@ -832,11 +892,6 @@ function initAdminPage(){
     }).join('') || '<p style="color:var(--ink-soft);">No data in this window yet.</p>';
   }
 
-  function anRenderList(containerId, items, renderRow){
-    const el = document.getElementById(containerId);
-    el.innerHTML = items.map(renderRow).join('') || '<p style="color:var(--ink-soft);">No data in this window yet.</p>';
-  }
-
   async function refreshAnalytics(){
     const days = document.getElementById('anRange').value;
     const qs = 'days='+encodeURIComponent(days);
@@ -858,76 +913,19 @@ function initAdminPage(){
     anRenderFunnel('anShopFunnel', funnel.shop_funnel);
     anRenderFunnel('anLeadFunnel', funnel.lead_funnel);
 
-    // Revenue over time
-    anDestroyChart('revenue');
-    anCharts.revenue = new Chart(document.getElementById('anRevenueChart'), {
-      type: 'line',
-      data: {
-        labels: ecommerce.revenue_by_day.map(d=>d.date),
-        datasets: [{
-          label: 'Revenue (PKR)',
-          data: ecommerce.revenue_by_day.map(d=>d.revenue),
-          borderColor: '#4A93E8', backgroundColor: 'rgba(74,147,232,0.12)',
-          fill: true, tension: 0.3, pointRadius: 2,
-        }]
-      },
-      options: { plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}} }
-    });
+    anPlotlyLine('anRevenueChart', ecommerce.revenue_by_day.map(d=>d.date), ecommerce.revenue_by_day.map(d=>d.revenue));
 
-    // Revenue by source (doughnut)
-    anDestroyChart('source');
-    anCharts.source = new Chart(document.getElementById('anSourceChart'), {
-      type: 'doughnut',
-      data: {
-        labels: ecommerce.revenue_by_source.map(s=>s.source),
-        datasets: [{
-          data: ecommerce.revenue_by_source.map(s=>s.revenue),
-          backgroundColor: ['#4A93E8','#16233B','#9FB1CC','#3576C9'],
-        }]
-      },
-      options: { plugins:{legend:{position:'bottom'}} }
-    });
+    anPlotlyPie('anSourceChart', ecommerce.revenue_by_source.map(s=>s.source), ecommerce.revenue_by_source.map(s=>s.revenue));
 
-    anRenderList('anTopProducts', ecommerce.top_products, p=>`
-      <div class="admin-row">
-        <div class="admin-row-info">
-          <div class="admin-row-name">${p.name}</div>
-          <div class="admin-row-meta">${p.units} sold</div>
-        </div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--primary-dark);">PKR ${Math.round(p.revenue).toLocaleString()}</div>
-      </div>`);
+    anPlotlyBarH('anTopProducts', ecommerce.top_products.map(p=>p.name), ecommerce.top_products.map(p=>p.revenue), { prefix: 'PKR ' });
 
-    anRenderList('anRevenueChannel', ecommerce.revenue_by_channel, c=>`
-      <div class="admin-row">
-        <div class="admin-row-info">
-          <div class="admin-row-name">${c.channel}</div>
-          <div class="admin-row-meta">${c.orders} order${c.orders===1?'':'s'}</div>
-        </div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--primary-dark);">PKR ${Math.round(c.revenue).toLocaleString()}</div>
-      </div>`);
+    anPlotlyBarH('anRevenueChannel', ecommerce.revenue_by_channel.map(c=>c.channel), ecommerce.revenue_by_channel.map(c=>c.revenue), { prefix: 'PKR ' });
 
-    anRenderList('anBookingsChannel', ecommerce.bookings_by_channel, c=>`
-      <div class="admin-row">
-        <div class="admin-row-info"><div class="admin-row-name">${c.channel}</div></div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--primary-dark);">${c.count}</div>
-      </div>`);
+    anPlotlyBarH('anBookingsChannel', ecommerce.bookings_by_channel.map(c=>c.channel), ecommerce.bookings_by_channel.map(c=>c.count));
 
-    anRenderList('anTopCities', ecommerce.revenue_by_city, c=>`
-      <div class="admin-row">
-        <div class="admin-row-info">
-          <div class="admin-row-name">${c.city}</div>
-          <div class="admin-row-meta">${c.orders} order${c.orders===1?'':'s'}</div>
-        </div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--primary-dark);">PKR ${Math.round(c.revenue).toLocaleString()}</div>
-      </div>`);
+    anPlotlyBarH('anTopCities', ecommerce.revenue_by_city.map(c=>c.city), ecommerce.revenue_by_city.map(c=>c.revenue), { prefix: 'PKR ' });
 
-    anRenderList('anBookingSources', ecommerce.booking_sources, b=>`
-      <div class="admin-row">
-        <div class="admin-row-info">
-          <div class="admin-row-name">${b.source === 'custom_design' ? 'Custom design request' : 'Standard booking'}</div>
-        </div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--primary-dark);">${b.count}</div>
-      </div>`);
+    anPlotlyPie('anBookingSources', ecommerce.booking_sources.map(b=>b.source === 'custom_design' ? 'Custom design request' : 'Standard booking'), ecommerce.booking_sources.map(b=>b.count), 0.5);
 
     document.getElementById('anTransitions').innerHTML = journey.top_transitions.map(t=>`
       <div class="an-transition-row" style="margin-bottom:8px;">
@@ -935,11 +933,7 @@ function initAdminPage(){
         <span class="an-count">${t.count}</span>
       </div>`).join('') || '<p style="color:var(--ink-soft);">No page-transition data yet — needs real visitor traffic with analytics consent accepted.</p>';
 
-    anRenderList('anEntryPages', journey.top_entry_pages, p=>`
-      <div class="admin-row">
-        <div class="admin-row-info"><div class="admin-row-name">${p.page || '(unknown)'}</div></div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--primary-dark);">${p.count}</div>
-      </div>`);
+    anPlotlyBarH('anEntryPages', journey.top_entry_pages.map(p=>p.page || '(unknown)'), journey.top_entry_pages.map(p=>p.count));
   }
 
   document.getElementById('anRange')?.addEventListener('change', refreshAnalytics);
