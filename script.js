@@ -353,10 +353,13 @@ function isColor(value){ return typeof value === 'string' && value.startsWith('#
    Two problems, two fixes:
    1) Photos are shown small (card/thumb size) but often uploaded at full
       camera resolution — every one of those bytes still has to download.
-      optimizeImageUrl() routes remote photos through images.weserv.nl, a
-      free image proxy, requesting only the pixel width actually needed,
-      re-encoded as WebP. Local/relative paths (e.g. "assets/...") and
-      data: URIs are left untouched since the proxy can't reach them.
+      optimizeImageUrl() requests only the pixel width actually needed,
+      re-encoded to a modern format. Cloudinary URLs get Cloudinary's own
+      native transformation params (it's already a full image CDN — a
+      second proxy hop would only add latency); everything else routes
+      through images.weserv.nl, a free general-purpose image proxy.
+      Local/relative paths (e.g. "assets/...") and data: URIs are left
+      untouched since neither can reach those.
    2) Every <img> was being requested immediately, even ones nowhere near
       the viewport (off-screen carousel slides, cards far down the page).
       imgTag() defaults every image to loading="lazy" decoding="async" —
@@ -367,8 +370,21 @@ function isColor(value){ return typeof value === 'string' && value.startsWith('#
 function optimizeImageUrl(url, width){
   if(!url || typeof url !== 'string') return url;
   if(!/^https?:\/\//i.test(url)) return url; // relative/local/data: — leave alone
-  const bare = url.replace(/^https?:\/\//i, '');
   const w = Math.round(width || 600);
+
+  // Cloudinary is already a full image CDN with its own on-the-fly
+  // resizing/format conversion — routing a Cloudinary URL through a
+  // SECOND proxy (weserv, below) adds a redundant fetch-and-re-encode
+  // hop instead of removing latency. Rewrite Cloudinary URLs to use
+  // Cloudinary's own transformation syntax directly: auto format
+  // (WebP/AVIF depending on the browser), auto quality, and exactly the
+  // pixel width actually being rendered, capped so it never upscales.
+  const cloudinaryMatch = url.match(/^(https?:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\/)(.*)$/i);
+  if(cloudinaryMatch){
+    return `${cloudinaryMatch[1]}f_auto,q_auto,w_${w},c_limit/${cloudinaryMatch[2]}`;
+  }
+
+  const bare = url.replace(/^https?:\/\//i, '');
   return `https://images.weserv.nl/?url=${encodeURIComponent(bare)}&w=${w}&q=76&output=webp&fit=cover`;
 }
 function imgTag(url, alt, width, opts){
