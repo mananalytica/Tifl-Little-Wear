@@ -1580,6 +1580,15 @@ function initAdminPage(){
       body: body ? JSON.stringify(body) : undefined
     });
     if(res.status===401){ showToast('Admin key rejected — check it and try again'); throw new Error('unauthorized'); }
+    if(!res.ok){
+      // Surface the backend's actual error detail (FastAPI's HTTPException
+      // body is {"detail": "..."}) instead of silently returning it as if
+      // it were valid data — every call site's try/catch now gets the
+      // real reason a request failed, not a generic downstream crash.
+      let detail = 'Request failed ('+res.status+')';
+      try{ const errBody = await res.json(); if(errBody.detail) detail = errBody.detail; }catch(e){}
+      throw new Error(detail);
+    }
     return res.json();
   }
 
@@ -2387,7 +2396,7 @@ function initAdminPage(){
         apiCall('/api/analytics/journey?'+qs, 'GET'),
       ]);
     }catch(e){
-      document.getElementById('anKpiGrid').innerHTML = '<p style="color:var(--primary-dark);">Could not load analytics.</p>';
+      document.getElementById('anKpiGrid').innerHTML = '<p style="color:var(--primary-dark);">Could not load analytics: '+e.message+'</p>';
       return;
     }
 

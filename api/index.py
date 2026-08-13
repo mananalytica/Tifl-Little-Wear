@@ -2499,35 +2499,41 @@ def analytics_overview(days: int = 30, x_admin_key: str | None = Header(default=
     require_admin(x_admin_key)
     conn = get_conn()
     since = f"CURRENT_TIMESTAMP - INTERVAL '{int(days)} days'"
+    try:
+        unique_visitors = conn.execute(f"""
+            SELECT COUNT(DISTINCT COALESCE(user_id, anonymous_id))
+            FROM analytics_events WHERE received_at >= {since}
+        """).fetchone()[0]
 
-    unique_visitors = conn.execute(f"""
-        SELECT COUNT(DISTINCT COALESCE(user_id, anonymous_id))
-        FROM analytics_events WHERE received_at >= {since}
-    """).fetchone()[0]
+        total_events = conn.execute(f"SELECT COUNT(*) FROM analytics_events WHERE received_at >= {since}").fetchone()[0]
 
-    total_events = conn.execute(f"SELECT COUNT(*) FROM analytics_events WHERE received_at >= {since}").fetchone()[0]
+        orders_row = conn.execute(f"""
+            SELECT COUNT(*), COALESCE(SUM(total),0), COALESCE(AVG(total),0)
+            FROM orders WHERE created_at >= {since}
+        """).fetchone()
 
-    orders_row = conn.execute(f"""
-        SELECT COUNT(*), COALESCE(SUM(total),0), COALESCE(AVG(total),0)
-        FROM orders WHERE created_at >= {since}
-    """).fetchone()
+        bookings_row = conn.execute(f"""
+            SELECT COUNT(*), COUNT(*) FILTER (WHERE source = 'custom_design')
+            FROM bookings WHERE created_at >= {since}
+        """).fetchone()
 
-    bookings_row = conn.execute(f"""
-        SELECT COUNT(*), COUNT(*) FILTER (WHERE source = 'custom_design')
-        FROM bookings WHERE created_at >= {since}
-    """).fetchone()
+        signups = conn.execute(f"SELECT COUNT(*) FROM customers WHERE created_at >= {since}").fetchone()[0]
 
-    signups = conn.execute(f"SELECT COUNT(*) FROM customers WHERE created_at >= {since}").fetchone()[0]
-    conn.close()
-
-    return {
-        "window_days": days,
-        "unique_visitors": unique_visitors,
-        "total_events": total_events,
-        "orders": orders_row[0], "revenue": orders_row[1], "avg_order_value": round(orders_row[2], 2),
-        "bookings": bookings_row[0], "custom_design_bookings": bookings_row[1],
-        "signups": signups,
-    }
+        return {
+            "window_days": days,
+            "unique_visitors": unique_visitors,
+            "total_events": total_events,
+            "orders": orders_row[0], "revenue": orders_row[1], "avg_order_value": round(orders_row[2], 2),
+            "bookings": bookings_row[0], "custom_design_bookings": bookings_row[1],
+            "signups": signups,
+        }
+    except Exception as e:
+        # Surfaces the ACTUAL DuckDB error to the frontend (which now
+        # displays it directly) instead of a generic 500 that requires
+        # digging through Vercel logs to diagnose.
+        raise HTTPException(status_code=500, detail=f"analytics/overview failed: {e}")
+    finally:
+        conn.close()
 
 
 @app.get("/api/analytics/funnel")
@@ -2545,50 +2551,50 @@ def analytics_funnel(days: int = 30, x_admin_key: str | None = Header(default=No
         """, event_names).fetchone()
         return row[0]
 
-    # Shop/ecommerce funnel — purely client-side steps up to the last one,
-    # where we cross-check against the real `orders` table instead of
-    # trusting the client "purchase" event alone (that event fires
-    # optimistically on the client; the orders table is the actual truth).
-    view_item = step_count(["view_item"])
-    add_to_cart = step_count(["add_to_cart"])
-    begin_checkout = step_count(["begin_checkout"])
-    purchasers = conn.execute(f"SELECT COUNT(DISTINCT customer_id) FROM orders WHERE created_at >= {since} AND customer_id IS NOT NULL").fetchone()[0]
-    total_orders = conn.execute(f"SELECT COUNT(*) FROM orders WHERE created_at >= {since}").fetchone()[0]
+    try:
+        # Shop/ecommerce funnel — purely client-side steps up to the last
+        # one, where we cross-check against the real `orders` table
+        # instead of trusting the client "purchase" event alone (that
+        # event fires optimistically on the client; orders is the truth).
+        view_item = step_count(["view_item"])
+        add_to_cart = step_count(["add_to_cart"])
+        begin_checkout = step_count(["begin_checkout"])
+        total_orders = conn.execute(f"SELECT COUNT(*) FROM orders WHERE created_at >= {since}").fetchone()[0]
 
-    # Booking/lead-gen funnel — page views of the two request pages, down
-    # to a real confirmed row in `bookings` (server-side truth, not the
-    # client "generate_lead" event, for the same reason as above).
-    # Booking/lead-gen funnel — page views of the two request pages, down
-    # to a real confirmed row in `bookings` (server-side truth, not the
-    # client "generate_lead" event, for the same reason as above).
-    # Matched on page_path rather than event_name/page title — path is a
-    # stable technical identifier, title is marketing copy that can
-    # change without anyone thinking to update an analytics query.
-    booking_page_views = conn.execute(f"""
-        SELECT COUNT(DISTINCT COALESCE(user_id, anonymous_id))
-        FROM analytics_events
-        WHERE event_type = 'page' AND received_at >= {since}
-          AND (json_extract_string(payload, '$.properties.page_path') LIKE '%booking.html%'
-               OR json_extract_string(payload, '$.properties.page_path') LIKE '%custom-design.html%')
-    """).fetchone()[0]
-    leads_generated = step_count(["generate_lead"])
-    bookings_confirmed = conn.execute(f"SELECT COUNT(*) FROM bookings WHERE created_at >= {since}").fetchone()[0]
+        # Booking/lead-gen funnel — page views of the two request pages,
+        # down to a real confirmed row in `bookings` (server-side truth,
+        # not the client "generate_lead" event, for the same reason as
+        # above). Matched on page_path rather than event_name/page title
+        # — path is a stable technical identifier, title is marketing
+        # copy that can change without anyone updating an analytics query.
+        booking_page_views = conn.execute(f"""
+            SELECT COUNT(DISTINCT COALESCE(user_id, anonymous_id))
+            FROM analytics_events
+            WHERE event_type = 'page' AND received_at >= {since}
+              AND (json_extract_string(payload, '$.properties.page_path') LIKE '%booking.html%'
+                   OR json_extract_string(payload, '$.properties.page_path') LIKE '%custom-design.html%')
+        """).fetchone()[0]
+        leads_generated = step_count(["generate_lead"])
+        bookings_confirmed = conn.execute(f"SELECT COUNT(*) FROM bookings WHERE created_at >= {since}").fetchone()[0]
 
-    conn.close()
-    return {
-        "window_days": days,
-        "shop_funnel": [
-            {"step": "Viewed a product", "count": view_item},
-            {"step": "Added to cart", "count": add_to_cart},
-            {"step": "Began checkout", "count": begin_checkout},
-            {"step": "Purchased (confirmed order)", "count": total_orders},
-        ],
-        "lead_funnel": [
-            {"step": "Visited a booking/design page", "count": booking_page_views},
-            {"step": "Submitted the form (client-side)", "count": leads_generated},
-            {"step": "Booking confirmed (server-side)", "count": bookings_confirmed},
-        ],
-    }
+        return {
+            "window_days": days,
+            "shop_funnel": [
+                {"step": "Viewed a product", "count": view_item},
+                {"step": "Added to cart", "count": add_to_cart},
+                {"step": "Began checkout", "count": begin_checkout},
+                {"step": "Purchased (confirmed order)", "count": total_orders},
+            ],
+            "lead_funnel": [
+                {"step": "Visited a booking/design page", "count": booking_page_views},
+                {"step": "Submitted the form (client-side)", "count": leads_generated},
+                {"step": "Booking confirmed (server-side)", "count": bookings_confirmed},
+            ],
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"analytics/funnel failed: {e}")
+    finally:
+        conn.close()
 
 
 @app.get("/api/analytics/journey")
@@ -2596,63 +2602,66 @@ def analytics_journey(days: int = 30, limit: int = 15, x_admin_key: str | None =
     require_admin(x_admin_key)
     conn = get_conn()
     since = f"CURRENT_TIMESTAMP - INTERVAL '{int(days)} days'"
+    try:
+        # Page-to-page transitions: for every page-view event, find the
+        # same visitor's immediately preceding page view (LAG over time),
+        # then count how often each (from -> to) pair occurs. This is the
+        # "hierarchical movement" view — effectively a Sankey diagram's
+        # raw data, without needing a Sankey-capable charting library.
+        transitions = conn.execute(f"""
+            WITH page_events AS (
+                SELECT
+                    COALESCE(user_id, anonymous_id) AS visitor,
+                    json_extract_string(payload, '$.properties.page_path') AS page_path,
+                    received_at
+                FROM analytics_events
+                WHERE event_type = 'page' AND received_at >= {since}
+            ),
+            with_prev AS (
+                SELECT
+                    visitor, page_path,
+                    LAG(page_path) OVER (PARTITION BY visitor ORDER BY received_at) AS prev_page
+                FROM page_events
+            )
+            SELECT prev_page AS from_page, page_path AS to_page, COUNT(*) AS n
+            FROM with_prev
+            WHERE prev_page IS NOT NULL AND prev_page != page_path
+            GROUP BY prev_page, page_path
+            ORDER BY n DESC
+            LIMIT ?
+        """, [limit]).fetchall()
 
-    # Page-to-page transitions: for every page-view event, find the same
-    # visitor's immediately preceding page view (LAG over time), then
-    # count how often each (from -> to) pair occurs. This is the
-    # "hierarchical movement" view — effectively a Sankey diagram's raw
-    # data, without needing a Sankey-capable charting library.
-    transitions = conn.execute(f"""
-        WITH page_events AS (
-            SELECT
-                COALESCE(user_id, anonymous_id) AS visitor,
-                json_extract_string(payload, '$.properties.page_path') AS page_path,
-                received_at
+        top_entry_pages = conn.execute(f"""
+            WITH page_events AS (
+                SELECT
+                    COALESCE(user_id, anonymous_id) AS visitor,
+                    json_extract_string(payload, '$.properties.page_path') AS page_path,
+                    received_at,
+                    ROW_NUMBER() OVER (PARTITION BY COALESCE(user_id, anonymous_id) ORDER BY received_at) AS rn
+                FROM analytics_events
+                WHERE event_type = 'page' AND received_at >= {since}
+            )
+            SELECT page_path, COUNT(*) AS n FROM page_events WHERE rn = 1
+            GROUP BY page_path ORDER BY n DESC LIMIT ?
+        """, [limit]).fetchall()
+
+        top_pages_overall = conn.execute(f"""
+            SELECT json_extract_string(payload, '$.properties.page_path') AS page_path, COUNT(*) AS n
             FROM analytics_events
             WHERE event_type = 'page' AND received_at >= {since}
-        ),
-        with_prev AS (
-            SELECT
-                visitor, page_path,
-                LAG(page_path) OVER (PARTITION BY visitor ORDER BY received_at) AS prev_page
-            FROM page_events
-        )
-        SELECT prev_page AS from_page, page_path AS to_page, COUNT(*) AS n
-        FROM with_prev
-        WHERE prev_page IS NOT NULL AND prev_page != page_path
-        GROUP BY prev_page, page_path
-        ORDER BY n DESC
-        LIMIT ?
-    """, [limit]).fetchall()
+            GROUP BY page_path ORDER BY n DESC LIMIT ?
+        """, [limit]).fetchall()
 
-    top_entry_pages = conn.execute(f"""
-        WITH page_events AS (
-            SELECT
-                COALESCE(user_id, anonymous_id) AS visitor,
-                json_extract_string(payload, '$.properties.page_path') AS page_path,
-                received_at,
-                ROW_NUMBER() OVER (PARTITION BY COALESCE(user_id, anonymous_id) ORDER BY received_at) AS rn
-            FROM analytics_events
-            WHERE event_type = 'page' AND received_at >= {since}
-        )
-        SELECT page_path, COUNT(*) AS n FROM page_events WHERE rn = 1
-        GROUP BY page_path ORDER BY n DESC LIMIT ?
-    """, [limit]).fetchall()
-
-    top_pages_overall = conn.execute(f"""
-        SELECT json_extract_string(payload, '$.properties.page_path') AS page_path, COUNT(*) AS n
-        FROM analytics_events
-        WHERE event_type = 'page' AND received_at >= {since}
-        GROUP BY page_path ORDER BY n DESC LIMIT ?
-    """, [limit]).fetchall()
-
-    conn.close()
-    return {
-        "window_days": days,
-        "top_transitions": [{"from": t[0], "to": t[1], "count": t[2]} for t in transitions],
-        "top_entry_pages": [{"page": p[0], "count": p[1]} for p in top_entry_pages],
-        "top_pages_overall": [{"page": p[0], "count": p[1]} for p in top_pages_overall],
-    }
+        return {
+            "window_days": days,
+            "top_transitions": [{"from": t[0], "to": t[1], "count": t[2]} for t in transitions],
+            "top_entry_pages": [{"page": p[0], "count": p[1]} for p in top_entry_pages],
+            "top_pages_overall": [{"page": p[0], "count": p[1]} for p in top_pages_overall],
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"analytics/journey failed: {e}")
+    finally:
+        conn.close()
 
 
 @app.get("/api/analytics/ecommerce")
@@ -2660,54 +2669,59 @@ def analytics_ecommerce(days: int = 30, x_admin_key: str | None = Header(default
     require_admin(x_admin_key)
     conn = get_conn()
     since = f"CURRENT_TIMESTAMP - INTERVAL '{int(days)} days'"
+    try:
+        revenue_by_day = conn.execute(f"""
+            SELECT CAST(created_at AS DATE) AS d, COALESCE(SUM(total),0), COUNT(*)
+            FROM orders WHERE created_at >= {since}
+            GROUP BY d ORDER BY d
+        """).fetchall()
 
-    revenue_by_day = conn.execute(f"""
-        SELECT CAST(created_at AS DATE) AS d, COALESCE(SUM(total),0), COUNT(*)
-        FROM orders WHERE created_at >= {since}
-        GROUP BY d ORDER BY d
-    """).fetchall()
+        revenue_by_source = conn.execute(f"""
+            SELECT COALESCE(source, 'checkout') AS src, COUNT(*), COALESCE(SUM(total),0)
+            FROM orders WHERE created_at >= {since}
+            GROUP BY src
+        """).fetchall()
 
-    revenue_by_source = conn.execute(f"""
-        SELECT COALESCE(source, 'checkout') AS src, COUNT(*), COALESCE(SUM(total),0)
-        FROM orders WHERE created_at >= {since}
-        GROUP BY src
-    """).fetchall()
+        revenue_by_city = conn.execute(f"""
+            SELECT COALESCE(city, 'Not given'), COUNT(*), COALESCE(SUM(total),0)
+            FROM orders WHERE created_at >= {since}
+            GROUP BY 1 ORDER BY 3 DESC LIMIT 10
+        """).fetchall()
 
-    revenue_by_city = conn.execute(f"""
-        SELECT COALESCE(city, 'Not given'), COUNT(*), COALESCE(SUM(total),0)
-        FROM orders WHERE created_at >= {since}
-        GROUP BY 1 ORDER BY 3 DESC LIMIT 10
-    """).fetchall()
+        # items is a JSON array column. DuckDB's documented pattern for
+        # this: cast the JSON array to a typed LIST of STRUCT (matched by
+        # field name, not position) and UNNEST it — more reliable across
+        # DuckDB versions than SQLite/Postgres-style json_each syntax.
+        top_products = conn.execute(f"""
+            SELECT
+                item.name AS product_name,
+                SUM(item.qty) AS units,
+                SUM(item.qty * item.price) AS revenue
+            FROM orders, UNNEST(CAST(orders.items AS STRUCT(id VARCHAR, name VARCHAR, brand VARCHAR, price DOUBLE, qty INTEGER)[])) AS t(item)
+            WHERE orders.created_at >= {since}
+            GROUP BY product_name
+            ORDER BY revenue DESC
+            LIMIT 10
+        """).fetchall()
 
-    # items is a JSON array column — json_each unnests it per order so we
-    # can aggregate at the product level across every order.
-    top_products = conn.execute(f"""
-        SELECT
-            je.value ->> 'name' AS product_name,
-            SUM(CAST(je.value ->> 'qty' AS INTEGER)) AS units,
-            SUM(CAST(je.value ->> 'qty' AS INTEGER) * CAST(je.value ->> 'price' AS DOUBLE)) AS revenue
-        FROM orders, json_each(orders.items) AS je
-        WHERE orders.created_at >= {since}
-        GROUP BY product_name
-        ORDER BY revenue DESC
-        LIMIT 10
-    """).fetchall()
+        booking_sources = conn.execute(f"""
+            SELECT COALESCE(source, 'standard') AS src, COUNT(*)
+            FROM bookings WHERE created_at >= {since}
+            GROUP BY src
+        """).fetchall()
 
-    booking_sources = conn.execute(f"""
-        SELECT COALESCE(source, 'standard') AS src, COUNT(*)
-        FROM bookings WHERE created_at >= {since}
-        GROUP BY src
-    """).fetchall()
-
-    conn.close()
-    return {
-        "window_days": days,
-        "revenue_by_day": [{"date": str(r[0]), "revenue": r[1], "orders": r[2]} for r in revenue_by_day],
-        "revenue_by_source": [{"source": r[0], "orders": r[1], "revenue": r[2]} for r in revenue_by_source],
-        "revenue_by_city": [{"city": r[0], "orders": r[1], "revenue": r[2]} for r in revenue_by_city],
-        "top_products": [{"name": r[0], "units": r[1], "revenue": r[2]} for r in top_products],
-        "booking_sources": [{"source": r[0], "count": r[1]} for r in booking_sources],
-    }
+        return {
+            "window_days": days,
+            "revenue_by_day": [{"date": str(r[0]), "revenue": r[1], "orders": r[2]} for r in revenue_by_day],
+            "revenue_by_source": [{"source": r[0], "orders": r[1], "revenue": r[2]} for r in revenue_by_source],
+            "revenue_by_city": [{"city": r[0], "orders": r[1], "revenue": r[2]} for r in revenue_by_city],
+            "top_products": [{"name": r[0], "units": r[1], "revenue": r[2]} for r in top_products],
+            "booking_sources": [{"source": r[0], "count": r[1]} for r in booking_sources],
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"analytics/ecommerce failed: {e}")
+    finally:
+        conn.close()
 
 
 # ================= FIND MY FABRIC QUIZ — lead capture =================
