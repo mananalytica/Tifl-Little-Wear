@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Product Admin — Tifl Little Wear</title>
 <meta name="robots" content="noindex, nofollow">
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Nastaliq+Urdu:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 </head>
@@ -50,6 +50,7 @@
       <button class="admin-tab" data-tab="tailors" role="tab">Tailors</button>
       <button class="admin-tab" data-tab="fabrics" role="tab">Fabrics</button>
       <button class="admin-tab" data-tab="fittings" role="tab">Fittings</button>
+      <button class="admin-tab" data-tab="techpacks" role="tab">Tech Packs</button>
     </div>
 
     <!-- ===== Products ===== -->
@@ -361,8 +362,90 @@
     </div>
     <!-- /Fittings panel -->
 
+    <!-- ===== Tech Packs ===== -->
+    <div class="admin-tab-panel" data-panel="techpacks">
+    <div class="eyebrow">Natural language \u2192 tech pack</div>
+    <h2 style="font-size:22px;margin-bottom:8px;">Generate a cut sheet from a customer's own words</h2>
+    <p style="color:var(--ink-soft);font-size:14.5px;max-width:640px;margin-bottom:28px;">
+      Pulls the customer's design brief, their measurements, and the fabric's real width/repeat into a structured
+      draft \u2014 yardage, seams, darts, closures, BOM, and cutting/stitching steps in English and Urdu. <b>Always a
+      draft first</b> \u2014 review and edit before it goes to a cutter.
+    </p>
+
+    <div class="side-card" style="margin-bottom:32px;">
+      <h3>Generate a new tech pack</h3>
+      <div class="form-grid" style="margin-top:14px;">
+        <div class="field full"><label for="tpBookingSelect">Booking</label>
+          <select id="tpBookingSelect"><option value="">Loading bookings\u2026</option></select>
+        </div>
+        <div class="field full"><label for="tpFabricSelect">Fabric</label>
+          <select id="tpFabricSelect"><option value="">Loading fabrics\u2026</option></select>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="tpGenerateBtn" style="margin-top:14px;">Generate tech pack</button>
+      <p id="tpGenerateStatus" style="margin-top:10px;font-size:13px;color:var(--ink-soft);"></p>
+    </div>
+
+    <!-- Review/edit panel — hidden until a tech pack is generated or opened from the list -->
+    <div class="side-card" id="tpEditor" style="display:none;margin-bottom:32px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <h3 id="tpEditorTitle">Tech pack</h3>
+        <span id="tpStatusBadge" style="font-family:'IBM Plex Mono',monospace;font-size:11px;padding:3px 10px;border-radius:20px;background:var(--bg-alt);"></span>
+      </div>
+      <p id="tpEditorMeta" style="font-size:12.5px;color:var(--ink-soft);margin-bottom:18px;"></p>
+
+      <div class="form-grid">
+        <div class="field"><label for="tpYardage">Yardage estimate</label><input id="tpYardage" type="text"></div>
+        <div class="field"><label for="tpSeam">Seam allowance</label><input id="tpSeam" type="text"></div>
+        <div class="field"><label for="tpDarts">Dart placement</label><input id="tpDarts" type="text"></div>
+        <div class="field"><label for="tpClosures">Closures</label><input id="tpClosures" type="text"></div>
+        <div class="field full"><label for="tpLining">Lining</label><input id="tpLining" type="text"></div>
+      </div>
+
+      <p class="eyebrow" style="margin-top:22px;">Bill of materials</p>
+      <div class="form-grid">
+        <div class="field"><label for="tpZipper">Zipper</label><input id="tpZipper" type="text"></div>
+        <div class="field"><label for="tpThread">Thread color</label><input id="tpThread" type="text"></div>
+        <div class="field"><label for="tpInterfacing">Interfacing</label><input id="tpInterfacing" type="text"></div>
+        <div class="field"><label for="tpButtons">Buttons</label><input id="tpButtons" type="text"></div>
+        <div class="field full"><label for="tpOther">Other materials</label><input id="tpOther" type="text"></div>
+      </div>
+
+      <p class="eyebrow" style="margin-top:22px;">Cutting instructions</p>
+      <div class="form-grid">
+        <div class="field full"><label for="tpCutEn">English</label><textarea id="tpCutEn" rows="6"></textarea></div>
+        <div class="field full"><label for="tpCutUr">اردو (Urdu)</label><textarea id="tpCutUr" rows="6" dir="rtl" style="font-family:'Noto Nastaliq Urdu','Noto Sans Arabic',serif;font-size:15px;"></textarea></div>
+      </div>
+
+      <p class="eyebrow" style="margin-top:22px;">Stitching instructions</p>
+      <div class="form-grid">
+        <div class="field full"><label for="tpStitchEn">English</label><textarea id="tpStitchEn" rows="6"></textarea></div>
+        <div class="field full"><label for="tpStitchUr">اردو (Urdu)</label><textarea id="tpStitchUr" rows="6" dir="rtl" style="font-family:'Noto Nastaliq Urdu','Noto Sans Arabic',serif;font-size:15px;"></textarea></div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:22px;flex-wrap:wrap;">
+        <button class="btn btn-ghost" id="tpCloseBtn">Close</button>
+        <button class="btn btn-ghost" id="tpExportBtn">Export PDF</button>
+        <button class="btn btn-ghost" id="tpSaveBtn">Save changes</button>
+        <button class="btn btn-primary btn-block" id="tpApproveBtn">Save &amp; approve</button>
+      </div>
+    </div>
+
+    <h2 style="font-size:18px;margin-bottom:16px;">All tech packs</h2>
+    <div id="adminTechPackList" class="admin-list"></div>
+    </div>
+    <!-- /Tech Packs panel -->
+
   </div>
 </main>
+
+<!-- Print-only view for PDF export (via window.print()) — populated by
+     exportTechPackPdf() in script.js right before printing. Kept
+     separate from the editor above so the printed layout can be clean
+     and the Urdu text can render RTL with a proper Urdu font, which a
+     library like jsPDF can't do without embedding custom font files;
+     the browser's own renderer handles this correctly for free. -->
+<div id="techPackPrintView" class="tp-print-view"></div>
 
 <div class="toast" id="toast"></div>
 <script src="rudderstack.js"></script>

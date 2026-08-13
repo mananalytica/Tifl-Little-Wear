@@ -600,3 +600,30 @@ body.has-sticky-cta .whatsapp-tip{bottom:calc(var(--sticky-bar-h, 96px) + 30px);
 .fg-dots span{width:30px;height:4px;border-radius:999px;background:rgba(241,246,253,.35);cursor:pointer;transition:background .2s,width .2s;}
 .fg-dots span.active{background:#fff;width:42px;}
 @media (prefers-reduced-motion: reduce){.fg-slide{transition:none;}}
+
+/* =============== TECH PACK PRINT VIEW =============== */
+/* Hidden on screen entirely; only shown (and everything else hidden)
+   when printing/exporting to PDF via window.print() in exportTechPackPdf().
+   Handles Urdu natively through the browser's own text engine (RTL +
+   the Noto Nastaliq Urdu webfont) rather than a PDF library that would
+   need custom font embedding to render Arabic-script glyphs at all. */
+.tp-print-view{display:none;}
+@media print{
+  body *{visibility:hidden;}
+  .tp-print-view, .tp-print-view *{visibility:visible;}
+  .tp-print-view{
+    display:block;position:absolute;top:0;left:0;width:100%;
+    padding:24px;font-family:'Inter',Arial,sans-serif;color:#1F2A3D;
+  }
+  .tp-print-view h1{font-family:'Fredoka',sans-serif;font-size:22px;margin-bottom:4px;}
+  .tp-print-meta{font-size:12px;color:#5C6B85;margin-bottom:20px;}
+  .tp-print-view h2{font-family:'Fredoka',sans-serif;font-size:15px;margin:22px 0 8px;border-top:1px dashed #E1E8F2;padding-top:16px;}
+  .tp-print-view h3{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:#5C6B85;margin-bottom:6px;}
+  .tp-print-table{width:100%;border-collapse:collapse;font-size:13px;}
+  .tp-print-table th{text-align:left;width:160px;padding:6px 10px 6px 0;color:#5C6B85;font-weight:600;vertical-align:top;}
+  .tp-print-table td{padding:6px 0;vertical-align:top;}
+  .tp-print-langs{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+  .tp-print-langs p{font-size:13px;line-height:1.6;white-space:pre-wrap;}
+  .tp-urdu{font-family:'Noto Nastaliq Urdu','Noto Sans Arabic',serif;font-size:15px;text-align:right;}
+  @page{margin:16mm;}
+}

@@ -862,6 +862,36 @@ def ensure_schema(conn):
             notes               VARCHAR,
             active              BOOLEAN
         );""",
+        # Phase 3: the actual generated tech pack. One row per generation —
+        # editing/approving happens in place on the same row rather than
+        # versioning, since a tailor's edit supersedes the draft rather
+        # than sitting alongside it. `raw_llm_response` is kept verbatim
+        # for audit/debugging if a generated estimate ever looks wrong.
+        """CREATE TABLE IF NOT EXISTS tech_packs (
+            tech_pack_id                VARCHAR PRIMARY KEY,
+            created_at                  TIMESTAMP,
+            booking_id                  VARCHAR,
+            fabric_id                   VARCHAR,
+            status                      VARCHAR,
+            yardage_estimate            VARCHAR,
+            seam_allowance              VARCHAR,
+            dart_placement              VARCHAR,
+            closures                    VARCHAR,
+            lining                      VARCHAR,
+            cutting_instructions_en     VARCHAR,
+            cutting_instructions_ur     VARCHAR,
+            stitching_instructions_en   VARCHAR,
+            stitching_instructions_ur   VARCHAR,
+            bom_zipper                  VARCHAR,
+            bom_thread_color            VARCHAR,
+            bom_interfacing             VARCHAR,
+            bom_buttons                 VARCHAR,
+            bom_other                   VARCHAR,
+            raw_llm_response            VARCHAR,
+            generated_by                VARCHAR,
+            approved_by                 VARCHAR,
+            approved_at                 TIMESTAMP
+        );""",
     ]
     try:
         conn.execute("\n".join(create_statements))
@@ -1727,6 +1757,266 @@ def delete_fabric(fabric_id: str, x_admin_key: str | None = Header(default=None)
     conn.execute("DELETE FROM fabrics WHERE fabric_id = ?", [fabric_id])
     conn.close()
     return {"fabric_id": fabric_id, "status": "deleted"}
+
+
+# ================= TECH PACKS (Phase 3) =================
+# ⚙️ EDIT ME: set GEMINI_API_KEY in Vercel env vars (Google AI Studio ->
+# Get API key). No other Gemini setup needed — this calls the REST API
+# directly, same urllib pattern as everything else in this file.
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.5-flash")
+
+# Every field the model must fill in. Using Gemini's responseSchema mode
+# guarantees valid JSON back matching this shape exactly — no regex-out-
+# of-a-text-blob parsing, no risk of a missing field silently vanishing.
+TECH_PACK_SCHEMA = {
+    "type": "OBJECT",
+    "properties": {
+        "yardage_estimate": {"type": "STRING", "description": "Estimated fabric needed, with unit, e.g. '1.8 yards' or '1.6m'. Account for the fabric's pattern repeat and drape type."},
+        "seam_allowance": {"type": "STRING", "description": "Seam allowance spec, e.g. '1.5cm on all seams, 2.5cm on hem'."},
+        "dart_placement": {"type": "STRING", "description": "Where darts go and why, in plain terms."},
+        "closures": {"type": "STRING", "description": "Closure type and placement, e.g. 'centre-back invisible zip, 18cm'."},
+        "lining": {"type": "STRING", "description": "Lining requirement, or 'None required' if unlined."},
+        "cutting_instructions_en": {"type": "STRING", "description": "Step-by-step cutting instructions in English, numbered, for a master cutter."},
+        "cutting_instructions_ur": {"type": "STRING", "description": "The SAME cutting instructions translated into Urdu, using standard Urdu tailoring/darzi vocabulary, written right-to-left."},
+        "stitching_instructions_en": {"type": "STRING", "description": "Step-by-step stitching/assembly instructions in English, numbered."},
+        "stitching_instructions_ur": {"type": "STRING", "description": "The SAME stitching instructions translated into Urdu, using standard Urdu tailoring vocabulary, written right-to-left."},
+        "bom_zipper": {"type": "STRING", "description": "Zipper spec (length, type) or 'None'."},
+        "bom_thread_color": {"type": "STRING", "description": "Thread color match, described precisely (e.g. 'Emerald green, match fabric exactly')."},
+        "bom_interfacing": {"type": "STRING", "description": "Interfacing weight/type needed, or 'None'."},
+        "bom_buttons": {"type": "STRING", "description": "Button count and size, or 'None'."},
+        "bom_other": {"type": "STRING", "description": "Any other materials needed — trims, boning, elastic, embroidery thread, etc."},
+    },
+    "required": ["yardage_estimate", "seam_allowance", "dart_placement", "closures", "lining",
+                 "cutting_instructions_en", "cutting_instructions_ur",
+                 "stitching_instructions_en", "stitching_instructions_ur",
+                 "bom_zipper", "bom_thread_color", "bom_interfacing", "bom_buttons", "bom_other"],
+}
+
+
+def call_gemini_structured(prompt: str) -> dict:
+    """POSTs to Gemini with responseSchema enforcement. Raises a plain
+    Exception with Gemini's actual error body on failure (caller turns
+    that into a clean 502 for the frontend) — deliberately NOT a silent
+    no-op like the notification helpers, since a failed generation here
+    needs to surface to the tailor waiting on it, not disappear."""
+    if not GEMINI_API_KEY:
+        raise Exception("GEMINI_API_KEY is not configured")
+    body = {
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {
+            "temperature": 0.3,
+            "responseMimeType": "application/json",
+            "responseSchema": TECH_PACK_SCHEMA,
+        },
+    }
+    data = json.dumps(body).encode("utf-8")
+    req = urllib.request.Request(
+        f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent?key={GEMINI_API_KEY}",
+        data=data,
+        headers={
+            "Content-Type": "application/json",
+            "User-Agent": "TiflLittleWear-Backend/1.0 (+https://www.tifllittlewear.com)",
+        },
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=45) as resp:
+            raw = resp.read().decode("utf-8")
+    except urllib.error.HTTPError as e:
+        body_text = e.read().decode("utf-8", "replace")
+        raise Exception(f"Gemini HTTP {e.code}: {body_text}")
+    parsed = json.loads(raw)
+    text = parsed["candidates"][0]["content"]["parts"][0]["text"]
+    return json.loads(text), raw  # (structured fields, full raw response for audit)
+
+
+def build_tech_pack_prompt(booking: dict, measurement: dict | None, fabric: dict) -> str:
+    m_lines = "No measurement on file yet — estimate generously and flag that measurements are pending." if not measurement else "\n".join(
+        f"- {label}: {measurement.get(key) or 'not recorded'}"
+        for key, label in [
+            ("chest", "Chest"), ("waist", "Waist"), ("hip", "Hip"),
+            ("shoulder_width", "Shoulder width"), ("sleeve_length", "Sleeve length"),
+            ("neck", "Neck"), ("back_length", "Back length"), ("front_length", "Front length"),
+            ("inseam", "Inseam"), ("outseam", "Outseam"), ("height", "Height"),
+        ]
+    )
+    return f"""You are a technical pattern-cutting expert for Tifl Little Wear (TLW), a made-to-measure kidswear studio in Lahore, Pakistan. You are producing a tech pack for a master cutter and tailor to work from directly — be precise and practical, not decorative.
+
+CHILD: {booking.get('child_name') or 'not given'}
+GARMENT TYPE: {booking.get('garment_type') or 'not specified'}
+
+CUSTOMER'S REQUEST (their own words):
+\"\"\"{booking.get('design_brief') or booking.get('notes') or 'No description given.'}\"\"\"
+
+MEASUREMENTS (cm):
+{m_lines}
+
+FABRIC:
+- Name: {fabric.get('name')}
+- Composition: {fabric.get('composition') or 'not specified'}
+- Width: {fabric.get('width_cm') or 'not specified'} cm
+- Pattern repeat: {fabric.get('pattern_repeat_cm') or 0} cm (0 means plain/no repeat)
+- Drape: {fabric.get('drape_type') or 'not specified'}
+
+Produce a complete tech pack in the exact structured format requested. For the two instruction fields that need both languages: write the English version first, then produce a faithful Urdu translation using the vocabulary a working Lahori darzi would actually use — not a literal dictionary translation. Every numeric estimate should account for the fabric's actual width and pattern repeat above, not a generic assumption."""
+
+
+@app.post("/api/tech-packs/generate")
+def generate_tech_pack(booking_id: str, fabric_id: str, x_admin_key: str | None = Header(default=None)):
+    require_admin(x_admin_key)
+    conn = get_conn()
+    booking_row = conn.execute("SELECT * FROM bookings WHERE booking_id = ?", [booking_id]).fetchone()
+    if not booking_row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Booking not found")
+    booking_cols = [c[0] for c in conn.description]
+    booking = dict(zip(booking_cols, booking_row))
+
+    fabric_row = conn.execute("SELECT * FROM fabrics WHERE fabric_id = ?", [fabric_id]).fetchone()
+    if not fabric_row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Fabric not found")
+    fabric_cols = [c[0] for c in conn.description]
+    fabric = dict(zip(fabric_cols, fabric_row))
+
+    # Prefer a real tailor-recorded/self-reported measurement row linked
+    # to this booking; fall back to the basic 6-field JSON stored
+    # directly on the booking itself (the pre-Phase-1 format) if that's
+    # all there is.
+    meas_row = conn.execute(
+        "SELECT * FROM measurements WHERE booking_id = ? ORDER BY created_at DESC LIMIT 1", [booking_id]
+    ).fetchone()
+    if meas_row:
+        meas_cols = [c[0] for c in conn.description]
+        measurement = dict(zip(meas_cols, meas_row))
+    elif booking.get("measurements"):
+        legacy = json.loads(booking["measurements"])
+        measurement = {"chest": legacy.get("chest"), "waist": legacy.get("waist"),
+                        "height": legacy.get("height"), "inseam": legacy.get("inseam")}
+    else:
+        measurement = None
+    conn.close()
+
+    prompt = build_tech_pack_prompt(booking, measurement, fabric)
+    try:
+        fields, raw = call_gemini_structured(prompt)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Tech pack generation failed: {e}")
+
+    tech_pack_id = "TP-" + uuid.uuid4().hex[:10].upper()
+    conn = get_conn()
+    conn.execute(
+        """
+        INSERT INTO tech_packs
+            (tech_pack_id, created_at, booking_id, fabric_id, status,
+             yardage_estimate, seam_allowance, dart_placement, closures, lining,
+             cutting_instructions_en, cutting_instructions_ur,
+             stitching_instructions_en, stitching_instructions_ur,
+             bom_zipper, bom_thread_color, bom_interfacing, bom_buttons, bom_other,
+             raw_llm_response, generated_by, approved_by, approved_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        [
+            tech_pack_id, datetime.now(), booking_id, fabric_id, "draft",
+            fields["yardage_estimate"], fields["seam_allowance"], fields["dart_placement"],
+            fields["closures"], fields["lining"],
+            fields["cutting_instructions_en"], fields["cutting_instructions_ur"],
+            fields["stitching_instructions_en"], fields["stitching_instructions_ur"],
+            fields["bom_zipper"], fields["bom_thread_color"], fields["bom_interfacing"],
+            fields["bom_buttons"], fields["bom_other"],
+            raw, x_admin_key, None, None,
+        ],
+    )
+    conn.close()
+    notify_discord_other(tech_pack_id, "Tech pack generated (draft — needs review)", [
+        ("Booking", booking_id, True),
+        ("Fabric", fabric.get("name"), True),
+        ("Yardage estimate", fields["yardage_estimate"], False),
+    ])
+    return {"tech_pack_id": tech_pack_id, "status": "draft", **fields}
+
+
+@app.get("/api/tech-packs")
+def list_tech_packs(x_admin_key: str | None = Header(default=None)):
+    require_admin(x_admin_key)
+    conn = get_conn()
+    rows = conn.execute("SELECT * FROM tech_packs ORDER BY created_at DESC").fetchall()
+    cols = [c[0] for c in conn.description]
+    conn.close()
+    return [dict(zip(cols, row)) for row in rows]
+
+
+@app.get("/api/tech-packs/{tech_pack_id}")
+def get_tech_pack(tech_pack_id: str, x_admin_key: str | None = Header(default=None)):
+    require_admin(x_admin_key)
+    conn = get_conn()
+    row = conn.execute("SELECT * FROM tech_packs WHERE tech_pack_id = ?", [tech_pack_id]).fetchone()
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Tech pack not found")
+    cols = [c[0] for c in conn.description]
+    conn.close()
+    return dict(zip(cols, row))
+
+
+TECH_PACK_EDITABLE_FIELDS = [
+    "yardage_estimate", "seam_allowance", "dart_placement", "closures", "lining",
+    "cutting_instructions_en", "cutting_instructions_ur",
+    "stitching_instructions_en", "stitching_instructions_ur",
+    "bom_zipper", "bom_thread_color", "bom_interfacing", "bom_buttons", "bom_other",
+]
+
+class TechPackUpdate(BaseModel):
+    yardage_estimate: str | None = None
+    seam_allowance: str | None = None
+    dart_placement: str | None = None
+    closures: str | None = None
+    lining: str | None = None
+    cutting_instructions_en: str | None = None
+    cutting_instructions_ur: str | None = None
+    stitching_instructions_en: str | None = None
+    stitching_instructions_ur: str | None = None
+    bom_zipper: str | None = None
+    bom_thread_color: str | None = None
+    bom_interfacing: str | None = None
+    bom_buttons: str | None = None
+    bom_other: str | None = None
+    approve: bool | None = False  # set true to mark this tech pack approved
+
+
+@app.put("/api/tech-packs/{tech_pack_id}")
+def update_tech_pack(tech_pack_id: str, update: TechPackUpdate, x_admin_key: str | None = Header(default=None)):
+    require_admin(x_admin_key)
+    conn = get_conn()
+    existing = conn.execute("SELECT tech_pack_id FROM tech_packs WHERE tech_pack_id = ?", [tech_pack_id]).fetchone()
+    if not existing:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Tech pack not found")
+
+    set_parts, values = [], []
+    for f in TECH_PACK_EDITABLE_FIELDS:
+        v = getattr(update, f)
+        if v is not None:
+            set_parts.append(f"{f}=?")
+            values.append(v)
+    if update.approve:
+        set_parts += ["status=?", "approved_by=?", "approved_at=?"]
+        values += ["approved", x_admin_key, datetime.now()]
+
+    if set_parts:
+        conn.execute(f"UPDATE tech_packs SET {', '.join(set_parts)} WHERE tech_pack_id=?", values + [tech_pack_id])
+    conn.close()
+    return {"tech_pack_id": tech_pack_id, "status": "updated"}
+
+
+@app.delete("/api/tech-packs/{tech_pack_id}")
+def delete_tech_pack(tech_pack_id: str, x_admin_key: str | None = Header(default=None)):
+    require_admin(x_admin_key)
+    conn = get_conn()
+    conn.execute("DELETE FROM tech_packs WHERE tech_pack_id = ?", [tech_pack_id])
+    conn.close()
+    return {"tech_pack_id": tech_pack_id, "status": "deleted"}
 
 
 @app.get("/api/products")
