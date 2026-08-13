@@ -1832,6 +1832,7 @@ function initAdminPage(){
     refreshTechPackBookingDropdown();
     refreshTechPackFabricDropdown();
     refreshTechPackList();
+    refreshAnalytics();
   });
 
   document.getElementById('productForm')?.addEventListener('submit', async (e)=>{
@@ -2327,6 +2328,144 @@ function initAdminPage(){
     window.print();
   });
 
+  // ---- Analytics dashboard ----
+  let anCharts = {}; // Chart.js instances, kept so re-rendering destroys the old one first
+
+  function anDestroyChart(key){
+    if(anCharts[key]){ anCharts[key].destroy(); delete anCharts[key]; }
+  }
+
+  function anRenderKpis(overview){
+    const fmt = (n)=> new Intl.NumberFormat('en-PK').format(n||0);
+    const cards = [
+      ["Unique visitors", fmt(overview.unique_visitors)],
+      ["Revenue", "PKR "+fmt(Math.round(overview.revenue))],
+      ["Orders", fmt(overview.orders)],
+      ["Avg order value", "PKR "+fmt(Math.round(overview.avg_order_value))],
+      ["Bookings", fmt(overview.bookings)],
+      ["Custom design requests", fmt(overview.custom_design_bookings)],
+      ["New signups", fmt(overview.signups)],
+      ["Total events tracked", fmt(overview.total_events)],
+    ];
+    document.getElementById('anKpiGrid').innerHTML = cards.map(([label,val])=>`
+      <div class="an-kpi-card">
+        <div class="an-kpi-label">${label}</div>
+        <div class="an-kpi-value">${val}</div>
+      </div>`).join('');
+  }
+
+  function anRenderFunnel(containerId, steps){
+    const max = steps.length ? Math.max(...steps.map(s=>s.count), 1) : 1;
+    document.getElementById(containerId).innerHTML = steps.map((s, i)=>{
+      const pct = max ? Math.round((s.count/max)*100) : 0;
+      const dropoff = i>0 && steps[i-1].count ? Math.round(100 - (s.count/steps[i-1].count)*100) : null;
+      return `
+      <div class="an-funnel-step">
+        <div class="an-funnel-bar"><div class="an-funnel-fill" style="width:${Math.max(pct,4)}%;"></div>
+          <div class="an-funnel-label"><span>${s.step}</span><span>${s.count}</span></div>
+        </div>
+        ${dropoff!==null ? `<div class="an-funnel-drop">${dropoff>0 ? '↓ '+dropoff+'% drop-off from previous step' : 'No drop-off'}</div>` : ''}
+      </div>`;
+    }).join('') || '<p style="color:var(--ink-soft);">No data in this window yet.</p>';
+  }
+
+  function anRenderList(containerId, items, renderRow){
+    const el = document.getElementById(containerId);
+    el.innerHTML = items.map(renderRow).join('') || '<p style="color:var(--ink-soft);">No data in this window yet.</p>';
+  }
+
+  async function refreshAnalytics(){
+    const days = document.getElementById('anRange').value;
+    const qs = 'days='+encodeURIComponent(days);
+
+    let overview, funnel, ecommerce, journey;
+    try{
+      [overview, funnel, ecommerce, journey] = await Promise.all([
+        apiCall('/api/analytics/overview?'+qs, 'GET'),
+        apiCall('/api/analytics/funnel?'+qs, 'GET'),
+        apiCall('/api/analytics/ecommerce?'+qs, 'GET'),
+        apiCall('/api/analytics/journey?'+qs, 'GET'),
+      ]);
+    }catch(e){
+      document.getElementById('anKpiGrid').innerHTML = '<p style="color:var(--primary-dark);">Could not load analytics.</p>';
+      return;
+    }
+
+    anRenderKpis(overview);
+    anRenderFunnel('anShopFunnel', funnel.shop_funnel);
+    anRenderFunnel('anLeadFunnel', funnel.lead_funnel);
+
+    // Revenue over time
+    anDestroyChart('revenue');
+    anCharts.revenue = new Chart(document.getElementById('anRevenueChart'), {
+      type: 'line',
+      data: {
+        labels: ecommerce.revenue_by_day.map(d=>d.date),
+        datasets: [{
+          label: 'Revenue (PKR)',
+          data: ecommerce.revenue_by_day.map(d=>d.revenue),
+          borderColor: '#4A93E8', backgroundColor: 'rgba(74,147,232,0.12)',
+          fill: true, tension: 0.3, pointRadius: 2,
+        }]
+      },
+      options: { plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}} }
+    });
+
+    // Revenue by source (doughnut)
+    anDestroyChart('source');
+    anCharts.source = new Chart(document.getElementById('anSourceChart'), {
+      type: 'doughnut',
+      data: {
+        labels: ecommerce.revenue_by_source.map(s=>s.source),
+        datasets: [{
+          data: ecommerce.revenue_by_source.map(s=>s.revenue),
+          backgroundColor: ['#4A93E8','#16233B','#9FB1CC','#3576C9'],
+        }]
+      },
+      options: { plugins:{legend:{position:'bottom'}} }
+    });
+
+    anRenderList('anTopProducts', ecommerce.top_products, p=>`
+      <div class="admin-row">
+        <div class="admin-row-info">
+          <div class="admin-row-name">${p.name}</div>
+          <div class="admin-row-meta">${p.units} sold</div>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--primary-dark);">PKR ${Math.round(p.revenue).toLocaleString()}</div>
+      </div>`);
+
+    anRenderList('anTopCities', ecommerce.revenue_by_city, c=>`
+      <div class="admin-row">
+        <div class="admin-row-info">
+          <div class="admin-row-name">${c.city}</div>
+          <div class="admin-row-meta">${c.orders} order${c.orders===1?'':'s'}</div>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--primary-dark);">PKR ${Math.round(c.revenue).toLocaleString()}</div>
+      </div>`);
+
+    anRenderList('anBookingSources', ecommerce.booking_sources, b=>`
+      <div class="admin-row">
+        <div class="admin-row-info">
+          <div class="admin-row-name">${b.source === 'custom_design' ? 'Custom design request' : 'Standard booking'}</div>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--primary-dark);">${b.count}</div>
+      </div>`);
+
+    document.getElementById('anTransitions').innerHTML = journey.top_transitions.map(t=>`
+      <div class="an-transition-row" style="margin-bottom:8px;">
+        <span class="an-path">${t.from || '(unknown)'} → ${t.to || '(unknown)'}</span>
+        <span class="an-count">${t.count}</span>
+      </div>`).join('') || '<p style="color:var(--ink-soft);">No page-transition data yet — needs real visitor traffic with analytics consent accepted.</p>';
+
+    anRenderList('anEntryPages', journey.top_entry_pages, p=>`
+      <div class="admin-row">
+        <div class="admin-row-info"><div class="admin-row-name">${p.page || '(unknown)'}</div></div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--primary-dark);">${p.count}</div>
+      </div>`);
+  }
+
+  document.getElementById('anRange')?.addEventListener('change', refreshAnalytics);
+
   if(getKey()){
     document.getElementById('adminGate').style.display = 'none';
     document.getElementById('adminPanel').style.display = 'block';
@@ -2338,6 +2477,7 @@ function initAdminPage(){
     refreshTechPackBookingDropdown();
     refreshTechPackFabricDropdown();
     refreshTechPackList();
+    refreshAnalytics();
   }
 }
 

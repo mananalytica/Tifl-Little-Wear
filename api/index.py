@@ -924,6 +924,11 @@ def ensure_schema(conn):
     alter_statements.append("ALTER TABLE orders ADD COLUMN IF NOT EXISTS postal_code VARCHAR;")
     alter_statements.append("ALTER TABLE orders ADD COLUMN IF NOT EXISTS state VARCHAR;")
     alter_statements.append("ALTER TABLE orders ADD COLUMN IF NOT EXISTS country VARCHAR;")
+    # Distinguishes a live-sell instant-buy order from a normal checkout —
+    # already used for Discord routing, now also persisted here so the
+    # analytics dashboard can segment revenue by source directly from
+    # this table instead of depending on the RudderStack event pipeline.
+    alter_statements.append("ALTER TABLE orders ADD COLUMN IF NOT EXISTS source VARCHAR;")
     # Designer/tailor attribution — which master tailor cut and finished this
     # piece. Stores the tailor's SLUG (e.g. "abdul-sattar"), not their display
     # name, so renaming a tailor never breaks product attribution. Resolved
@@ -1422,7 +1427,7 @@ def create_booking(booking: Booking):
               dict({
                   "booking_id": booking_id, "parent_name": booking.parent_name, "child_name": booking.child_name,
                   "garment_type": booking.garment_type, "mode": booking.mode, "date": booking.date, "time_slot": booking.time_slot,
-                  "preferred_tailor": booking.preferred_tailor,
+                  "preferred_tailor": booking.preferred_tailor, "source": booking.source,
               }, **flatten_attribution(booking.attribution)),
               anonymous_id=booking.anonymous_id)
     notify_n8n(N8N_BOOKING_WEBHOOK_URL, {
@@ -2286,14 +2291,14 @@ def create_order(order: Order, authorization: str | None = Header(default=None))
         """INSERT INTO orders
            (order_id, created_at, customer_name, phone, email, address, address_line2, city,
             postal_code, state, country, payment_method, notes, items, subtotal, shipping_fee,
-            total, currency, status, customer_id)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'received', ?)""",
+            total, currency, status, customer_id, source)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'received', ?, ?)""",
         [order_id, datetime.now(), order.customer_name, order.phone, order.email,
          order.address, order.address_line2, order.city, order.postal_code, order.state, order.country,
          order.payment_method, order.notes,
          json.dumps([i.dict() for i in order.items]), order.subtotal,
          order.shipping_fee, order.total, order.currency,
-         customer["customer_id"] if customer else None],
+         customer["customer_id"] if customer else None, order.source],
     )
     # Decrement stock for every ordered item. GREATEST(...,0) clamps at
     # zero instead of going negative if two orders race for the last
@@ -2321,6 +2326,7 @@ def create_order(order: Order, authorization: str | None = Header(default=None))
                   "city": order.city,
                   "postal_code": order.postal_code,
                   "country": order.country,
+                  "source": order.source,
                   "products": [
                       {"product_id": i.id, "name": i.name, "brand": i.brand, "price": i.price, "quantity": i.qty}
                       for i in order.items
@@ -2475,6 +2481,233 @@ async def rudder_webhook(request: Request, x_webhook_secret: str | None = Header
         inserted += 1
     conn.close()
     return {"status": "received", "events_stored": inserted}
+
+
+# ================= ANALYTICS DASHBOARD =================
+# Deliberately hybrid: revenue/order/booking numbers come from the
+# structured `orders`/`bookings` tables (reliable, no JSON-parsing
+# uncertainty) — behavioral data with no structured equivalent (page
+# browsing, funnel drop-off before a conversion) comes from
+# `analytics_events`, RudderStack's raw event stream. JSON paths below
+# (properties.page_path etc.) match rsPageContext()'s shape in
+# rudderstack.js as of when this was written — worth spot-checking a
+# few real rows once live traffic is flowing, since this couldn't be
+# tested against actual captured events.
+
+@app.get("/api/analytics/overview")
+def analytics_overview(days: int = 30, x_admin_key: str | None = Header(default=None)):
+    require_admin(x_admin_key)
+    conn = get_conn()
+    since = f"CURRENT_TIMESTAMP - INTERVAL '{int(days)} days'"
+
+    unique_visitors = conn.execute(f"""
+        SELECT COUNT(DISTINCT COALESCE(user_id, anonymous_id))
+        FROM analytics_events WHERE received_at >= {since}
+    """).fetchone()[0]
+
+    total_events = conn.execute(f"SELECT COUNT(*) FROM analytics_events WHERE received_at >= {since}").fetchone()[0]
+
+    orders_row = conn.execute(f"""
+        SELECT COUNT(*), COALESCE(SUM(total),0), COALESCE(AVG(total),0)
+        FROM orders WHERE created_at >= {since}
+    """).fetchone()
+
+    bookings_row = conn.execute(f"""
+        SELECT COUNT(*), COUNT(*) FILTER (WHERE source = 'custom_design')
+        FROM bookings WHERE created_at >= {since}
+    """).fetchone()
+
+    signups = conn.execute(f"SELECT COUNT(*) FROM customers WHERE created_at >= {since}").fetchone()[0]
+    conn.close()
+
+    return {
+        "window_days": days,
+        "unique_visitors": unique_visitors,
+        "total_events": total_events,
+        "orders": orders_row[0], "revenue": orders_row[1], "avg_order_value": round(orders_row[2], 2),
+        "bookings": bookings_row[0], "custom_design_bookings": bookings_row[1],
+        "signups": signups,
+    }
+
+
+@app.get("/api/analytics/funnel")
+def analytics_funnel(days: int = 30, x_admin_key: str | None = Header(default=None)):
+    require_admin(x_admin_key)
+    conn = get_conn()
+    since = f"CURRENT_TIMESTAMP - INTERVAL '{int(days)} days'"
+
+    def step_count(event_names: list) -> int:
+        placeholders = ", ".join(["?"] * len(event_names))
+        row = conn.execute(f"""
+            SELECT COUNT(DISTINCT COALESCE(user_id, anonymous_id))
+            FROM analytics_events
+            WHERE event_name IN ({placeholders}) AND received_at >= {since}
+        """, event_names).fetchone()
+        return row[0]
+
+    # Shop/ecommerce funnel — purely client-side steps up to the last one,
+    # where we cross-check against the real `orders` table instead of
+    # trusting the client "purchase" event alone (that event fires
+    # optimistically on the client; the orders table is the actual truth).
+    view_item = step_count(["view_item"])
+    add_to_cart = step_count(["add_to_cart"])
+    begin_checkout = step_count(["begin_checkout"])
+    purchasers = conn.execute(f"SELECT COUNT(DISTINCT customer_id) FROM orders WHERE created_at >= {since} AND customer_id IS NOT NULL").fetchone()[0]
+    total_orders = conn.execute(f"SELECT COUNT(*) FROM orders WHERE created_at >= {since}").fetchone()[0]
+
+    # Booking/lead-gen funnel — page views of the two request pages, down
+    # to a real confirmed row in `bookings` (server-side truth, not the
+    # client "generate_lead" event, for the same reason as above).
+    # Booking/lead-gen funnel — page views of the two request pages, down
+    # to a real confirmed row in `bookings` (server-side truth, not the
+    # client "generate_lead" event, for the same reason as above).
+    # Matched on page_path rather than event_name/page title — path is a
+    # stable technical identifier, title is marketing copy that can
+    # change without anyone thinking to update an analytics query.
+    booking_page_views = conn.execute(f"""
+        SELECT COUNT(DISTINCT COALESCE(user_id, anonymous_id))
+        FROM analytics_events
+        WHERE event_type = 'page' AND received_at >= {since}
+          AND (json_extract_string(payload, '$.properties.page_path') LIKE '%booking.html%'
+               OR json_extract_string(payload, '$.properties.page_path') LIKE '%custom-design.html%')
+    """).fetchone()[0]
+    leads_generated = step_count(["generate_lead"])
+    bookings_confirmed = conn.execute(f"SELECT COUNT(*) FROM bookings WHERE created_at >= {since}").fetchone()[0]
+
+    conn.close()
+    return {
+        "window_days": days,
+        "shop_funnel": [
+            {"step": "Viewed a product", "count": view_item},
+            {"step": "Added to cart", "count": add_to_cart},
+            {"step": "Began checkout", "count": begin_checkout},
+            {"step": "Purchased (confirmed order)", "count": total_orders},
+        ],
+        "lead_funnel": [
+            {"step": "Visited a booking/design page", "count": booking_page_views},
+            {"step": "Submitted the form (client-side)", "count": leads_generated},
+            {"step": "Booking confirmed (server-side)", "count": bookings_confirmed},
+        ],
+    }
+
+
+@app.get("/api/analytics/journey")
+def analytics_journey(days: int = 30, limit: int = 15, x_admin_key: str | None = Header(default=None)):
+    require_admin(x_admin_key)
+    conn = get_conn()
+    since = f"CURRENT_TIMESTAMP - INTERVAL '{int(days)} days'"
+
+    # Page-to-page transitions: for every page-view event, find the same
+    # visitor's immediately preceding page view (LAG over time), then
+    # count how often each (from -> to) pair occurs. This is the
+    # "hierarchical movement" view — effectively a Sankey diagram's raw
+    # data, without needing a Sankey-capable charting library.
+    transitions = conn.execute(f"""
+        WITH page_events AS (
+            SELECT
+                COALESCE(user_id, anonymous_id) AS visitor,
+                json_extract_string(payload, '$.properties.page_path') AS page_path,
+                received_at
+            FROM analytics_events
+            WHERE event_type = 'page' AND received_at >= {since}
+        ),
+        with_prev AS (
+            SELECT
+                visitor, page_path,
+                LAG(page_path) OVER (PARTITION BY visitor ORDER BY received_at) AS prev_page
+            FROM page_events
+        )
+        SELECT prev_page AS from_page, page_path AS to_page, COUNT(*) AS n
+        FROM with_prev
+        WHERE prev_page IS NOT NULL AND prev_page != page_path
+        GROUP BY prev_page, page_path
+        ORDER BY n DESC
+        LIMIT ?
+    """, [limit]).fetchall()
+
+    top_entry_pages = conn.execute(f"""
+        WITH page_events AS (
+            SELECT
+                COALESCE(user_id, anonymous_id) AS visitor,
+                json_extract_string(payload, '$.properties.page_path') AS page_path,
+                received_at,
+                ROW_NUMBER() OVER (PARTITION BY COALESCE(user_id, anonymous_id) ORDER BY received_at) AS rn
+            FROM analytics_events
+            WHERE event_type = 'page' AND received_at >= {since}
+        )
+        SELECT page_path, COUNT(*) AS n FROM page_events WHERE rn = 1
+        GROUP BY page_path ORDER BY n DESC LIMIT ?
+    """, [limit]).fetchall()
+
+    top_pages_overall = conn.execute(f"""
+        SELECT json_extract_string(payload, '$.properties.page_path') AS page_path, COUNT(*) AS n
+        FROM analytics_events
+        WHERE event_type = 'page' AND received_at >= {since}
+        GROUP BY page_path ORDER BY n DESC LIMIT ?
+    """, [limit]).fetchall()
+
+    conn.close()
+    return {
+        "window_days": days,
+        "top_transitions": [{"from": t[0], "to": t[1], "count": t[2]} for t in transitions],
+        "top_entry_pages": [{"page": p[0], "count": p[1]} for p in top_entry_pages],
+        "top_pages_overall": [{"page": p[0], "count": p[1]} for p in top_pages_overall],
+    }
+
+
+@app.get("/api/analytics/ecommerce")
+def analytics_ecommerce(days: int = 30, x_admin_key: str | None = Header(default=None)):
+    require_admin(x_admin_key)
+    conn = get_conn()
+    since = f"CURRENT_TIMESTAMP - INTERVAL '{int(days)} days'"
+
+    revenue_by_day = conn.execute(f"""
+        SELECT CAST(created_at AS DATE) AS d, COALESCE(SUM(total),0), COUNT(*)
+        FROM orders WHERE created_at >= {since}
+        GROUP BY d ORDER BY d
+    """).fetchall()
+
+    revenue_by_source = conn.execute(f"""
+        SELECT COALESCE(source, 'checkout') AS src, COUNT(*), COALESCE(SUM(total),0)
+        FROM orders WHERE created_at >= {since}
+        GROUP BY src
+    """).fetchall()
+
+    revenue_by_city = conn.execute(f"""
+        SELECT COALESCE(city, 'Not given'), COUNT(*), COALESCE(SUM(total),0)
+        FROM orders WHERE created_at >= {since}
+        GROUP BY 1 ORDER BY 3 DESC LIMIT 10
+    """).fetchall()
+
+    # items is a JSON array column — json_each unnests it per order so we
+    # can aggregate at the product level across every order.
+    top_products = conn.execute(f"""
+        SELECT
+            je.value ->> 'name' AS product_name,
+            SUM(CAST(je.value ->> 'qty' AS INTEGER)) AS units,
+            SUM(CAST(je.value ->> 'qty' AS INTEGER) * CAST(je.value ->> 'price' AS DOUBLE)) AS revenue
+        FROM orders, json_each(orders.items) AS je
+        WHERE orders.created_at >= {since}
+        GROUP BY product_name
+        ORDER BY revenue DESC
+        LIMIT 10
+    """).fetchall()
+
+    booking_sources = conn.execute(f"""
+        SELECT COALESCE(source, 'standard') AS src, COUNT(*)
+        FROM bookings WHERE created_at >= {since}
+        GROUP BY src
+    """).fetchall()
+
+    conn.close()
+    return {
+        "window_days": days,
+        "revenue_by_day": [{"date": str(r[0]), "revenue": r[1], "orders": r[2]} for r in revenue_by_day],
+        "revenue_by_source": [{"source": r[0], "orders": r[1], "revenue": r[2]} for r in revenue_by_source],
+        "revenue_by_city": [{"city": r[0], "orders": r[1], "revenue": r[2]} for r in revenue_by_city],
+        "top_products": [{"name": r[0], "units": r[1], "revenue": r[2]} for r in top_products],
+        "booking_sources": [{"source": r[0], "count": r[1]} for r in booking_sources],
+    }
 
 
 # ================= FIND MY FABRIC QUIZ — lead capture =================

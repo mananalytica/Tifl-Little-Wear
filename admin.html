@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Nastaliq+Urdu:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -51,6 +52,7 @@
       <button class="admin-tab" data-tab="fabrics" role="tab">Fabrics</button>
       <button class="admin-tab" data-tab="fittings" role="tab">Fittings</button>
       <button class="admin-tab" data-tab="techpacks" role="tab">Tech Packs</button>
+      <button class="admin-tab" data-tab="analytics" role="tab">Analytics</button>
     </div>
 
     <!-- ===== Products ===== -->
@@ -435,6 +437,77 @@
     <div id="adminTechPackList" class="admin-list"></div>
     </div>
     <!-- /Tech Packs panel -->
+
+    <!-- ===== Analytics ===== -->
+    <div class="admin-tab-panel" data-panel="analytics">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px;margin-bottom:28px;">
+        <div>
+          <div class="eyebrow">Analytics dashboard</div>
+          <h2 style="font-size:22px;margin:0;">How the site is actually performing</h2>
+        </div>
+        <div class="field" style="margin:0;min-width:180px;">
+          <label for="anRange">Date range</label>
+          <select id="anRange">
+            <option value="7">Last 7 days</option>
+            <option value="30" selected>Last 30 days</option>
+            <option value="90">Last 90 days</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="anKpiGrid" class="an-kpi-grid"><p style="color:var(--ink-soft);">Loading…</p></div>
+
+      <div class="an-section-grid" style="margin-top:32px;">
+        <div class="side-card">
+          <h3>Shop funnel</h3>
+          <div id="anShopFunnel" class="an-funnel"></div>
+        </div>
+        <div class="side-card">
+          <h3>Booking / design request funnel</h3>
+          <div id="anLeadFunnel" class="an-funnel"></div>
+        </div>
+      </div>
+
+      <div class="side-card" style="margin-top:24px;">
+        <h3>Revenue over time</h3>
+        <canvas id="anRevenueChart" height="90"></canvas>
+      </div>
+
+      <div class="an-section-grid" style="margin-top:24px;">
+        <div class="side-card">
+          <h3>Revenue by source</h3>
+          <canvas id="anSourceChart" height="200"></canvas>
+        </div>
+        <div class="side-card">
+          <h3>Top products</h3>
+          <div id="anTopProducts" class="admin-list"></div>
+        </div>
+      </div>
+
+      <div class="an-section-grid" style="margin-top:24px;">
+        <div class="side-card">
+          <h3>Revenue by city</h3>
+          <div id="anTopCities" class="admin-list"></div>
+        </div>
+        <div class="side-card">
+          <h3>Booking sources</h3>
+          <div id="anBookingSources" class="admin-list"></div>
+        </div>
+      </div>
+
+      <h2 style="font-size:18px;margin:32px 0 16px;">How visitors move through the site</h2>
+      <div class="an-section-grid">
+        <div class="side-card">
+          <h3>Top page-to-page moves</h3>
+          <div id="anTransitions"></div>
+        </div>
+        <div class="side-card">
+          <h3>Where people land first</h3>
+          <div id="anEntryPages" class="admin-list"></div>
+        </div>
+      </div>
+    </div>
+    <!-- /Analytics panel -->
 
   </div>
 </main>
