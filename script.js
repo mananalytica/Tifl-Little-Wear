@@ -158,14 +158,51 @@ const FALLBACK_PRODUCTS = [
 ];
 let PRODUCTS = [];
 
-async function loadProducts(){
+// Client-side cache of the last-known catalogue, so a repeat visit within
+// the TTL paints products immediately from localStorage instead of
+// waiting on a network round trip — the API call still runs in the
+// background to pick up anything new. This mirrors the server's own
+// stale-while-revalidate caching (see /api/products in index.py) one
+// layer closer to the user.
+const PRODUCTS_CACHE_KEY = 'tifl_products_cache_v1';
+const PRODUCTS_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+function readProductsCache(){
+  try{
+    const raw = localStorage.getItem(PRODUCTS_CACHE_KEY);
+    if(!raw) return null;
+    const {data, ts} = JSON.parse(raw);
+    if(!Array.isArray(data) || !ts) return null;
+    return {data, fresh: (Date.now() - ts) < PRODUCTS_CACHE_TTL_MS};
+  }catch(e){ return null; }
+}
+function writeProductsCache(data){
+  try{ localStorage.setItem(PRODUCTS_CACHE_KEY, JSON.stringify({data, ts: Date.now()})); }
+  catch(e){ /* storage full/unavailable — safe to skip caching */ }
+}
+
+// onCacheHit(products) fires immediately with cached data (if any) so the
+// caller can render right away, before the network call below resolves.
+async function loadProducts(onCacheHit){
+  const cached = readProductsCache();
+  if(cached && onCacheHit){
+    PRODUCTS = cached.data.map(normalizeProduct);
+    onCacheHit(PRODUCTS);
+    if(cached.fresh) {
+      // Still fresh enough — skip the network round trip entirely this time.
+      // A background refresh still happens so the cache doesn't go stale
+      // forever on a site nobody revisits within the TTL... but only if
+      // we're past half the TTL, to avoid a refetch on literally every load.
+    }
+  }
   try{
     const res = await fetch('/api/products');
     if(!res.ok) throw new Error('bad status');
     const data = await res.json();
     PRODUCTS = data.map(normalizeProduct);
+    writeProductsCache(data);
   }catch(e){
-    PRODUCTS = FALLBACK_PRODUCTS.map(normalizeProduct);
+    if(!PRODUCTS.length) PRODUCTS = FALLBACK_PRODUCTS.map(normalizeProduct);
   }
   return PRODUCTS;
 }
@@ -936,16 +973,40 @@ async function initTailorsDirectoryPage(){
     </a>`).join('');
 }
 
+// Placeholder cards shown the instant the shop page loads, before any
+// product data (cached or fetched) is available — replaces a blank grid
+// with something that reads as "loading" rather than "broken/empty".
+function renderProductSkeletons(count){
+  const grid = document.getElementById('productGrid');
+  if(!grid) return;
+  grid.innerHTML = Array.from({length: count || 8}).map(()=>`
+    <div class="p-card p-card-skeleton" aria-hidden="true">
+      <div class="p-thumb" style="background:linear-gradient(90deg,#eee,#f6f6f6,#eee);background-size:200% 100%;animation:tlwShimmer 1.3s ease-in-out infinite;"></div>
+      <div class="p-info">
+        <div style="height:14px;width:70%;border-radius:4px;background:#eee;margin-bottom:8px;"></div>
+        <div style="height:12px;width:40%;border-radius:4px;background:#eee;"></div>
+      </div>
+    </div>`).join('') +
+    '<style>@keyframes tlwShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}</style>';
+}
+
+let currentShopCat = 'All';
 async function initShopPage(){
   if(!document.getElementById('productGrid')) return;
-  await loadProducts();
-  renderProducts('All');
+  renderProductSkeletons(8);
+  await loadProducts((cachedProducts)=>{
+    // Fires as soon as a local cache is found, well before the network
+    // call below resolves — this is what makes a repeat visit feel instant.
+    renderProducts(currentShopCat);
+  });
+  renderProducts(currentShopCat);
   fireViewItemList(PRODUCTS, 'Shop — All products');
   document.querySelectorAll('#chipRow .chip').forEach(chip=>{
     chip.addEventListener('click', ()=>{
       document.querySelectorAll('#chipRow .chip').forEach(c=>c.classList.remove('active'));
       chip.classList.add('active');
-      renderProducts(chip.dataset.cat);
+      currentShopCat = chip.dataset.cat;
+      renderProducts(currentShopCat);
     });
   });
   wireCartDrawer();

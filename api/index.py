@@ -681,13 +681,42 @@ app.add_middleware(
 
 _schema_ready = False
 
+# Reused across requests on a warm serverless instance. Opening a fresh
+# "md:" connection is a real network round trip to MotherDuck (auth +
+# catalog attach) — before this fix, get_conn() did that on EVERY single
+# request, which is most of what made /api/products (and every other
+# endpoint) feel slow on first landing. Vercel keeps a Python instance
+# warm between requests for a while, so caching the connection here means
+# only the first request after a cold start pays that round trip; every
+# request after reuses the same live connection.
+_conn = None
+
+class _ConnProxy:
+    """Wraps the cached connection so existing endpoint code can keep
+    calling conn.close() exactly as before, without that actually tearing
+    down the shared connection underneath every other in-flight/future
+    request on this instance. Everything else (execute, description, ...)
+    passes straight through to the real connection."""
+    def __init__(self, real):
+        self._real = real
+    def __getattr__(self, name):
+        return getattr(self._real, name)
+    def close(self):
+        pass  # no-op on purpose — see class docstring
+
 def get_conn():
-    global _schema_ready
+    global _schema_ready, _conn
+
+    if _conn is not None:
+        try:
+            _conn.execute("SELECT 1")  # cheap liveness check
+            return _ConnProxy(_conn)
+        except Exception:
+            _conn = None  # instance recycled the connection underneath us — reconnect below
+
     if not _schema_ready:
         # Only touch the account-level (no-database) connection once per
         # warm instance, purely to create the database if it's missing.
-        # Doing this on every single request (as before) was an extra
-        # avoidable network round trip every time.
         root = duckdb.connect(
             f"md:?motherduck_token={MOTHERDUCK_TOKEN}",
             config={"home_directory": "/tmp"},
@@ -695,16 +724,16 @@ def get_conn():
         root.execute(f"CREATE DATABASE IF NOT EXISTS {DB_NAME}")
         root.close()
 
-    conn = duckdb.connect(
+    _conn = duckdb.connect(
         f"md:{DB_NAME}?motherduck_token={MOTHERDUCK_TOKEN}",
         config={"home_directory": "/tmp"},
     )
 
     if not _schema_ready:
-        ensure_schema(conn)
+        ensure_schema(_conn)
         _schema_ready = True
 
-    return conn
+    return _ConnProxy(_conn)
 
 
 def ensure_schema(conn):
@@ -2049,15 +2078,40 @@ def delete_tech_pack(tech_pack_id: str, x_admin_key: str | None = Header(default
     return {"tech_pack_id": tech_pack_id, "status": "deleted"}
 
 
+import time as _time
+_products_cache = {"data": None, "ts": 0.0}
+_PRODUCTS_CACHE_TTL = 30  # seconds
+
 @app.get("/api/products")
-def list_products():
+def list_products(response: Response):
+    # The shop page blocks its whole first paint on this call, so it's the
+    # single most latency-sensitive endpoint on the site. Two layers of
+    # caching, both safe for a catalogue that only changes when someone
+    # edits it in admin.html:
+    #  1) A small in-memory cache per warm instance, so back-to-back
+    #     requests (many shoppers landing within the same 30s window)
+    #     never touch MotherDuck at all.
+    #  2) A Cache-Control header so Vercel's edge network and the
+    #     browser itself can serve repeat/instant loads without even
+    #     reaching this function. stale-while-revalidate means a visitor
+    #     never waits on a background refresh — they get the last-known
+    #     list immediately while it updates for the next request.
+    now = _time.time()
+    if _products_cache["data"] is not None and (now - _products_cache["ts"]) < _PRODUCTS_CACHE_TTL:
+        response.headers["Cache-Control"] = "public, max-age=30, stale-while-revalidate=300"
+        return _products_cache["data"]
+
     conn = get_conn()
     rows = conn.execute(
         "SELECT * FROM products WHERE active = true ORDER BY created_at DESC"
     ).fetchall()
     cols = [c[0] for c in conn.description]
     conn.close()
-    return [dict(zip(cols, row)) for row in rows]
+    data = [dict(zip(cols, row)) for row in rows]
+    _products_cache["data"] = data
+    _products_cache["ts"] = now
+    response.headers["Cache-Control"] = "public, max-age=30, stale-while-revalidate=300"
+    return data
 
 
 # ================= SHOPPING FEEDS =================
@@ -2245,6 +2299,7 @@ def create_product(product: Product, x_admin_key: str | None = Header(default=No
         [product_id, datetime.now()] + product_values(product),
     )
     conn.close()
+    _products_cache["data"] = None  # so the new product shows up immediately, not after the TTL
     return {"product_id": product_id, "status": "created"}
 
 
@@ -2258,6 +2313,7 @@ def update_product(product_id: str, product: Product, x_admin_key: str | None = 
         product_values(product) + [product_id],
     )
     conn.close()
+    _products_cache["data"] = None
     return {"product_id": product_id, "status": "updated"}
 
 
@@ -2267,6 +2323,7 @@ def delete_product(product_id: str, x_admin_key: str | None = Header(default=Non
     conn = get_conn()
     conn.execute("DELETE FROM products WHERE product_id = ?", [product_id])
     conn.close()
+    _products_cache["data"] = None
     return {"product_id": product_id, "status": "deleted"}
 
 
@@ -2316,6 +2373,7 @@ def bulk_import_products(payload: dict, x_admin_key: str | None = Header(default
             created += 1
 
     conn.close()
+    _products_cache["data"] = None
     return {"created": created, "updated": updated, "errors": errors, "total": len(items)}
 
 
