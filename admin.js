@@ -66,12 +66,29 @@ function initAdminPage(){
           <div class="admin-row-meta">${p.brand} · ${p.category} · ${p.currency} ${p.price.toLocaleString()}${p.sku ? ' · SKU '+p.sku : ''}</div>
         </div>
         <button class="btn btn-ghost btn-sm" data-edit="${p.id}">Edit</button>
+        <button class="btn btn-ghost btn-sm" data-dup="${p.id}">Duplicate</button>
         <button class="btn btn-ghost btn-sm" data-del="${p.id}">Delete</button>
       </div>`).join('') || '<p style="color:var(--ink-soft);">No products yet — add your first one above.</p>';
 
     listRoot.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click', ()=>{
       const p = products.find(x=>x.id===b.dataset.edit);
       fillForm(p);
+      window.scrollTo({top: document.getElementById('productForm').getBoundingClientRect().top + window.scrollY - 20, behavior:'smooth'});
+    }));
+    // Duplicate: pre-fills the form from an existing product (name/SKU
+    // suffixed so they're obviously placeholders) but leaves it un-saved
+    // and un-linked to the original row — the admin reviews/adjusts and
+    // hits "Save product" themselves, which creates a brand-new product
+    // rather than silently cloning one with no chance to change anything.
+    listRoot.querySelectorAll('[data-dup]').forEach(b=>b.addEventListener('click', ()=>{
+      const p = products.find(x=>x.id===b.dataset.dup);
+      fillForm(Object.assign({}, p, {
+        name: p.name + ' (copy)',
+        sku: p.sku ? p.sku + '-COPY' : ''
+      }));
+      document.getElementById('apEditingId').value = ''; // ensure Save creates a new product, not an update
+      document.getElementById('apFormTitle').textContent = 'Duplicating: '+p.name+' — review and Save';
+      showToast('Duplicated — review the details, then Save product');
       window.scrollTo({top: document.getElementById('productForm').getBoundingClientRect().top + window.scrollY - 20, behavior:'smooth'});
     }));
     listRoot.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click', async ()=>{
@@ -114,12 +131,27 @@ function initAdminPage(){
           <div class="admin-row-meta">${t.title}${t.years_experience ? ' · '+t.years_experience+' yrs' : ''} · /master-tailor.html?slug=${t.slug}</div>
         </div>
         <button class="btn btn-ghost btn-sm" data-edit="${t.id}">Edit</button>
+        <button class="btn btn-ghost btn-sm" data-dup="${t.id}">Duplicate</button>
         <button class="btn btn-ghost btn-sm" data-del="${t.id}">Delete</button>
       </div>`).join('') || '<p style="color:var(--ink-soft);">No tailors yet — add your first one above.</p>';
 
     listRoot.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click', ()=>{
       const t = tailors.find(x=>x.id===b.dataset.edit);
       fillTailorForm(t);
+      window.scrollTo({top: document.getElementById('tailorForm').getBoundingClientRect().top + window.scrollY - 20, behavior:'smooth'});
+    }));
+    // Duplicate: same pattern as products — pre-fill, suffix the slug
+    // (which must stay unique since it drives the tailor's URL) and name,
+    // clear the editing id, and let the admin review before saving.
+    listRoot.querySelectorAll('[data-dup]').forEach(b=>b.addEventListener('click', ()=>{
+      const t = tailors.find(x=>x.id===b.dataset.dup);
+      fillTailorForm(Object.assign({}, t, {
+        name: t.name + ' (copy)',
+        slug: t.slug + '-copy'
+      }));
+      document.getElementById('atEditingId').value = ''; // ensure Save creates a new tailor, not an update
+      document.getElementById('atFormTitle').textContent = 'Duplicating: '+t.name+' — review and Save';
+      showToast('Duplicated — review the details (especially the slug), then Save tailor');
       window.scrollTo({top: document.getElementById('tailorForm').getBoundingClientRect().top + window.scrollY - 20, behavior:'smooth'});
     }));
     listRoot.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click', async ()=>{
@@ -522,6 +554,133 @@ function initAdminPage(){
         (result.errors.length ? '<pre style="font-size:11.5px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;margin-top:8px;overflow-x:auto;">'+JSON.stringify(result.errors,null,2)+'</pre>' : '');
       showToast('Bulk import complete');
       refreshList();
+    }catch(e){ /* apiCall already toasts on 401 */ }
+  });
+
+  /* ---------- bulk import: tailors (CSV) ---------- */
+  // Same PapaParse approach as the product importer above. specialties/
+  // timeline/gallery/testimonials are JSON-list columns — parsed leniently
+  // per-row so one malformed JSON cell doesn't sink the whole file, it
+  // just leaves that one section empty for that row (reported back in
+  // the results, not silently swallowed).
+  function parseTailorJSONCell(raw, rowIndex, fieldLabel, warnings){
+    if(!raw || !raw.trim()) return null;
+    try{
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : null;
+    }catch(e){
+      warnings.push(`Row ${rowIndex+1}: "${fieldLabel}" isn't valid JSON — left blank.`);
+      return null;
+    }
+  }
+  function mapTailorRow(row, rowIndex, warnings){
+    const get = (k)=> (row[k] !== undefined && row[k] !== '') ? row[k] : null;
+    return {
+      slug: (get('slug')||'').toString().trim().toLowerCase().replace(/[^a-z0-9-]+/g,'-'),
+      name: get('name'),
+      title: get('title') || 'Master Tailor',
+      tagline: get('tagline'),
+      photo_url: get('photo_url'),
+      years_experience: get('years_experience') ? parseInt(get('years_experience'), 10) : null,
+      garments_count: get('garments_count'),
+      apprentices_count: get('apprentices_count'),
+      established_year: get('established_year'),
+      bio: get('bio'),
+      specialties: parseTailorJSONCell(get('specialties'), rowIndex, 'specialties', warnings),
+      timeline: parseTailorJSONCell(get('timeline'), rowIndex, 'timeline', warnings),
+      gallery: parseTailorJSONCell(get('gallery'), rowIndex, 'gallery', warnings),
+      testimonials: parseTailorJSONCell(get('testimonials'), rowIndex, 'testimonials', warnings),
+      active: get('active') === null ? true : !/^(false|0|no)$/i.test(get('active'))
+    };
+  }
+  function parseTailorCSV(text){
+    const result = Papa.parse(text, {header:true, skipEmptyLines:true});
+    const warnings = [];
+    const items = result.data.map((row,i)=>mapTailorRow(row,i,warnings));
+    return {items, warnings};
+  }
+
+  document.getElementById('tailorBulkUploadBtn')?.addEventListener('click', async ()=>{
+    const fileInput = document.getElementById('tailorBulkFile');
+    const resultsEl = document.getElementById('tailorBulkResults');
+    const file = fileInput.files[0];
+    if(!file){ showToast('Choose a CSV file first'); return; }
+
+    const text = await file.text();
+    let items, warnings;
+    try{
+      ({items, warnings} = parseTailorCSV(text));
+    }catch(e){
+      resultsEl.innerHTML = '<p style="color:var(--primary-dark);">Could not parse that file: '+e.message+'</p>';
+      return;
+    }
+
+    items = items.filter(i=>i.slug && i.name);
+    if(items.length===0){
+      resultsEl.innerHTML = '<p style="color:var(--primary-dark);">No usable rows found — check the file has "slug" and "name" columns.</p>';
+      return;
+    }
+
+    resultsEl.innerHTML = '<p style="color:var(--ink-soft);">Importing '+items.length+' rows…</p>';
+    try{
+      const result = await apiCall('/api/tailors/bulk', 'POST', {items});
+      resultsEl.innerHTML = `<p style="color:var(--primary-dark);">Done — ${result.created} created, ${result.updated} updated${result.errors.length ? ', '+result.errors.length+' skipped (see below)' : ''}.</p>` +
+        (result.errors.length ? '<pre style="font-size:11.5px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;margin-top:8px;overflow-x:auto;">'+JSON.stringify(result.errors,null,2)+'</pre>' : '') +
+        (warnings.length ? '<pre style="font-size:11.5px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;margin-top:8px;overflow-x:auto;">'+warnings.join('\n')+'</pre>' : '');
+      showToast('Bulk import complete');
+      refreshTailorList();
+      refreshTailorDropdown();
+    }catch(e){ /* apiCall already toasts on 401 */ }
+  });
+
+  /* ---------- bulk import: fabrics (CSV) ---------- */
+  function mapFabricRow(row){
+    const get = (k)=> (row[k] !== undefined && row[k] !== '') ? row[k] : null;
+    return {
+      name: (get('name')||'').toString().trim(),
+      composition: get('composition'),
+      width_cm: get('width_cm') ? parseFloat(get('width_cm')) : null,
+      pattern_repeat_cm: get('pattern_repeat_cm') ? parseFloat(get('pattern_repeat_cm')) : null,
+      drape_type: get('drape_type'),
+      cost_per_yard: get('cost_per_yard') ? parseFloat(get('cost_per_yard')) : null,
+      supplier: get('supplier'),
+      notes: get('notes'),
+      active: get('active') === null ? true : !/^(false|0|no)$/i.test(get('active'))
+    };
+  }
+  function parseFabricCSV(text){
+    const result = Papa.parse(text, {header:true, skipEmptyLines:true});
+    return result.data.map(mapFabricRow);
+  }
+
+  document.getElementById('fabricBulkUploadBtn')?.addEventListener('click', async ()=>{
+    const fileInput = document.getElementById('fabricBulkFile');
+    const resultsEl = document.getElementById('fabricBulkResults');
+    const file = fileInput.files[0];
+    if(!file){ showToast('Choose a CSV file first'); return; }
+
+    const text = await file.text();
+    let items;
+    try{
+      items = parseFabricCSV(text);
+    }catch(e){
+      resultsEl.innerHTML = '<p style="color:var(--primary-dark);">Could not parse that file: '+e.message+'</p>';
+      return;
+    }
+
+    items = items.filter(i=>i.name);
+    if(items.length===0){
+      resultsEl.innerHTML = '<p style="color:var(--primary-dark);">No usable rows found — check the file has a "name" column.</p>';
+      return;
+    }
+
+    resultsEl.innerHTML = '<p style="color:var(--ink-soft);">Importing '+items.length+' rows…</p>';
+    try{
+      const result = await apiCall('/api/fabrics/bulk', 'POST', {items});
+      resultsEl.innerHTML = `<p style="color:var(--primary-dark);">Done — ${result.created} created, ${result.updated} updated${result.errors.length ? ', '+result.errors.length+' skipped (see below)' : ''}.</p>` +
+        (result.errors.length ? '<pre style="font-size:11.5px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;margin-top:8px;overflow-x:auto;">'+JSON.stringify(result.errors,null,2)+'</pre>' : '');
+      showToast('Bulk import complete');
+      refreshFabricList();
     }catch(e){ /* apiCall already toasts on 401 */ }
   });
 

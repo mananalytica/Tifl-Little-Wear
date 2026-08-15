@@ -212,6 +212,25 @@
       stitched by" dropdown) and it automatically shows up in that tailor's portfolio and lookbook.
     </p>
 
+    <!-- ===== Bulk import ===== -->
+    <div class="side-card" style="margin-bottom:40px;">
+      <h3>Bulk upload (CSV)</h3>
+      <p style="margin-bottom:16px;">Upload a CSV to add or update many tailors at once. Matching is done by <b>URL slug</b> — if a row's slug matches an existing tailor, that tailor is updated instead of duplicated, so it's safe to re-upload the same file later.</p>
+      <p style="font-size:12.5px;color:var(--ink-soft);margin-bottom:8px;">
+        Expected columns: <code>slug, name, title, tagline, photo_url, years_experience, garments_count, apprentices_count, established_year, bio, specialties, timeline, gallery, testimonials, active</code>.
+        Only <code>slug</code> and <code>name</code> are required. <code>photo_url</code> can be a real photo link or a "#hex" colour placeholder.
+      </p>
+      <p style="font-size:12.5px;color:var(--ink-soft);margin-bottom:14px;">
+        <b>specialties / timeline / gallery / testimonials</b> are optional JSON — leave a cell blank to skip that section, or paste a JSON list, e.g. <code>[{"title":"Hand embroidery","description":"..."}]</code> for specialties. If a spreadsheet program adds extra quoting around JSON when you export CSV, that's fine — it's parsed the same way the product bulk upload parses its columns.
+      </p>
+      <p style="font-size:12.5px;margin-bottom:14px;"><a href="tailortemplate.csv" download style="color:var(--primary-dark);font-weight:600;">↓ Download a starter CSV template</a> with these columns pre-filled on an example row.</p>
+      <input type="file" id="tailorBulkFile" accept=".csv" style="margin-bottom:12px;">
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-primary btn-sm" id="tailorBulkUploadBtn">Upload &amp; import</button>
+      </div>
+      <div id="tailorBulkResults" style="margin-top:14px;font-size:13.3px;"></div>
+    </div>
+
     <div class="contact-grid">
       <div class="contact-form" style="background:var(--bg-alt);">
         <h2 id="atFormTitle" style="font-size:18px;margin-bottom:16px;">Add a tailor</h2>
@@ -276,6 +295,22 @@
       Width and pattern repeat are what real yardage estimates are built from — worth filling in accurately for
       every fabric you stock. This catalog feeds the tech pack generator.
     </p>
+
+    <!-- ===== Bulk import ===== -->
+    <div class="side-card" style="margin-bottom:40px;">
+      <h3>Bulk upload (CSV)</h3>
+      <p style="margin-bottom:16px;">Upload a CSV to add or update many fabrics at once. Matching is done by <b>fabric name</b> (not case-sensitive) — if a row's name matches an existing fabric, that fabric is updated instead of duplicated, so it's safe to re-upload the same file later.</p>
+      <p style="font-size:12.5px;color:var(--ink-soft);margin-bottom:14px;">
+        Expected columns: <code>name, composition, width_cm, pattern_repeat_cm, drape_type, cost_per_yard, supplier, notes, active</code>.
+        Only <code>name</code> is required. <code>drape_type</code> should be one of <code>crisp, structured, fluid, stretch</code>.
+      </p>
+      <p style="font-size:12.5px;margin-bottom:14px;"><a href="fabrictemplate.csv" download style="color:var(--primary-dark);font-weight:600;">↓ Download a starter CSV template</a> with these columns pre-filled on an example row.</p>
+      <input type="file" id="fabricBulkFile" accept=".csv" style="margin-bottom:12px;">
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-primary btn-sm" id="fabricBulkUploadBtn">Upload &amp; import</button>
+      </div>
+      <div id="fabricBulkResults" style="margin-top:14px;font-size:13.3px;"></div>
+    </div>
 
     <div class="contact-grid">
       <div class="contact-form" style="background:var(--bg-alt);">

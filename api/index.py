@@ -1746,6 +1746,54 @@ def delete_tailor(tailor_id: str, x_admin_key: str | None = Header(default=None)
     return {"tailor_id": tailor_id, "status": "deleted"}
 
 
+# Same shape as /api/products/bulk: upload many tailors at once (CSV from
+# admin.html). Matched by SLUG rather than SKU — a tailor doesn't have a
+# feed-style SKU, but slug is already the field that has to be unique
+# anyway (it's what the tailor's page URL is built from), so it's the
+# natural match key for "is this an update or a new tailor".
+@app.post("/api/tailors/bulk")
+def bulk_import_tailors(payload: dict, x_admin_key: str | None = Header(default=None)):
+    require_admin(x_admin_key)
+    items = payload.get("items", [])
+    conn = get_conn()
+    created, updated, errors = 0, 0, []
+
+    for i, raw in enumerate(items):
+        try:
+            tailor = Tailor(**{k: v for k, v in raw.items() if k in Tailor.model_fields})
+        except Exception as e:
+            errors.append({"row": i, "error": str(e)})
+            continue
+
+        existing_id = None
+        if tailor.slug:
+            row = conn.execute(
+                "SELECT tailor_id FROM tailors WHERE slug = ? LIMIT 1", [tailor.slug]
+            ).fetchone()
+            if row:
+                existing_id = row[0]
+
+        if existing_id:
+            set_clause = ", ".join([f"{f}=?" for f in TAILOR_FIELDS])
+            conn.execute(
+                f"UPDATE tailors SET {set_clause} WHERE tailor_id=?",
+                tailor_values(tailor) + [existing_id],
+            )
+            updated += 1
+        else:
+            tailor_id = "t-" + uuid.uuid4().hex[:8]
+            cols = ", ".join(TAILOR_FIELDS)
+            placeholders = ", ".join(["?"] * len(TAILOR_FIELDS))
+            conn.execute(
+                f"INSERT INTO tailors (tailor_id, created_at, {cols}) VALUES (?, ?, {placeholders})",
+                [tailor_id, datetime.now()] + tailor_values(tailor),
+            )
+            created += 1
+
+    conn.close()
+    return {"created": created, "updated": updated, "errors": errors, "total": len(items)}
+
+
 # ================= FABRICS =================
 # Phase 1 of the tech pack generator: a real catalog with the actual
 # numbers yardage math depends on (width, pattern repeat), instead of the
@@ -1816,6 +1864,52 @@ def delete_fabric(fabric_id: str, x_admin_key: str | None = Header(default=None)
     conn.execute("DELETE FROM fabrics WHERE fabric_id = ?", [fabric_id])
     conn.close()
     return {"fabric_id": fabric_id, "status": "deleted"}
+
+
+# Same shape as /api/products/bulk. Fabrics don't have a feed-style SKU,
+# so rows are matched by NAME (case-insensitive) — re-uploading the same
+# fabric list updates existing rows in place instead of duplicating them.
+@app.post("/api/fabrics/bulk")
+def bulk_import_fabrics(payload: dict, x_admin_key: str | None = Header(default=None)):
+    require_admin(x_admin_key)
+    items = payload.get("items", [])
+    conn = get_conn()
+    created, updated, errors = 0, 0, []
+
+    for i, raw in enumerate(items):
+        try:
+            fabric = Fabric(**{k: v for k, v in raw.items() if k in Fabric.model_fields})
+        except Exception as e:
+            errors.append({"row": i, "error": str(e)})
+            continue
+        if not fabric.name:
+            errors.append({"row": i, "error": "name is required"})
+            continue
+
+        row = conn.execute(
+            "SELECT fabric_id FROM fabrics WHERE lower(name) = lower(?) LIMIT 1", [fabric.name]
+        ).fetchone()
+        existing_id = row[0] if row else None
+
+        if existing_id:
+            set_clause = ", ".join([f"{f}=?" for f in FABRIC_FIELDS])
+            conn.execute(
+                f"UPDATE fabrics SET {set_clause} WHERE fabric_id=?",
+                fabric_values(fabric) + [existing_id],
+            )
+            updated += 1
+        else:
+            fabric_id = "fab-" + uuid.uuid4().hex[:8]
+            cols = ", ".join(FABRIC_FIELDS)
+            placeholders = ", ".join(["?"] * len(FABRIC_FIELDS))
+            conn.execute(
+                f"INSERT INTO fabrics (fabric_id, created_at, {cols}) VALUES (?, ?, {placeholders})",
+                [fabric_id, datetime.now()] + fabric_values(fabric),
+            )
+            created += 1
+
+    conn.close()
+    return {"created": created, "updated": updated, "errors": errors, "total": len(items)}
 
 
 # ================= TECH PACKS (Phase 3) =================
