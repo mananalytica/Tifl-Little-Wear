@@ -557,7 +557,27 @@ function initAdminPage(){
     }catch(e){ /* apiCall already toasts on 401 */ }
   });
 
-  /* ---------- bulk import: tailors (CSV) ---------- */
+  /* ---------- instant preview backfill: products ---------- */
+  // Generates image_blur for any product saved before this feature
+  // existed (new saves already get one automatically — see the product
+  // form submit handler). Can be slow for a large catalogue since each
+  // row needs its own tiny fetch server-side, so the button disables
+  // itself and shows a "working…" state rather than looking stuck.
+  document.getElementById('backfillBlurBtn')?.addEventListener('click', async (e)=>{
+    const btn = e.currentTarget;
+    const resultEl = document.getElementById('backfillBlurResult');
+    btn.disabled = true;
+    const originalLabel = btn.textContent;
+    btn.textContent = 'Generating…';
+    resultEl.innerHTML = '<p style="color:var(--ink-soft);">This can take a little while for a large catalogue — hang tight.</p>';
+    try{
+      const result = await apiCall('/api/products/backfill-blur', 'POST');
+      resultEl.innerHTML = `<p style="color:var(--primary-dark);">Done — ${result.updated} product${result.updated===1?'':'s'} now have an instant preview${result.skipped ? `, ${result.skipped} skipped (photo couldn't be fetched)` : ''}.</p>`;
+      showToast('Instant previews generated');
+      refreshList();
+    }catch(err){ resultEl.innerHTML = '<p style="color:var(--primary-dark);">'+(err.message||'Something went wrong')+'</p>'; }
+    finally{ btn.disabled = false; btn.textContent = originalLabel; }
+  });
   // Same PapaParse approach as the product importer above. specialties/
   // timeline/gallery/testimonials are JSON-list columns — parsed leniently
   // per-row so one malformed JSON cell doesn't sink the whole file, it
@@ -631,6 +651,23 @@ function initAdminPage(){
       refreshTailorList();
       refreshTailorDropdown();
     }catch(e){ /* apiCall already toasts on 401 */ }
+  });
+
+  /* ---------- instant preview backfill: tailors ---------- */
+  document.getElementById('tailorBackfillBlurBtn')?.addEventListener('click', async (e)=>{
+    const btn = e.currentTarget;
+    const resultEl = document.getElementById('tailorBackfillBlurResult');
+    btn.disabled = true;
+    const originalLabel = btn.textContent;
+    btn.textContent = 'Generating…';
+    resultEl.innerHTML = '<p style="color:var(--ink-soft);">Working…</p>';
+    try{
+      const result = await apiCall('/api/tailors/backfill-blur', 'POST');
+      resultEl.innerHTML = `<p style="color:var(--primary-dark);">Done — ${result.updated} tailor${result.updated===1?'':'s'} now have an instant preview${result.skipped ? `, ${result.skipped} skipped (photo couldn't be fetched)` : ''}.</p>`;
+      showToast('Instant previews generated');
+      refreshTailorList();
+    }catch(err){ resultEl.innerHTML = '<p style="color:var(--primary-dark);">'+(err.message||'Something went wrong')+'</p>'; }
+    finally{ btn.disabled = false; btn.textContent = originalLabel; }
   });
 
   /* ---------- bulk import: fabrics (CSV) ---------- */

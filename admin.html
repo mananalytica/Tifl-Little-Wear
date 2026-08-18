@@ -80,6 +80,14 @@
       <div id="bulkResults" style="margin-top:14px;font-size:13.3px;"></div>
     </div>
 
+    <!-- ===== Instant preview backfill ===== -->
+    <div class="side-card" style="margin-bottom:40px;">
+      <h3>Instant image previews</h3>
+      <p style="margin-bottom:14px;">Every product saved from now on automatically gets a tiny inline preview generated from its photo, so shoppers see something the instant the page loads instead of a blank box while the full photo fetches. Products added <b>before</b> this feature won't have one yet — run this once to backfill them. Safe to re-run any time; it only processes products that don't already have a preview.</p>
+      <button class="btn btn-ghost btn-sm" id="backfillBlurBtn">Generate previews for existing products</button>
+      <div id="backfillBlurResult" style="margin-top:10px;font-size:13.3px;"></div>
+    </div>
+
     <!-- ===== Feed links ===== -->
     <div class="side-card" style="margin-bottom:40px;">
       <h3>Shopping feed URLs</h3>
@@ -229,6 +237,14 @@
         <button class="btn btn-primary btn-sm" id="tailorBulkUploadBtn">Upload &amp; import</button>
       </div>
       <div id="tailorBulkResults" style="margin-top:14px;font-size:13.3px;"></div>
+    </div>
+
+    <!-- ===== Instant preview backfill ===== -->
+    <div class="side-card" style="margin-bottom:40px;">
+      <h3>Instant image previews</h3>
+      <p style="margin-bottom:14px;">Same idea as on the Products tab — generates a tiny inline preview for tailor photos saved before this feature existed. Safe to re-run any time.</p>
+      <button class="btn btn-ghost btn-sm" id="tailorBackfillBlurBtn">Generate previews for existing tailors</button>
+      <div id="tailorBackfillBlurResult" style="margin-top:10px;font-size:13.3px;"></div>
     </div>
 
     <div class="contact-grid">

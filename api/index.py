@@ -20,11 +20,14 @@ SETUP
 6. Your endpoint becomes:  https://<your-domain>/api/bookings
 """
 
+import base64
 import hashlib
 import json
 import os
+import re
 import secrets
 import urllib.error
+import urllib.parse
 import urllib.request
 import uuid
 from html import escape
@@ -961,6 +964,15 @@ def ensure_schema(conn):
         ("features", "JSON"),
     ]
     alter_statements = [f"ALTER TABLE products ADD COLUMN IF NOT EXISTS {c} {t};" for c, t in shopping_columns]
+    # Tiny (~20px) base64 data-URI placeholder generated server-side from
+    # image_url (see compute_image_blur below). Shipped inline with every
+    # product in the normal /api/products response — since it's just text
+    # sitting in that same JSON payload, the browser can paint it the
+    # instant the page's own data arrives, with zero extra image request.
+    # The real photo then fades in over it once it finishes loading. This
+    # is what makes photos feel like they "load as fast as text".
+    alter_statements.append("ALTER TABLE products ADD COLUMN IF NOT EXISTS image_blur VARCHAR;")
+    alter_statements.append("ALTER TABLE tailors ADD COLUMN IF NOT EXISTS photo_blur VARCHAR;")
     alter_statements.append("ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_id VARCHAR;")
     alter_statements.append("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS email VARCHAR;")
     alter_statements.append("ALTER TABLE orders ADD COLUMN IF NOT EXISTS address_line2 VARCHAR;")
@@ -1717,8 +1729,8 @@ def create_tailor(tailor: Tailor, x_admin_key: str | None = Header(default=None)
     cols = ", ".join(TAILOR_FIELDS)
     placeholders = ", ".join(["?"] * len(TAILOR_FIELDS))
     conn.execute(
-        f"INSERT INTO tailors (tailor_id, created_at, {cols}) VALUES (?, ?, {placeholders})",
-        [tailor_id, datetime.now()] + tailor_values(tailor),
+        f"INSERT INTO tailors (tailor_id, created_at, {cols}, photo_blur) VALUES (?, ?, {placeholders}, ?)",
+        [tailor_id, datetime.now()] + tailor_values(tailor) + [compute_image_blur(tailor.photo_url)],
     )
     conn.close()
     return {"tailor_id": tailor_id, "status": "created"}
@@ -1730,8 +1742,8 @@ def update_tailor(tailor_id: str, tailor: Tailor, x_admin_key: str | None = Head
     conn = get_conn()
     set_clause = ", ".join([f"{f}=?" for f in TAILOR_FIELDS])
     conn.execute(
-        f"UPDATE tailors SET {set_clause} WHERE tailor_id=?",
-        tailor_values(tailor) + [tailor_id],
+        f"UPDATE tailors SET {set_clause}, photo_blur=? WHERE tailor_id=?",
+        tailor_values(tailor) + [compute_image_blur(tailor.photo_url), tailor_id],
     )
     conn.close()
     return {"tailor_id": tailor_id, "status": "updated"}
@@ -1773,11 +1785,13 @@ def bulk_import_tailors(payload: dict, x_admin_key: str | None = Header(default=
             if row:
                 existing_id = row[0]
 
+        blur = compute_image_blur(tailor.photo_url)
+
         if existing_id:
             set_clause = ", ".join([f"{f}=?" for f in TAILOR_FIELDS])
             conn.execute(
-                f"UPDATE tailors SET {set_clause} WHERE tailor_id=?",
-                tailor_values(tailor) + [existing_id],
+                f"UPDATE tailors SET {set_clause}, photo_blur=? WHERE tailor_id=?",
+                tailor_values(tailor) + [blur, existing_id],
             )
             updated += 1
         else:
@@ -1785,8 +1799,8 @@ def bulk_import_tailors(payload: dict, x_admin_key: str | None = Header(default=
             cols = ", ".join(TAILOR_FIELDS)
             placeholders = ", ".join(["?"] * len(TAILOR_FIELDS))
             conn.execute(
-                f"INSERT INTO tailors (tailor_id, created_at, {cols}) VALUES (?, ?, {placeholders})",
-                [tailor_id, datetime.now()] + tailor_values(tailor),
+                f"INSERT INTO tailors (tailor_id, created_at, {cols}, photo_blur) VALUES (?, ?, {placeholders}, ?)",
+                [tailor_id, datetime.now()] + tailor_values(tailor) + [blur],
             )
             created += 1
 
@@ -2359,6 +2373,50 @@ def get_product(product_id: str):
     return dict(zip(cols, row))
 
 
+# ================= INSTANT IMAGE PLACEHOLDERS (BLUR-UP) =================
+# Fetches a tiny (~20px-wide, heavily compressed) copy of a photo and
+# returns it as a base64 data: URI. This tiny string gets stored on the
+# row itself (image_blur / photo_blur) and travels inline with the normal
+# product/tailor JSON — no separate image request needed to show *something*.
+# The frontend (imgTag() in script.js) paints this as an instant background
+# the moment the page's own data lands, then fades the real photo in over
+# it once that finishes loading. Net effect: photos feel like they render
+# as fast as the surrounding text, because the placeholder essentially IS
+# text (a string in the same payload) rather than a separate network trip.
+# Mirrors optimizeImageUrl()'s Cloudinary/weserv branching in script.js so
+# both the tiny placeholder and the real photo come from the same host.
+def compute_image_blur(image_url: str | None) -> str | None:
+    if not image_url or not isinstance(image_url, str):
+        return None
+    if image_url.startswith("#"):
+        return None  # colour-swatch placeholder, not a real photo
+    if not re.match(r"^https?://", image_url, re.I):
+        return None  # relative/local path — nothing to fetch
+    try:
+        cloudinary_match = re.match(r"^(https?://res\.cloudinary\.com/[^/]+/image/upload/)(.*)$", image_url, re.I)
+        if cloudinary_match:
+            tiny_url = f"{cloudinary_match.group(1)}f_webp,q_30,w_20,c_limit,e_blur:300/{cloudinary_match.group(2)}"
+        else:
+            bare = re.sub(r"^https?://", "", image_url, flags=re.I)
+            tiny_url = f"https://images.weserv.nl/?url={urllib.parse.quote(bare, safe='')}&w=20&q=30&output=webp&blur=2"
+        req = urllib.request.Request(tiny_url, headers={"User-Agent": "Mozilla/5.0"})
+        # Short timeout + hard size cap: this must never meaningfully slow
+        # down an admin save, and a 20px image should only ever be a few
+        # hundred bytes anyway — the cap just guards against a proxy
+        # ignoring the width param and returning something huge.
+        with urllib.request.urlopen(req, timeout=6) as resp:
+            data = resp.read(50_000)
+            content_type = resp.headers.get("Content-Type", "image/webp").split(";")[0].strip()
+        if not data:
+            return None
+        b64 = base64.b64encode(data).decode("ascii")
+        return f"data:{content_type};base64,{b64}"
+    except Exception:
+        # A failed placeholder must never block saving the product/tailor —
+        # the real image still works, it just won't have an instant preview.
+        return None
+
+
 # All product columns except product_id/created_at (which are handled
 # separately) — used to build INSERT/UPDATE statements without manually
 # counting placeholders every time a field is added.
@@ -2389,8 +2447,8 @@ def create_product(product: Product, x_admin_key: str | None = Header(default=No
     cols = ", ".join(PRODUCT_FIELDS)
     placeholders = ", ".join(["?"] * len(PRODUCT_FIELDS))
     conn.execute(
-        f"INSERT INTO products (product_id, created_at, {cols}) VALUES (?, ?, {placeholders})",
-        [product_id, datetime.now()] + product_values(product),
+        f"INSERT INTO products (product_id, created_at, {cols}, image_blur) VALUES (?, ?, {placeholders}, ?)",
+        [product_id, datetime.now()] + product_values(product) + [compute_image_blur(product.image_url)],
     )
     conn.close()
     _products_cache["data"] = None  # so the new product shows up immediately, not after the TTL
@@ -2403,12 +2461,58 @@ def update_product(product_id: str, product: Product, x_admin_key: str | None = 
     conn = get_conn()
     set_clause = ", ".join([f"{f}=?" for f in PRODUCT_FIELDS])
     conn.execute(
-        f"UPDATE products SET {set_clause} WHERE product_id=?",
-        product_values(product) + [product_id],
+        f"UPDATE products SET {set_clause}, image_blur=? WHERE product_id=?",
+        product_values(product) + [compute_image_blur(product.image_url), product_id],
     )
     conn.close()
     _products_cache["data"] = None
     return {"product_id": product_id, "status": "updated"}
+
+
+# One-time (repeatable/idempotent) backfill for rows saved before the
+# instant-placeholder feature existed — new saves get image_blur/photo_blur
+# automatically (see create/update/bulk endpoints above), but products and
+# tailors already in the database need this run once to catch up. Safe to
+# call again any time — it skips rows that already have a placeholder, so
+# re-running only picks up whatever's still missing (e.g. a fetch that
+# failed the first time due to a slow host).
+@app.post("/api/products/backfill-blur")
+def backfill_product_blur(x_admin_key: str | None = Header(default=None)):
+    require_admin(x_admin_key)
+    conn = get_conn()
+    rows = conn.execute(
+        "SELECT product_id, image_url FROM products WHERE image_blur IS NULL AND image_url IS NOT NULL"
+    ).fetchall()
+    updated, skipped = 0, 0
+    for product_id, image_url in rows:
+        blur = compute_image_blur(image_url)
+        if blur:
+            conn.execute("UPDATE products SET image_blur=? WHERE product_id=?", [blur, product_id])
+            updated += 1
+        else:
+            skipped += 1
+    conn.close()
+    _products_cache["data"] = None
+    return {"updated": updated, "skipped": skipped, "total_checked": len(rows)}
+
+
+@app.post("/api/tailors/backfill-blur")
+def backfill_tailor_blur(x_admin_key: str | None = Header(default=None)):
+    require_admin(x_admin_key)
+    conn = get_conn()
+    rows = conn.execute(
+        "SELECT tailor_id, photo_url FROM tailors WHERE photo_blur IS NULL AND photo_url IS NOT NULL"
+    ).fetchall()
+    updated, skipped = 0, 0
+    for tailor_id, photo_url in rows:
+        blur = compute_image_blur(photo_url)
+        if blur:
+            conn.execute("UPDATE tailors SET photo_blur=? WHERE tailor_id=?", [blur, tailor_id])
+            updated += 1
+        else:
+            skipped += 1
+    conn.close()
+    return {"updated": updated, "skipped": skipped, "total_checked": len(rows)}
 
 
 @app.delete("/api/products/{product_id}")
@@ -2449,11 +2553,15 @@ def bulk_import_products(payload: dict, x_admin_key: str | None = Header(default
             if row:
                 existing_id = row[0]
 
+        # Only worth the extra fetch when a real photo URL is present —
+        # skipped entirely for colour-swatch placeholder rows.
+        blur = compute_image_blur(product.image_url)
+
         if existing_id:
             set_clause = ", ".join([f"{f}=?" for f in PRODUCT_FIELDS])
             conn.execute(
-                f"UPDATE products SET {set_clause} WHERE product_id=?",
-                product_values(product) + [existing_id],
+                f"UPDATE products SET {set_clause}, image_blur=? WHERE product_id=?",
+                product_values(product) + [blur, existing_id],
             )
             updated += 1
         else:
@@ -2461,8 +2569,8 @@ def bulk_import_products(payload: dict, x_admin_key: str | None = Header(default
             cols = ", ".join(PRODUCT_FIELDS)
             placeholders = ", ".join(["?"] * len(PRODUCT_FIELDS))
             conn.execute(
-                f"INSERT INTO products (product_id, created_at, {cols}) VALUES (?, ?, {placeholders})",
-                [product_id, datetime.now()] + product_values(product),
+                f"INSERT INTO products (product_id, created_at, {cols}, image_blur) VALUES (?, ?, {placeholders}, ?)",
+                [product_id, datetime.now()] + product_values(product) + [blur],
             )
             created += 1
 

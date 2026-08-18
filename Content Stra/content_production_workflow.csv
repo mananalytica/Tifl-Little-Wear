@@ -1,0 +1,32 @@
+Stage,Task,Owner,Tools,Time Estimate,Deliverable,Approval Needed,Notes
+1. Ideation,Weekly content brainstorm (refer to 90-day calendar),Content Lead + Founder,Notion / Google Sheets / 90-day calendar,1 hour/week,Weekly content brief list,Founder,Align with business priorities + seasonal events
+1. Ideation,Keyword opportunity check,Content Lead,Google Keyword Planner + Ubersuggest + mapped keywords CSV,30 min/week,3-5 keyword opportunities,None,Look for trending terms in PK market
+1. Ideation,Competitor content audit,Content Lead,Instagram + TikTok + competitor websites,45 min/week,2-3 content gaps identified,None,What are they NOT doing? That's your angle
+2. Planning,Batch plan: Instagram grid (6 posts),Content Lead,Google Sheets / Later / Buffer,1 hour/week,6 post concepts with captions drafted,Founder,"Mix of pillars: 2 process, 1 transformation, 1 tip, 1 emotional, 1 promo"
+2. Planning,Batch plan: Instagram Stories (daily),Content Lead,Instagram native / Canva,30 min/week,7 story frames planned,None,Use story templates in Canva for consistency
+2. Planning,Batch plan: Reels (3-4/week),Content Lead + Videographer,Google Sheets + shooting schedule,1 hour/week,4 reel scripts + shot lists,Founder,Scripts should have hook in first 1.5 seconds
+2. Planning,Blog post outline,Content Lead,Google Docs + keyword mapping,1 hour/post,"Outline with H2s, keywords, CTA placement",Founder,One blog post every 2 weeks minimum
+2. Planning,Website page content brief,Content Lead,Website master plan CSV,45 min/page,"Brief with key message, CTA, SEO targets",Founder,Use template below
+3. Production,Reel filming (batch 4 in one session),Videographer + Studio,Phone 4K + ring light + tripod + mic,3 hours/session,4 raw reels + B-roll,Content Lead,Film at studio during active hours for authenticity
+3. Production,Photo shoot (product + lifestyle),Photographer + Studio,DSLR + natural light + studio setup,4 hours/shoot,30-50 edited photos,Content Lead,Batch shoot for 2 weeks of content
+3. Production,Blog post writing,Content Lead / Writer,Google Docs + Grammarly,3-4 hours/post,1500-2000 word draft,Founder,Include 3-5 internal links to shop/booking
+3. Production,Website page copywriting,Content Lead,Google Docs + keyword mapping,2-3 hours/page,Full page copy with CTAs,Founder,"Write for skimming: bullets, subheads, short paragraphs"
+3. Production,"Canva graphic creation (carousels, stories, quote cards)",Content Lead / Designer,Canva Pro + brand kit,2 hours/week,6 grid posts + 7 story sets + 2 quote cards,Content Lead,Use brand colors from DESIGN-GUIDE.md
+3. Production,Video editing (Reels + TikTok),Videographer / Editor,CapCut Pro + brand fonts,2 hours/reel,4 edited reels with captions + music,Content Lead,Add Urdu/English captions (80% watch muted)
+4. Review,Content review + brand voice check,Founder,Google Docs / Canva comments,1 hour/week,Approved content batch,N/A,Check: Is it warm? Is it playful? Is it trustworthy?
+4. Review,SEO optimization check,Content Lead,Yoast mental model + keyword CSV,30 min/post,Optimized meta + headers + alt text,None,"Primary keyword in H1, first 100 words, URL"
+4. Review,Legal / sensitivity review,Founder,N/A,15 min/week,Flagged content removed/modified,N/A,"No minor faces without consent, no location oversharing"
+5. Publishing,Instagram grid scheduling,Content Lead,Later / Meta Business Suite,30 min/week,6 posts scheduled,None,"Post Tue, Thu, Sat at 7-9 PM PK time"
+5. Publishing,Instagram Stories (real-time + planned),Content Lead,Instagram native,15 min/day,Daily stories posted,None,Mix of planned + in-the-moment studio content
+5. Publishing,Reels publishing,Content Lead,Instagram + TikTok + FB cross-post,15 min/reel,Reel live across platforms,None,"Post Reels Mon, Wed, Fri, Sun at 8 PM"
+5. Publishing,Blog post publishing,Content Lead,Website CMS / static HTML,30 min/post,Post live with featured image + internal links,None,Share to Stories + WhatsApp status immediately
+5. Publishing,Website page publishing,Dev + Content Lead,Git + Vercel,1 hour/page,Page live + nav updated + sitemap refreshed,Founder,Test on mobile first (70% traffic)
+5. Publishing,WhatsApp Status updates,Studio Manager,WhatsApp Business,5 min/day,Daily status with CTA to link,None,Your most engaged audience is here — don't ignore
+5. Publishing,Facebook cross-post,Content Lead,Meta Business Suite,15 min/week,IG content mirrored to FB page,None,Many Lahore mothers still active on FB
+6. Distribution,Email newsletter (bi-weekly),Content Lead,Mailchimp / Kit (ConvertKit),1.5 hours/issue,Newsletter with blog highlights + offers,Founder,Segment: new leads vs customers vs VIP
+6. Distribution,WhatsApp broadcast (weekly),Studio Manager,WhatsApp Business API / broadcast lists,30 min/week,Weekly broadcast: new reel + offer + booking link,None,"Keep it personal, not spammy"
+6. Distribution,Pinterest pinning,Content Lead,Pinterest Business + Tailwind,30 min/week,10 pins from blog + product content,None,PK mothers use Pinterest for kids fashion inspo
+6. Distribution,Google Business Profile updates,Studio Manager,Google Business Dashboard,15 min/week,Weekly photo + offer post + Q&A response,None,Critical for local SEO in Gulberg
+7. Measurement,Weekly metrics review,Content Lead + Founder,Instagram Insights + Meta Business Suite + Google Analytics,1 hour/week,Weekly metrics report (see template),Founder,"Track: engagement rate, saves, shares, link clicks, bookings"
+7. Measurement,Monthly content audit,Content Lead,Spreadsheet + platform analytics,2 hours/month,Monthly content performance report,Founder,What worked? What flopped? Why?
+7. Measurement,Quarterly strategy review,Founder + Content Lead,All data + 90-day calendar,2 hours/quarter,Q+1 strategy adjustments,N/A,Pivot pillars based on data + seasonal shifts

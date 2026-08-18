@@ -216,6 +216,9 @@ function normalizeProduct(p){
     price: p.price,
     currency: p.currency || 'PKR',
     image_url: p.image_url || '#4A93E8',
+    // Tiny instant-preview placeholder for image_url — see imgTag() in
+    // this file and compute_image_blur() in index.py.
+    image_blur: p.image_blur || null,
     description: p.description || '',
     sku: p.sku || '',
     // Shopping feed attributes (Google Merchant Center / Meta Catalog)
@@ -302,6 +305,7 @@ function normalizeTailor(t){
     title: t.title || 'Master Tailor',
     tagline: t.tagline || '',
     photo_url: t.photo_url || '#101B2E',
+    photo_blur: t.photo_blur || null,
     years_experience: t.years_experience || null,
     garments_count: t.garments_count || '',
     apprentices_count: t.apprentices_count || '',
@@ -320,7 +324,8 @@ function normalizeTailor(t){
 function tailorPhotoHTML(t, opts){
   opts = opts || {};
   if(t.photo_url && !isColor(t.photo_url)){
-    return imgTag(t.photo_url, t.name, opts.width || 700, opts);
+    const withBlur = Object.assign({}, opts, {blur: opts.blur || t.photo_blur || null});
+    return imgTag(t.photo_url, t.name, opts.width || 700, withBlur);
   }
   const color = isColor(t.photo_url) ? t.photo_url : '#101B2E';
   const initials = (t.name||'').split(' ').filter(Boolean).slice(-2).map(w=>w[0]).join('').toUpperCase();
@@ -430,12 +435,26 @@ function optimizeImageUrl(url, width){
   const bare = url.replace(/^https?:\/\//i, '');
   return `https://images.weserv.nl/?url=${encodeURIComponent(bare)}&w=${w}&q=76&output=webp&fit=cover`;
 }
+// opts.blur, when present, is a tiny (~20px) base64 data: URI generated
+// server-side from the same photo (see image_blur/photo_blur, computed in
+// index.py). It's already sitting inline in the product/tailor JSON this
+// page fetched, so painting it costs nothing extra — no image request, no
+// round trip. It shows the instant this HTML string is inserted, exactly
+// like the surrounding text does. The real photo is layered on top at
+// opacity:0 and fades in the moment IT finishes loading, so the visitor
+// always sees *something* immediately instead of a blank box.
 function imgTag(url, alt, width, opts){
   opts = opts || {};
   const src = optimizeImageUrl(url, width);
   const loading = opts.eager ? 'eager' : 'lazy';
   const fetchpriority = opts.eager ? ' fetchpriority="high"' : '';
   const safeAlt = (alt||'').replace(/"/g,'&quot;');
+  if(opts.blur){
+    const safeBlur = opts.blur.replace(/"/g,'&quot;');
+    return `<div style="width:100%;height:100%;background-image:url(&quot;${safeBlur}&quot;);background-size:cover;background-position:center;overflow:hidden;">` +
+      `<img src="${src}" alt="${safeAlt}" loading="${loading}" decoding="async"${fetchpriority} style="width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .4s ease;" onload="this.style.opacity='1';">` +
+      `</div>`;
+  }
   return `<img src="${src}" alt="${safeAlt}" loading="${loading}" decoding="async"${fetchpriority} style="width:100%;height:100%;object-fit:cover;">`;
 }
 function garmentIllustration(color){
@@ -450,7 +469,8 @@ function productThumbHTML(p, size, opts){
   size = size || '46%';
   opts = opts || {};
   if(p.image_url && !isColor(p.image_url)){
-    return imgTag(p.image_url, p.name, opts.width || 480, opts);
+    const withBlur = Object.assign({}, opts, {blur: opts.blur || p.image_blur || null});
+    return imgTag(p.image_url, p.name, opts.width || 480, withBlur);
   }
   const color = isColor(p.image_url) ? p.image_url : '#4A93E8';
   return `<div style="background:${color}1A;width:100%;height:100%;display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 100 100" width="${size}" height="${size}"><path d="M50 10 L35 22 L20 18 L10 34 L22 42 L22 90 L78 90 L78 42 L90 34 L80 18 L65 22 Z" fill="${color}" opacity="0.85"/></svg></div>`;
@@ -602,11 +622,15 @@ function fgMediaHTML(p, opts){
     const src = optimizeImageUrl(p.image_url, width);
     const loading = opts.eager ? 'eager' : 'lazy';
     const fetchpriority = opts.eager ? ' fetchpriority="high"' : '';
-    // Two layers: a blurred, oversized copy fills the banner as backdrop;
-    // the real photo sits on top fully visible (object-fit:contain) so
-    // nothing gets cropped off, however wide the desktop banner is.
+    // Two layers: a blurred backdrop fills the banner, the real photo sits
+    // on top fully visible (object-fit:contain) so nothing gets cropped
+    // off. The backdrop uses the tiny inline placeholder (image_blur) when
+    // available — it paints instantly since it's already text in the page's
+    // own JSON — falling back to the full photo URL (CSS-blurred) only if
+    // no placeholder was generated for this product yet.
+    const backdropUrl = p.image_blur || src;
     return `
-      <div class="fg-media-backdrop" style="background-image:url('${src}')"></div>
+      <div class="fg-media-backdrop" style="background-image:url('${backdropUrl}')"></div>
       <div class="fg-media-fg"><img src="${src}" alt="" loading="${loading}" decoding="async"${fetchpriority}></div>`;
   }
   const color = (p && isColor(p.image_url)) ? p.image_url : '#4A93E8';
