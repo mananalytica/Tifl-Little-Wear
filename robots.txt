@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Allow: /api/sitemap-dynamic.xml
+Allow: /api/products/feed.xml
+Disallow: /admin.html
+Disallow: /account.html
+Disallow: /checkout.html
+Disallow: /thank-you.html
+Disallow: /booking-confirmation-preview.html
+Disallow: /order-confirmation-preview.html
+
+Sitemap: https://www.tifllittlewear.com/sitemap.xml
