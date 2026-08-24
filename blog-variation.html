@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Atelier Journal — Tifl Little Wear, Lahore</title>
-<meta name="description" content="Notes from the Tifl Little Wear atelier floor in Gulberg, Lahore — master tailoring, 11-point measurements, fabric guides, and grow-with-me stitching craft.">
+<title>Journal — Tifl Little Wear, Lahore</title>
+<meta name="description" content="Notes from the Tifl Little Wear studio in Gulberg, Lahore — master tailoring, 11-point measurements, fabric guides, and grow-with-me stitching craft.">
 <link rel="canonical" href="https://www.tifllittlewear.com/blog-variation.html">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Atelier Journal — Tifl Little Wear">
-<meta property="og:description" content="Notes from a made-to-measure kidswear atelier in Lahore. Stitched by hand, measured for growth.">
+<meta property="og:title" content="Journal — Tifl Little Wear">
+<meta property="og:description" content="Notes from a made-to-measure kidswear studio in Lahore. Stitched by hand, measured for growth.">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,53 +18,18 @@
 <link rel="stylesheet" href="styles.css">
 
 <style>
-/* ============================================================
-   ATELIER BLOG VARIATION — Scoped & Custom Tailor Motifs
-   ============================================================= */
-
-/* Measuring Tape Motif Header Bar */
-.tape-header-bar {
-  background: var(--bg-dark);
-  color: var(--ink-on-dark-soft);
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  padding: 8px 0;
-  border-bottom: 1px dashed var(--line-dark);
-  overflow: hidden;
+/* Tifl Little Wear Journal - Custom Tailor Motifs */
+.tifl-blog-hero {
+  padding: 48px 0 28px;
 }
-.tape-ticks {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  white-space: nowrap;
-  opacity: 0.85;
-}
-.tape-tick-unit {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-}
-.tape-tick-unit::after {
-  content: "┊ ┊ ┊ ┊ ┊";
-  color: rgba(255,255,255,0.25);
-  font-size: 9px;
-  letter-spacing: 2px;
-}
-
-/* Atelier Banner Header */
-.atelier-hero {
-  padding: 48px 0 32px;
-  position: relative;
-}
-.atelier-badge-row {
+.tifl-badge-row {
   display: flex;
   align-items: center;
   gap: 10px;
   margin-bottom: 14px;
   flex-wrap: wrap;
 }
-.atelier-tag {
+.tifl-tag {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -77,112 +42,21 @@
   border-radius: 999px;
   border: 1px solid rgba(74, 147, 232, 0.25);
 }
-.atelier-hero h1 {
-  font-size: clamp(32px, 4.5vw, 50px);
+.tifl-blog-hero h1 {
+  font-size: clamp(32px, 4.5vw, 48px);
   color: var(--ink);
   line-height: 1.15;
   margin-bottom: 12px;
 }
-.atelier-hero p.sub {
+.tifl-blog-hero p.sub {
   font-size: 17px;
   color: var(--ink-soft);
   max-width: 640px;
   line-height: 1.55;
 }
 
-/* Featured Master Story Card (Hero Post) */
-.featured-story-card {
-  background: linear-gradient(135deg, #FFFFFF 0%, var(--bg-alt) 100%);
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  padding: 32px;
-  margin-bottom: 48px;
-  box-shadow: 0 10px 30px -10px rgba(22, 35, 59, 0.05);
-  position: relative;
-  overflow: hidden;
-  display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
-  gap: 32px;
-  align-items: center;
-}
-.featured-story-card::before {
-  content: "";
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-  background: repeating-linear-gradient(90deg, var(--primary) 0 12px, transparent 12px 20px);
-}
-.featured-meta {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11.5px;
-  color: var(--ink-soft);
-  margin-bottom: 14px;
-}
-.featured-meta .dot { color: var(--primary); }
-.featured-title {
-  font-size: clamp(22px, 2.8vw, 30px);
-  line-height: 1.25;
-  margin-bottom: 14px;
-  color: var(--ink);
-}
-.featured-excerpt {
-  font-size: 15px;
-  color: var(--ink-soft);
-  line-height: 1.6;
-  margin-bottom: 22px;
-}
-.featured-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-.featured-visual {
-  background: var(--bg-dark);
-  border-radius: 14px;
-  padding: 24px;
-  color: var(--ink-on-dark);
-  position: relative;
-  border: 1px dashed var(--line-dark);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-height: 240px;
-}
-.featured-visual-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-}
-.swatch-chip {
-  background: rgba(255,255,255,0.12);
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10.5px;
-  color: #8FDC7E;
-}
-.featured-visual-illustration {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 20px 0;
-}
-.featured-visual-foot {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
-  color: var(--ink-on-dark-soft);
-  border-top: 1px dashed rgba(255,255,255,0.15);
-  padding-top: 12px;
-  display: flex;
-  justify-content: space-between;
-}
-
 /* Category Filter Tabs */
-.atelier-tabs {
+.tifl-tabs {
   display: flex;
   gap: 8px;
   overflow-x: auto;
@@ -190,7 +64,7 @@
   margin-bottom: 32px;
   border-bottom: 1px solid var(--line);
 }
-.atelier-tab {
+.tifl-tab {
   background: var(--bg-alt);
   color: var(--ink-soft);
   font-family: 'Inter', sans-serif;
@@ -199,19 +73,18 @@
   padding: 8px 18px;
   border-radius: 999px;
   border: 1px solid var(--line);
-  text-decoration: none;
   white-space: nowrap;
   transition: all 0.2s ease;
   cursor: pointer;
 }
-.atelier-tab:hover, .atelier-tab.active {
+.tifl-tab:hover, .tifl-tab.active {
   background: var(--primary);
   color: #FFFFFF;
   border-color: var(--primary);
 }
 
-/* 2-Column Layout: Articles (70%) + Sidebar (30%) */
-.atelier-layout {
+/* 2-Column Layout */
+.tifl-layout {
   display: grid;
   grid-template-columns: 1fr 340px;
   gap: 36px;
@@ -219,7 +92,7 @@
   margin-bottom: 70px;
 }
 
-/* Article List Grid */
+/* Feed */
 .articles-feed {
   display: flex;
   flex-direction: column;
@@ -231,7 +104,7 @@
   border-radius: 14px;
   overflow: hidden;
   display: grid;
-  grid-template-columns: 240px 1fr;
+  grid-template-columns: 220px 1fr;
   transition: all 0.2s ease;
   text-decoration: none;
   color: inherit;
@@ -255,7 +128,7 @@
   position: absolute;
   top: 12px;
   left: 12px;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(4px);
   padding: 3px 8px;
   border-radius: 4px;
@@ -326,7 +199,7 @@
 }
 
 /* Sidebar Widgets */
-.atelier-sidebar {
+.tifl-sidebar {
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -341,7 +214,7 @@
   position: relative;
 }
 
-/* Newsletter Widget (The Atelier Gazette) */
+/* Newsletter Widget */
 .widget-newsletter {
   background: linear-gradient(180deg, var(--bg-alt) 0%, #FFFFFF 100%);
   border: 1px solid var(--primary-light);
@@ -382,7 +255,6 @@
   font-family: 'Inter', sans-serif;
   font-size: 13px;
   outline: none;
-  transition: border-color 0.2s ease;
   box-sizing: border-box;
 }
 .newsletter-input:focus {
@@ -404,7 +276,7 @@
   margin-top: 6px;
 }
 
-/* Book a Fitting Hero Widget (Dark Contrast) */
+/* Book a Fitting Card */
 .widget-booking {
   background: var(--bg-dark);
   color: var(--ink-on-dark);
@@ -419,7 +291,7 @@
   margin-top: 16px;
 }
 
-/* Tailor's Tip Box */
+/* Tailor Tip */
 .widget-tip {
   background: #FFFDF5;
   border: 1px dashed #E5D5A2;
@@ -442,84 +314,44 @@
   font-style: italic;
 }
 
-/* Bottom Atelier Callout Section */
-.atelier-cta-section {
+/* Bottom Callout Section */
+.tifl-cta-section {
   background: var(--bg-dark);
   color: var(--ink-on-dark);
   border-radius: 18px;
   padding: 40px 32px;
   margin-bottom: 70px;
-  position: relative;
-  overflow: hidden;
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 24px;
 }
-.atelier-cta-section::before {
-  content: "";
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.02) 0 10px, transparent 10px 20px);
-  pointer-events: none;
-}
-.atelier-cta-content h2 {
+.tifl-cta-content h2 {
   font-size: clamp(22px, 3vw, 32px);
   color: #FFFFFF;
   margin-bottom: 8px;
 }
-.atelier-cta-content p {
+.tifl-cta-content p {
   color: var(--ink-on-dark-soft);
   font-size: 15px;
   max-width: 540px;
 }
-.atelier-cta-buttons {
+.tifl-cta-buttons {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
 }
 
 @media (max-width: 980px) {
-  .featured-story-card {
-    grid-template-columns: 1fr;
-    padding: 24px;
-  }
-  .atelier-layout {
-    grid-template-columns: 1fr;
-  }
-  .atelier-sidebar {
-    position: static;
-  }
-  .craft-card {
-    grid-template-columns: 1fr;
-  }
-  .craft-thumb {
-    height: 180px;
-    border-right: none;
-    border-bottom: 1px solid var(--line);
-  }
-  .atelier-cta-section {
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 28px 24px;
-  }
+  .tifl-layout { grid-template-columns: 1fr; }
+  .tifl-sidebar { position: static; }
+  .craft-card { grid-template-columns: 1fr; }
+  .craft-thumb { height: 170px; border-right: none; border-bottom: 1px solid var(--line); }
+  .tifl-cta-section { flex-direction: column; align-items: flex-start; padding: 28px 24px; }
 }
 </style>
 </head>
 <body>
-
-<!-- Measuring Tape Top Motif Bar -->
-<div class="tape-header-bar">
-  <div class="wrap">
-    <div class="tape-ticks">
-      <span class="tape-tick-unit">✂️ ATELIER JOURNAL</span>
-      <span class="tape-tick-unit">GULBERG STUDIO · LAHORE</span>
-      <span class="tape-tick-unit">MEASURED BY HAND</span>
-      <span class="tape-tick-unit">STITCHED FOR GROWTH</span>
-      <span class="tape-tick-unit">11-POINT FITTING</span>
-    </div>
-  </div>
-</div>
 
 <header class="site">
   <div class="nav-inner">
@@ -549,89 +381,49 @@
 
 <main class="wrap">
   
-  <!-- Atelier Hero Section -->
-  <div class="atelier-hero">
-    <div class="atelier-badge-row">
-      <span class="atelier-tag">🧵 Tailor's Workbench</span>
-      <span class="atelier-tag">📍 Gulberg III, Lahore</span>
-      <span class="atelier-tag" style="background:#FFF3D6;color:#8A6D1B;border-color:#E5D5A2;">✨ Made-to-Measure Stories</span>
+  <div class="tifl-blog-hero">
+    <div class="tifl-badge-row">
+      <span class="tifl-tag">🧵 Studio Dispatch</span>
+      <span class="tifl-tag">📍 Gulberg III, Lahore</span>
+      <span class="tifl-tag" style="background:#FFF3D6;color:#8A6D1B;border-color:#E5D5A2;">✨ Tifl Little Journal</span>
     </div>
-    <h1>The Atelier Dispatch & Craft Journal.</h1>
-    <p class="sub">Behind-the-seams notes from our master tailors in Lahore — how we measure, cut, and hand-stitch kidswear with 3 years of built-in growth room.</p>
+    <h1>Notes from the Tifl Little Wear studio floor.</h1>
+    <p class="sub">How we design, measure, and hand-stitch kidswear in Lahore — written down so you know the craft behind every piece.</p>
   </div>
 
   <hr class="seam" style="margin-bottom:32px;">
 
-  <!-- Featured Story Card (Hero Article) -->
-  <div class="featured-story-card">
-    <div class="featured-content">
-      <div class="featured-meta">
-        <span style="color:var(--primary-dark);font-weight:600;">FEATURED CRAFT STORY</span>
-        <span class="dot">•</span>
-        <span>4 min read</span>
-        <span class="dot">•</span>
-        <span>18 August 2026</span>
-      </div>
-      <h2 class="featured-title"><a href="blog-grow-with-me.html" style="color:inherit;text-decoration:none;">Kids clothes that actually grow with them — how our expandable seams work</a></h2>
-      <p class="featured-excerpt"><em>Ek silaai, teen saal.</em> Learn how our master tailors embed hidden double-blind seam allowances into every garment, letting a single outfit resize gracefully over three full years as your child grows.</p>
-      
-      <div class="featured-actions">
-        <a class="btn btn-primary" href="blog-grow-with-me.html">
-          Read Craft Story
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:4px;"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-        </a>
-        <a class="btn btn-ghost" href="booking.html">
-          ✂️ Book a Fitting
-        </a>
-      </div>
-    </div>
-
-    <!-- Visual Craft Showcase Frame -->
-    <div class="featured-visual">
-      <div class="featured-visual-head">
-        <span class="swatch-chip">PATENT SEAM #03</span>
-        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink-on-dark-soft);">GROW-WITH-ME</span>
-      </div>
-      <div class="featured-visual-illustration">
-        <svg viewBox="0 0 100 100" width="90" height="90"><path d="M50 10 L35 22 L20 18 L10 34 L22 42 L22 90 L78 90 L78 42 L90 34 L80 18 L65 22 Z" fill="#4A93E8" opacity="0.95"/></svg>
-      </div>
-      <div class="featured-visual-foot">
-        <span>Stitch allowance: +2.5 in</span>
-        <span>Durability: 36 Months</span>
-      </div>
-    </div>
-  </div>
-
   <!-- Category Filter Bar -->
-  <div class="atelier-tabs">
-    <button class="atelier-tab active" data-filter="all">All Journal Entries</button>
-    <button class="atelier-tab" data-filter="stitching">🧵 Stitching & Cutting</button>
-    <button class="atelier-tab" data-filter="fitting">📐 11-Point Fitting</button>
-    <button class="atelier-tab" data-filter="fabric">🌿 Fabrics & Block Print</button>
-    <button class="atelier-tab" data-filter="growth">✨ Grow-With-Me Craft</button>
+  <div class="tifl-tabs">
+    <button class="tifl-tab active" data-filter="all">All Stories</button>
+    <button class="tifl-tab" data-filter="growth">✨ Grow-With-Me Craft</button>
+    <button class="tifl-tab" data-filter="stitching">🧵 Stitching & Cutting</button>
+    <button class="tifl-tab" data-filter="fabric">🌿 Block Prints & Fabrics</button>
   </div>
 
-  <!-- 2-Column Main Layout: Feed + Tailor Sidebar -->
-  <div class="atelier-layout">
+  <!-- 2-Column Main Layout: Feed + Sidebar -->
+  <div class="tifl-layout">
     
-    <!-- Left Column: Articles Feed -->
+    <!-- Left Column: Articles in Hierarchical Order (Latest First) -->
     <div class="articles-feed">
       
-      <!-- Article Card 1 -->
-      <a class="craft-card" href="blog-behind-the-seams.html" data-category="stitching">
+      <!-- Post 1 (Latest: 18 August 2026) -->
+      <a class="craft-card" href="blog-grow-with-me.html" data-category="growth">
         <div class="craft-thumb">
-          <span class="craft-thumb-tag">11-Point Card</span>
+          <span class="craft-thumb-tag">Expandable Seam</span>
           <svg viewBox="0 0 100 100" width="70" height="70"><path d="M50 10 L35 22 L20 18 L10 34 L22 42 L22 90 L78 90 L78 42 L90 34 L80 18 L65 22 Z" fill="#4A93E8" opacity="0.85"/></svg>
         </div>
         <div class="craft-card-body">
           <div>
             <div class="craft-card-meta">
-              <span style="color:var(--primary-dark);font-weight:600;">STITCHING PROCESS</span>
+              <span style="color:var(--primary-dark);font-weight:600;">GROW-WITH-ME</span>
               <span>•</span>
-              <span>5 min read</span>
+              <span>18 August 2026</span>
+              <span>•</span>
+              <span>4 min read</span>
             </div>
-            <h3 class="craft-card-title">Behind the seams: how a made-to-measure kurta actually gets made</h3>
-            <p class="craft-card-excerpt">From an 11-point measurement card to a hand-pressed, finished piece — a step-by-step walk through our Lahore atelier process.</p>
+            <h3 class="craft-card-title">Kids clothes that actually grow with them — how our expandable seams work</h3>
+            <p class="craft-card-excerpt">Ek silaai, teen saal — the hidden hand-stitched technique that lets a piece move up with your child instead of being outgrown in a single season.</p>
           </div>
           <div class="craft-card-foot">
             <span class="craft-read-link">
@@ -643,47 +435,23 @@
         </div>
       </a>
 
-      <!-- Article Card 2 -->
-      <a class="craft-card" href="blog-eid-collection-story.html" data-category="fabric">
+      <!-- Post 2 (12 July 2026) -->
+      <a class="craft-card" href="blog-behind-the-seams.html" data-category="stitching">
         <div class="craft-thumb">
-          <span class="craft-thumb-tag">Hand Block</span>
-          <svg viewBox="0 0 100 100" width="70" height="70"><path d="M50 10 L35 22 L20 18 L10 34 L22 42 L22 90 L78 90 L78 42 L90 34 L80 18 L65 22 Z" fill="#3576C9" opacity="0.85"/></svg>
-        </div>
-        <div class="craft-card-body">
-          <div>
-            <div class="craft-card-meta">
-              <span style="color:var(--primary-dark);font-weight:600;">DESIGN & FABRICS</span>
-              <span>•</span>
-              <span>3 min read</span>
-            </div>
-            <h3 class="craft-card-title">Designing our Eid collection: organic cotton, hand block prints & extra room</h3>
-            <p class="craft-card-excerpt">Why we chose hand-carved wooden block prints on breathable cotton this season, and how we engineered comfort into festive kidswear.</p>
-          </div>
-          <div class="craft-card-foot">
-            <span class="craft-read-link">
-              Read Story 
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-            </span>
-            <span class="craft-action-btn">🎨 Design Studio</span>
-          </div>
-        </div>
-      </a>
-
-      <!-- Article Card 3 -->
-      <a class="craft-card" href="blog-grow-with-me.html" data-category="growth">
-        <div class="craft-thumb">
-          <span class="craft-thumb-tag">Grow-With-Me</span>
+          <span class="craft-thumb-tag">11-Point Card</span>
           <svg viewBox="0 0 100 100" width="70" height="70"><path d="M50 10 L35 22 L20 18 L10 34 L22 42 L22 90 L78 90 L78 42 L90 34 L80 18 L65 22 Z" fill="#4A93E8" opacity="0.85"/></svg>
         </div>
         <div class="craft-card-body">
           <div>
             <div class="craft-card-meta">
-              <span style="color:var(--primary-dark);font-weight:600;">GROWTH CRAFT</span>
+              <span style="color:var(--primary-dark);font-weight:600;">STITCHING PROCESS</span>
               <span>•</span>
-              <span>4 min read</span>
+              <span>12 July 2026</span>
+              <span>•</span>
+              <span>5 min read</span>
             </div>
-            <h3 class="craft-card-title">Kids clothes that actually grow with them — our hidden expandable seams</h3>
-            <p class="craft-card-excerpt">How two hidden stitches allow sleeves and hemlines to extend up to 2 inches cleanly without buying a new outfit every season.</p>
+            <h3 class="craft-card-title">Behind the seams: how a made-to-measure kurta actually gets made</h3>
+            <p class="craft-card-excerpt">From an 11-point measurement card to a pressed, finished garment — a walk through every stage of our stitching process in Gulberg.</p>
           </div>
           <div class="craft-card-foot">
             <span class="craft-read-link">
@@ -695,29 +463,57 @@
         </div>
       </a>
 
+      <!-- Post 3 (3 July 2026) -->
+      <a class="craft-card" href="blog-eid-collection-story-variation.html" data-category="fabric">
+        <div class="craft-thumb">
+          <span class="craft-thumb-tag">Hand Block</span>
+          <svg viewBox="0 0 100 100" width="70" height="70"><path d="M50 10 L35 22 L20 18 L10 34 L22 42 L22 90 L78 90 L78 42 L90 34 L80 18 L65 22 Z" fill="#3576C9" opacity="0.85"/></svg>
+        </div>
+        <div class="craft-card-body">
+          <div>
+            <div class="craft-card-meta">
+              <span style="color:var(--primary-dark);font-weight:600;">DESIGN & FABRICS</span>
+              <span>•</span>
+              <span>3 July 2026</span>
+              <span>•</span>
+              <span>3 min read</span>
+            </div>
+            <h3 class="craft-card-title">Designing this year's Eid collection: block prints and growth room</h3>
+            <p class="craft-card-excerpt">Why we chose hand block-printed cotton this season, and how we build growing-room into every occasion piece for kids.</p>
+          </div>
+          <div class="craft-card-foot">
+            <span class="craft-read-link">
+              Read Story 
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </span>
+            <span class="craft-action-btn">🎨 Design Studio</span>
+          </div>
+        </div>
+      </a>
+
     </div>
 
-    <!-- Right Column: Sticky Atelier Sidebar -->
-    <aside class="atelier-sidebar">
+    <!-- Right Column: Sticky Sidebar -->
+    <aside class="tifl-sidebar">
       
-      <!-- Widget 1: Newsletter Subscription Box -->
+      <!-- Newsletter Card: The Tifl Gazette -->
       <div class="sidebar-widget widget-newsletter">
         <div class="widget-newsletter-icon">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
         </div>
-        <h3 class="widget-title">The Atelier Gazette</h3>
+        <h3 class="widget-title">The Tifl Gazette</h3>
         <p class="widget-desc">Join 1,200+ Lahore parents. Get seasonal fabric drops, fitting dates, and tailor's tips directly in your inbox.</p>
 
-        <form class="newsletter-form" id="blogNewsletterForm">
-          <input type="email" class="newsletter-input" id="newsletterEmail" placeholder="Enter your email address..." required>
-          <button type="submit" class="btn btn-primary newsletter-btn" id="newsletterSubmitBtn">
+        <form class="newsletter-form" id="tiflNewsletterForm">
+          <input type="email" class="newsletter-input" id="tiflNewsletterEmail" placeholder="Enter your email address..." required>
+          <button type="submit" class="btn btn-primary newsletter-btn" id="tiflNewsletterBtn">
             Subscribe to Gazette
           </button>
         </form>
-        <p class="newsletter-note">🔒 No spam ever. Unsubscribe in 1-click anytime.</p>
+        <p class="newsletter-note">🔒 No spam ever. Unsubscribe anytime.</p>
       </div>
 
-      <!-- Widget 2: Book a Fitting Callout Card -->
+      <!-- Book a Fitting Widget -->
       <div class="sidebar-widget widget-booking">
         <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#8FDC7E;letter-spacing:0.06em;margin-bottom:6px;">LAHORE STUDIO FITTING</div>
         <h3 class="widget-title">Need Custom Fitting?</h3>
@@ -736,7 +532,7 @@
         </div>
       </div>
 
-      <!-- Widget 3: Tailor's Rule of Thumb Tip Box -->
+      <!-- Tailor Tip -->
       <div class="sidebar-widget widget-tip">
         <div class="tip-badge">
           <span>📏</span> TAILOR'S RULE OF THUMB
@@ -748,13 +544,13 @@
     </aside>
   </div>
 
-  <!-- Bottom Atelier Callout Section -->
-  <section class="atelier-cta-section">
-    <div class="atelier-cta-content">
+  <!-- Bottom Section -->
+  <section class="tifl-cta-section">
+    <div class="tifl-cta-content">
       <h2>Experience Made-to-Measure Kidswear</h2>
       <p>Have your child measured by hand at our Gulberg studio, or choose from our ready-to-ship hand-stitched collection.</p>
     </div>
-    <div class="atelier-cta-buttons">
+    <div class="tifl-cta-buttons">
       <a class="btn btn-primary" href="booking.html" style="padding:12px 24px;">✂️ Book a Fitting</a>
       <a class="btn btn-ghost" href="shop.html" style="color:#FFFFFF;border-color:var(--line-dark);padding:12px 24px;">🛍️ Explore Shop</a>
       <a class="btn btn-ghost" href="design-studio.html" style="color:#FFFFFF;border-color:var(--line-dark);padding:12px 24px;">🎨 Design Studio</a>
@@ -814,10 +610,9 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function(){
-  // Newsletter submission handler
-  const form = document.getElementById('blogNewsletterForm');
-  const input = document.getElementById('newsletterEmail');
-  const btn = document.getElementById('newsletterSubmitBtn');
+  const form = document.getElementById('tiflNewsletterForm');
+  const input = document.getElementById('tiflNewsletterEmail');
+  const btn = document.getElementById('tiflNewsletterBtn');
   
   if(form){
     form.addEventListener('submit', function(e){
@@ -829,7 +624,7 @@ document.addEventListener('DOMContentLoaded', function(){
       btn.innerText = 'Subscribing...';
 
       if(window.rudderanalytics){
-        try { window.rudderanalytics.track('Newsletter Subscribed', { email: email, location: 'Atelier Blog' }); } catch(err){}
+        try { window.rudderanalytics.track('Newsletter Subscribed', { email: email, location: 'Tifl Blog' }); } catch(err){}
       }
 
       setTimeout(function(){
@@ -838,7 +633,7 @@ document.addEventListener('DOMContentLoaded', function(){
         btn.style.background = '#28A745';
         btn.style.borderColor = '#28A745';
         input.value = '';
-        if(window.showToast) window.showToast('✨ Welcome to The Atelier Gazette!');
+        if(window.showToast) window.showToast('✨ Welcome to The Tifl Gazette!');
         
         setTimeout(function(){
           btn.innerText = 'Subscribe to Gazette';
@@ -850,7 +645,7 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 
   // Category Filtering
-  const tabs = document.querySelectorAll('.atelier-tab');
+  const tabs = document.querySelectorAll('.tifl-tab');
   const cards = document.querySelectorAll('.craft-card');
 
   tabs.forEach(tab => {
