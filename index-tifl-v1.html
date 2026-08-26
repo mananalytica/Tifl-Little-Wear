@@ -1,180 +1,196 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Tifl Little Wear – Made‑to‑Measure Kidswear</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="styles.css"> <!-- your existing stylesheet -->
-<style>
-/* ----------1️⃣ Blue‑Stitch Theme Variables ---------- */
-:root{
- --primary:#4A93E8; /* brand blue */
- --primary-light:#E5F0FF; /* light tint for cards */
- --bg-dark:#1F2B3F; /* deep navy for CTA section */
- --ink:#1F2B3F; /* dark‑navy text */
- --ink-soft:#5C6B85; /* muted text */
- --line:#4A93E8; /* tiny dash for stitch divs */
- --line-dark:#38688B;
- --bg-alt:#F8F9FA;
- --radius-sm:8px;
-  --radius:#14px;
-}
-* {box-sizing:border-box;}
-body{margin:0;color:var(--ink);font-family:'Inter',Arial,sans-serif;background:#F9F9F9;}
-a{color:var(--primary);}
+<title>Tifl Little Wear – Home</title>
 
-/* ----------1️⃣ Hero Banner (no black bar) ---------- */
-.hero-hero {
+ <!-- Google Fonts (Fredoka & Inter) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+ <!-- Your stylesheet – keep the existing one or replace it with the CSS below -->
+<link rel="stylesheet" href="styles.css">
+
+ <!-- Tiny‑custom CSS – you can also move this into styles.css -->
+<style>
+ /* ----- Tailor‑inspired design variables ----- */
+    :root{
+      --primary:#4A93E8; /* brand blue */
+ --primary-light:#E5F0FF;
+ --bg-dark:#1F2B3F;
+ --ink:#1F2B3F; /* primary text */
+ --ink-soft:#5C6B85;
+ --ink-on-dark-soft:#E1EFF5;
+ --bg-alt:#F8F9FA;
+ --line:#4A93E8;
+ --line-dark:#38688B;
+ --primary-light:#E5F0FF;
+ --radius-sm:8px;
+ --radius-sm-2:12px;
+ --radius-sm-2:12px;
+ }
+
+ /* ==== Tape‑header (removed per your request) ==== */
+ /* .tape-header-bar {display:none;} */ /* <-- comment out if you still want it */
+
+ /* ---- Basic page layout ------------------------------------------------ */
+ body{font-family:Inter,Arial,Helvetica,sans-serif;background:#F9F9F9;}
+ .wrap{padding:01rem;}
+
+ /* ---------- Header Navigation ---------- */
+ .nav-inner{
+ display:flex;align-items:center;justify-content:space-between;
+ padding:01rem;
+ }
+ .nav-inner a{color:var(--primary);}
+ .nav-tabs a{color:var(--ink-soft);text-decoration:none;padding:4px12px;}
+ .nav-tabs a.active{color:var(--primary);font-weight:600;}
+
+ /* -------- Hero Header (no black bar) ------------------- */
+ .hero-hero{
  position:relative;
- background:url('https://images.weserv.nl/?url=https://images.weserv.nl/?url=https://images.weserv.nl/?url=https://images.unsplash.com/photo-random-full-width?ixlib=rb-4.1.1&ixlib=rb-4.1.0') center/cover no-repeat;
- min-height:720px;
- padding:80px0;
-}
-.hero-overlay{
+ background:#1F2B3F; /* dark navy background */
+ min-height:68px;
+      padding:0 1rem;
+ }
+ .hero-overlay{
  background:rgba(31,41,58,0.85);
  position:absolute; inset:0;
-}
-.hero-text{
- position:absolute; left:50%;top:50%;transform:translate(-50%,-50%);
- text-align:center;color:#fff;
-}
-.hero-title{
- font-family:'Fredoka',sans-serif;
- font-size:clamp(32px,4vw,42px);
- font-weight:700;
+ }
+ .hero-text{
+ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+ text-align:center;
  color:#FFF;
-}
-.hero-sub{
- font-size:1.2rem;color:#FFF;
-}
-.hero-cta{
- display:inline-flex;align-items:center;gap:6px;
- background:var(--primary);
- color:#FFF;padding:12px24px;
- border-radius:999px;font-weight:500;
-}
-.hero-cta-secondary{
- background:transparent;
- color:#FFF;
- border:2px solid #FFF;
-}
+ }
+ .hero-title{font-family:'Fredoka',sans-serif;font-size:clamp(28px,4vw,38px);
+ font-weight:700;color:#FFF;}
+ .hero-sub{font-size:1rem;color:#FFF;margin-top:12px;}
 
-/* -------2️⃣ Stitch Line Divider (matches your .seam) --------- */
-.seam{height:2px;background:repeating-linear-gradient(90deg,var(--line),var(--line)10px,transparent12px20px);margin-top:24px;margin-bottom:24px;}
+ /* ==== Category Tabs ==== */
+ .tifl-tabs{
+ display:flex;gap:6px;margin-bottom:24px;
+ overflow-x:auto;
+ }
+ .tifl-tab{
+ background:#F5F5F5; border:1px solid var(--line);
+ border-radius:6px;padding:6px12px;font-size:13px;
+ cursor:pointer;transition:background .2s;
+ }
+ .tifl-tab.active{
+ background:var(--primary);color:#FFF;
+ }
 
-/* ----------3️⃣ Category “cards” – look like tiny stitched cards */
-.craft-card{
+ /* ====2‑Column Layout ==== */
+ .tifl-layout{
+ display:grid;grid-template-columns:1fr300px;gap:24px;
+ margin-bottom:48px;
+ }
+ @media(max-width:979px){.tifl-layout{grid-template-columns:1fr;} }
+
+ /* ==== Card style ==== */
+ .craft-card{
  background:#FFF8F0;
  border:1px solid var(--line);
  border-radius:12px;
  overflow:hidden;
  transition:transform .2s;
-}
-.craft-card:hover{transform:translateY(-3px);}
-.craft-card-top{
- text-align:center;
- padding:12px8px;
-}
-.craft-card-tag{
- font-family:'IBM Plex Mono',monospace;
- font-size:9px;color:#4A6C9E;letter-spacing:.5px;
-}
-.craft-card-body{
- padding:16px16px20px;
-}
-.craft-card-title{
- font-size:1.2rem;color:var(--ink);margin:8px04px;
-}
-.craft-card-text{
- font-size:13.5px;color:var(--ink-soft);line-height:1.5;
-}
-.craft-card-footer{
+ }
+    .craft-card:hover{transform:translateY(-3px);}
+ .craft-thumb{
+ background:var(--bg-alt);
+ display:flex;align-items:center;justify-content:center;
+ border-right:1px solid var(--line);
+ }
+ .craft-card-title{font-size:1.15rem;color:var(--ink);margin:8px0;}
+ .craft-card-excerpt{font-size:0.95rem;color:var(--ink-soft);margin-top:8px;}
+ .craft-card-footer{
  border-top:1px dashed var(--line);
- text-align:center;padding:10px;
- font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink-soft);
-}
-
-/* ----------3️⃣ Mini Hero Card – “Book a Fitting” ++ */
-.book-now-card{
- background:#1F2B3F;color:#FFF;
-  border:1px solid var(--line-dark);
- border-radius:12px;
+ padding-top:12px; text-align:center;
+ }
+ .craft-action-btn{
+ font-family:'IBM Plex Mono',monospace;font-size:12px;
+ background:var(--primary-light);color:#000;padding:4px10px;
+ border:1px solid var(--line);border-radius:6px;
  text-align:center;
- padding:18px;
-}
-.book-now-card h3{font-size:1.1rem;color:#FFF;font-weight:600;}
-.booking-buttons{display:flex;gap:10px;justify-content:center;}
-.booking-btn{background:#4A93E8;color:#FFF;padding:8px16px;border-radius:6px;
-  font-family:'IBM Plex Mono',monospace;font-size:12px;text-align:center;}
-.booking-btn:nth-child(2){background:#3B5A73;}
+ }
 
-/* ----------4️⃣ Footer CTAs (big, bold) ---------- */
-.cta-section{
- background:#1F2B3F;color:#FFF;
- padding:48px16px;text-align:center;
-}
-.cta-title{font-size:clamp(24px,4vw,34px);font-weight:700;}
-.cta-buttons a{
- background:var(--primary);
- color:#FFF;padding:10px22px;border-radius:8px;
- text-decoration:none;font-weight:600;
-}
-.cta-secondary{background:#2E3B4A;border-color:#4A93E8;}
+ /* ==== Newsletter Widget ==== */
+ .widget-newsletter{
+ background:#FFF8F0;border:1px solid var(--line);
+ border-top:3px solid var(--primary);
+ padding:16px; border-radius:12px;
+ }
+ .widget-title{font-weight:600;color:#1F2B3F;margin-bottom:8px;}
+ .newsletter-input{
+ width:100%;padding:8px;border:1px solid var(--line);
+ border-radius:6px;font-family:'Inter',sans-serif;
+ }
+ .newsletter-btn{
+ width:100%;padding:10px;background:var(--primary);
+ color:#FFF;border:none;border-radius:6px;
+ font-family:'Inter',sans-serif;font-weight:600;
+ }
 
-@media (max-width:980px){
- .wrap{grid-template-columns:1fr;}
-}
+ /* ==== Booking Widget ==== */
+ .widget-booking{
+ background:var(--bg-dark);color:#FFF;
+ border:1px solid var(--line-dark);
+ border-radius:12px;padding:18px;
+ }
+ .widget-booking .widget-title{color:#FFF;font-weight:600;margin-bottom:8px;}
+
+ /* ==== Bottom CTA Banner ==== */
+ .tifl-cta-section{
+ background:var(--bg-dark);color:#FFF;
+ padding:32px;text-align:center;
+ }
+ .tifl-cta-section a.btn{
+ background:var(--primary);color:#FFF;padding:10px20px;border-radius:6px;
+ text-decoration:none;
+ }
 </style>
 </head>
+
 <body>
 
+<!-- ===== NAVIGATION (unchanged) ===== -->
 <header class="site">
 <div class="nav-inner">
-<a href="index.html" class="brand">
- <img src="https://images.weserv.nl/?url=www.tifllittlewear.com/assets/logo.png&w=300&q=82&output=webp"
- alt="Tifl Little Wear" style="height:44px;">
-</a>
+<a href="index.html" class="brand"><img src="https://images.weserv.nl/?url=www.tifllittlewear.com/assets/logo.png&w=300&q=82&output=webp"
+ alt="Tifl Little Wear" style="height:44px;width:auto;"></a>
 <nav id="navTabs">
-<a href="index.html">Home</a> |<a href="shop.html">Shop</a> |<a href="design-studio.html">Design Studio</a> |
+<a href="index.html">Home</a> |
+<a href="shop.html">Shop</a> |<a href="design-studio.html">Design Studio</a> |
 <a href="blog.html" style="color:#4A93E8;font-weight:600;">Blog</a> |
 <a href="contact.html">Contact</a>
 </nav>
 <div class="nav-right">
 <a class="btn btn-ghost btn-sm" href="account.html">Account</a>
-<a href="shop.html" class="cart-btn"><svg width="18" height="18" viewBox="002424" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M11h4l2.6813.39a22 0 0 021.61h9.72a220002-1.61L236H6"/></svg>
-<span class="cart-badge" style="display:none;">0</span>
-</a>
-<button class="menu-toggle" id="menuToggle" aria-label="Toggle menu" style="display:none;">
-<svg width="18" height="18" viewBox="002424" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-</button>
+<a href="shop.html" class="cart-btn">Cart</a>
+<button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">☰</button>
 </div>
 </div>
 </header>
 
-<!-- ------------------- HERO SECTION ------------------- -->
+<!-- ==================== HERO ==================== -->
 <div class="hero-hero">
 <div class="hero-overlay"></div>
 <div class="hero-text">
-<div class="hero-title">Made‑to‑Measure Kidswear, Crafted in Lahore</h1>
-<p class="hero-sub">Hand‑stitched, hand‑measured, and built to grow.</p>
-<a href="booking.html" class="hero-cta btn-primary">Book a Fitting</a>
+<h1 class="hero-title">Crafted for Growth</h1>
+<p class="hero-sub">Explore our latest collection & discover the art of made‑to‑measure tailoring.</p>
+<a href="booking.html" class="hero-cta hero-primary">Book a Fitting</a>
 <a href="shop.html" class="hero-cta-secondary">🛍️ Shop Collection</a>
 </div>
 
-<hr class="seam" style="margin:0032px;">
-
-<!-- ==================== CATEGORY FILTER BAR ==================== -->
-<div class="tifl-tabs">
-<button class="tifl-tab active" data-filter="all">All Stories</button>
-<button class="tifl-tab" data-filter="growth">✨ Grow‑With‑Me</button>
-<button class="tifl-tab" data-filter="stitching">🧵 Stitching</button>
-<button class="tifl-tab" data-filter="fabric">🎨 Fabric Prints</button>
-</div>
-
-<!-- ==== MAIN GRID (2‑Column) ==== -->
+<hr class="seam" style="margin:24px0;">
+<!-- ====================2‑COLUMN GRID ==================== -->
 <div class="tifl-layout">
- <!-- ==== Main Feed ==== -->
+
+ <!-- ==== LEFT – ARTICLE FEED ==== -->
 <div class="articles-feed">
- <!-- ==== CARD 1 ==== -->
+
+ <!-- ==== CARD1 – Grow‑With‑Me ==== -->
 <a href="blog-grow-with-me.html" class="craft-card" data-category="growth">
 <div class="craft-thumb">
 <span class="craft-thumb-tag">Grow‑With‑Me</span>
@@ -182,103 +198,119 @@ a{color:var(--primary);}
 </div>
 <div class="craft-card-body">
 <div class="craft-card-meta">
-<span class="craft-card-meta-label">CRAFT TYPE</span><span class="craft-card-meta-tag">Grow‑With‑Me</span>
+<span class="craft-card-meta-label">TOPIC</span><span class="craft-card-meta-tag">Grow‑With‑Me</span>
 </div>
-        <h3 class="craft-card-title">Expandable Seams – How Kids’ Clothes Grow With Them</h3>
-<p class="craft-card-excerpt">Learn the hidden technique that adds hidden extra length when your child outgrows a garment.</p>
+<h3 class="craft-card-title">Expandable Seams – Future‑Proof Your Child’s Wardrobe</h3>
+<p class="craft-card-excerpt">How hidden expandable seams let a single garment grow up to three years.</p>
 </div>
 <div class="craft-card-foot">
 <a href="blog-grow-with-me.html" class="craft-read-link">Read Story</a>
-        <span class="craft-action-btn">📐 Try Size Tool</span>
+<span class="craft-action-btn">📐 Try Size Tool</span>
 </div>
-</a>
+</div>
 
- <!-- ==== CARD2 ==== -->
-<a href="blog-behind-the-seams.html" class="craft-card" data-category="stitching">
-<div class="craft-thumb">
-<span class="craft-thumb-tag">Hand Stitching</span>
-<svg viewBox="00100100" width="70" height="70"><path d="M5010 L3522 L2018 L1034 L2242 L2290 L7890 L7842 L9034 L8018 L6522 Z" fill="#4A93E8" opacity="0.85"/></svg>
-</div>
-<div class="craft-card-body">
-<div class="craft-card-meta">
-<span class="craft-card-meta-label">SKILL AREA</span><span class="craft-card-meta-tag">Stitching</span>
-</div>
-<h3 class="craft-card-title">The11‑Point Measurement Card</h3>
-<p class="craft-card-excerpt">Every perfect fit starts with a11‑point measurement. Here’s how we map each point.</p>
-</div>
-<div class="craft-card-foot">
-<a href="blog-behind-the-seams.html" class="craft-read-link">Read Story</a>
-<span class="craft-action-btn">📐 Try it Yourself</span>
-</div>
-</a>
-
- <!-- ==== CARD3 ==== -->
+ <!-- ==== CARD2 – Behind‑the‑Scenes ==== -->
 <a href="blog-behind-the-seams.html" class="craft-card" data-category="process">
-      <div class="craft-thumb">
+<div class="craft-thumb">
 <span class="craft-thumb-tag">Master Tailor</span>
 <svg viewBox="00100100" width="70" height="70"><path d="M5010 L3522 L2018 L1034 L2242 L2290 L7890 L7842 L9034 L8018 L6522 Z" fill="#4A93E8" opacity="0.85"/></svg>
-</div>
-<div class="craft-card-body">
+ </div>
+     <div class="craft-card-body">
 <div class="craft-card-meta">
 <span class="craft-card-meta-label">ROLE</span><span class="craft-card-meta-tag">Master Tailor</span>
 </div>
-<h3 class="craft-card-title">Meet Ustad Abdul Sattar</h3>
-<p class="craft-card-excerpt">A day in the life of Lahore’s most‑experienced hand‑tailor.</p>
+<h3 class="craft-card-title">Ustad Abdul Sattar – The Master at Work</h3>
+<p class="craft-card-excerpt">A glimpse into the daily routine of our master tailor, from morning measurements to the final stitch.</p>
 </div>
 <div class="craft-card-foot">
 <a href="master-tailor-bio.html" class="craft-read-link">Read Bio</a>
-<span class="craft-action-btn">🧵 Ask a Question</span>
+<span class="craft-action-btn">🧵 Ask a Question</a>
 </div>
-</a>
 </div>
 
-<!-- ==== SIDEBAR (Sticky) ==== -->
+ <!-- ==== CARD4 ==== -->
+<a href="blog-eid-collection-story.html" class="craft-card" data-category="design">
+<div class="craft-thumb">
+<span class="craft-thumb-tag">Hand‑Block</span>
+<svg viewBox="00100100" width="70" height="70"><path d="M5010 L3522 L2018 L1034 L2242 L2290 L7890 L7842 L9034 L8018 L6522 Z" fill="#3576C9" opacity="0.85"/></svg>
+</div>
+<div class="craft-card-body">
+<div class="craft-card-meta">
+<span class="craft-card-meta-label">CATEGORY</span><span class="craft-card-meta-tag">Block Print</span>
+</div>
+<h3 class="craft-card-title">Hand‑Block Printed Fabrics for Eid</h3>
+<p class="craft-card-excerpt">A look at the process behind our hand‑printed textiles and why they’re perfect for little ones.</p>
+</div>
+<div class="craft-card-foot">
+<a href="blog-eid-collection-story.html" class="craft-read-link">Read More</a>
+<span class="craft-action-btn">🎨 Explore Design Studio</a>
+</div>
+</div>
+</div>
+
+ <!-- ==================== SIDEBAR (Sticky) ==== -->
 <aside class="tifl-sidebar">
- <!-- ==== NEWSLETTER WIDGET ==== -->
+ <!-- Newsletter Widget -->
 <div class="sidebar-widget widget-newsletter">
-<div class="widget-icon">
-<svg width="24" height="24" fill="currentColor" viewBox="002424"><path d="M20,20L4,4l16,16M4,20l16-4"/></svg>
-</div>
-<h4 style="font-size:15px;color:#FFF;margin-bottom:8px;">The Tifl Gazette</h4>
-<p style="font-size:12px;color:#CCCCCC;margin-bottom:10px;">Seasonal drops & fitting tips.</p>
-<form class="newsletter-form" id="tiflNewsForm">
-<input type="email" placeholder="you@email.com" class="newsletter-input" required>
-<button type="submit" class="newsletter-btn">Subscribe</button>
+<div class="widget-icon"><svg width="24" height="24" fill="currentColor" viewBox="002424"><path d="M122L12222212l8-10z"/></svg></div>
+<h4 class="widget-title">The Tifl Gazette</h4>
+<p style="color:#CCCCCC;">Seasonal drops & fitting tips.</p>
+<form class="newsletter-form">
+<input type="email" placeholder="you@example.com" required>
+<button type="submit">Subscribe</button>
 </form>
-<p style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#CCCCCC;margin-top:8px;">🛡️ No spam. One‑click unsubscribe.</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#CCC;margin-top:8px;">
+ 📭 No spam – one‑click unsubscribe.
+</p>
 </div>
 
- <!-- ==== BOOK‑FITTING CTA CARD ==== -->
-<div class="sidebar-widget widget-booking" style="background:#1F2B3F;color:#FFF;">
-<div class="widget-title" style="font-size:16px;color:#FFF;margin-bottom:8px;">Book a Fitting</div>
-<a href="booking.html" class="btn btn-primary" style="margin-bottom:8px;">✂️ Book a Fitting</a>
-<a href="sizing-tool.html" class="btn btn-ghost" style="color:#FFF;">📐 Measure Yourself</a>
-
+ <!-- Quick‑Action Buttons -->
+<div class="widget-booking">
+<h4 style="color:#FFF;margin-bottom:8px;">Quick Actions</h4>
+<a href="booking.html" class="btn-primary">✂️ Book a Fitting</a>
+<a href="sizing-tool.html" class="btn-ghost" style="color:#FFF;">📐 Try Size Tool</a>
 <a href="https://wa.me/923054110254" target="_blank" rel="noopener"
- style="color:#8FDC7E;border:1px solid var(--line-dark);padding:4px6px;border-radius:6px;">
- 💬 Chat with Master Tailor</a>
+ style="color:#8FDC7E;border:1px solid var(--line-dark);padding:4px8px;border-radius:6px;">
+        💬 Chat with Master Tailor</a>
 </div>
 
- <!-- ==== Tailor Tip Box ==== -->
+ <!-- Tailor’s Tip Box -->
 <div class="widget-tip">
-<div class="tip-badge">📏 TAILOR'S TIP</div>
-<p class="tip-text">When measuring a child, always leave a “comfort room” of2‑3mm so the stitch doesn’t bind when they move.</p>
+<div class="tip-badge">📏 TAILOR’S TIP</div>
+<p class="tip-text">Always leave a2mm comfort room when measuring a child’s waist.</p>
 </div>
 </aside>
 
-<!-- ==== BIG CTA SECTION ==== -->
+ <!-- ==== BIG CTA SECTION ==== -->
 <section class="cta-section">
 <div class="cta-content">
-<h2 style="color:#FFF;margin-bottom:12px;">Ready for clothes that really fit?</h2>
-<p style="color:#CCCCCC;margin-bottom:24px;">
- Get a perfectly measured outfit without leaving Lahore.
-</p>
-<div>
-<a href="booking.html" class="btn-primary" style="margin-right:12px;">BOOK A FITTING</a>
-<a href="shop.html" class="btn-primary" style="margin-right:12px;">SHOP COLLECTION</a>
-<a href="design-studio.html" style="color:#FFF;">DESIGN STUDIO</a>
+<h2>Experience Tailor‑Made Comfort</h2>
+<p>Schedule a private fitting or explore our ready‑made collection.</p>
+<div class="cta-buttons">
+<a href="booking.html" class="btn-primary">BOOK A FITTING</a>
+<a href="shop.html" class="btn-primary">SHOP COLLECTION</a>
+</div>
 </div>
 </section>
 
+<script>
+// ---- SIMPLE FILTER LOGIC -------------------------------------------------document.querySelectorAll('.tifl-tab').forEach(tab=>{
+ tab.addEventListener('click',function(){
+ tabs.forEach(t=>t.classList.remove('active'));
+ this.classList.add('active');
+ const filter = this.dataset.filter;
+ document.querySelectorAll('.craft-card').forEach(c=>{
+ c.style.display = filter==='all' ? 'grid' : (card.dataset.category===filter?'grid':'none');
+ });
+ });
+});
+/* Simple toast helper (optional) */
+function showToast(msg){
+ const toast=document.createElement('div');
+ toast.style.cssText='position:fixed;bottom:20px;left:50%;background:#333;color:#FFF;padding:12px20px;border-radius:6px;z-index:9999';
+ toast.innerText=msg;document.body.appendChild(toast);
+ setTimeout(()=>toast.remove(),4000);
+});
+</script>
 </body>
 </html>
