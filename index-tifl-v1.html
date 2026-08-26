@@ -1,167 +1,301 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tifl Little Wear – Home</title>
 
- <!-- Google Fonts (Fredoka & Inter) -->
+<!-- Google Fonts (Fredoka & Inter) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 
- <!-- Your stylesheet – keep the existing one or replace it with the CSS below -->
-<link rel="stylesheet" href="styles.css">
-
- <!-- Tiny‑custom CSS – you can also move this into styles.css -->
 <style>
- /* ----- Tailor‑inspired design variables ----- */
-    :root{
-      --primary:#4A93E8; /* brand blue */
- --primary-light:#E5F0FF;
- --bg-dark:#1F2B3F;
- --ink:#1F2B3F; /* primary text */
- --ink-soft:#5C6B85;
- --ink-on-dark-soft:#E1EFF5;
- --bg-alt:#F8F9FA;
- --line:#4A93E8;
- --line-dark:#38688B;
- --primary-light:#E5F0FF;
- --radius-sm:8px;
- --radius-sm-2:12px;
- --radius-sm-2:12px;
- }
+/* ----- Tailor-inspired design variables ----- */
+:root{
+  --primary:#4A93E8;
+  --primary-light:#E5F0FF;
+  --bg-dark:#1F2B3F;
+  --ink:#1F2B3F;
+  --ink-soft:#5C6B85;
+  --bg-alt:#F8F9FA;
+  --line:#4A93E8;
+  --line-dark:#38688B;
+  --radius-sm:8px;
+  --radius-sm-2:12px;
+}
 
- /* ==== Tape‑header (removed per your request) ==== */
- /* .tape-header-bar {display:none;} */ /* <-- comment out if you still want it */
+/* ----- Basic page layout ----- */
+body{font-family:Inter,Arial,Helvetica,sans-serif;background:#F9F9F9;margin:0;}
+.wrap{max-width:1200px;margin:0 auto;padding:0 1rem;}
 
- /* ---- Basic page layout ------------------------------------------------ */
- body{font-family:Inter,Arial,Helvetica,sans-serif;background:#F9F9F9;}
- .wrap{padding:01rem;}
+/* ----- Header Navigation ----- */
+.nav-inner{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1rem 0;
+  border-bottom:1px solid var(--line);
+  margin-bottom:1rem;
+}
+.nav-inner a{color:var(--primary);}
+.nav-tabs a{color:var(--ink-soft);text-decoration:none;padding:4px 12px;}
+.nav-tabs a.active{color:var(--primary);font-weight:600;}
 
- /* ---------- Header Navigation ---------- */
- .nav-inner{
- display:flex;align-items:center;justify-content:space-between;
- padding:01rem;
- }
- .nav-inner a{color:var(--primary);}
- .nav-tabs a{color:var(--ink-soft);text-decoration:none;padding:4px12px;}
- .nav-tabs a.active{color:var(--primary);font-weight:600;}
+/* ----- Hero Header ----- */
+.hero-hero{
+  position:relative;
+  background:#1F2B3F;
+  min-height:200px;
+  padding:2rem 1rem 3rem 1rem;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+}
+.hero-overlay{
+  position:absolute; inset:0;
+  background:rgba(31,41,58,0.85);
+}
+.hero-text{
+  position:relative;
+  z-index:1;
+  color:#FFF;
+}
+.hero-title{font-family:'Fredoka',sans-serif;font-size:clamp(28px,4vw,38px);
+  font-weight:700;color:#FFF;margin-bottom:8px;}
+.hero-sub{font-size:1rem;color:#FFF;margin-bottom:20px;}
 
- /* -------- Hero Header (no black bar) ------------------- */
- .hero-hero{
- position:relative;
- background:#1F2B3F; /* dark navy background */
- min-height:68px;
-      padding:0 1rem;
- }
- .hero-overlay{
- background:rgba(31,41,58,0.85);
- position:absolute; inset:0;
- }
- .hero-text{
- position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
- text-align:center;
- color:#FFF;
- }
- .hero-title{font-family:'Fredoka',sans-serif;font-size:clamp(28px,4vw,38px);
- font-weight:700;color:#FFF;}
- .hero-sub{font-size:1rem;color:#FFF;margin-top:12px;}
+/* Hero buttons */
+.hero-cta-group{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  justify-content:center;
+}
+.hero-cta{
+  display:inline-block;
+  padding:10px 24px;
+  border-radius:6px;
+  font-weight:600;
+  text-decoration:none;
+  transition:background .2s;
+}
+.hero-cta.hero-primary{
+  background:var(--primary);
+  color:#FFF;
+}
+.hero-cta.hero-primary:hover{
+  background:#3a7ec9;
+}
+.hero-cta-secondary{
+  background:var(--primary-light);
+  color:var(--primary);
+}
+.hero-cta-secondary:hover{
+  background:#d4e6ff;
+}
 
- /* ==== Category Tabs ==== */
- .tifl-tabs{
- display:flex;gap:6px;margin-bottom:24px;
- overflow-x:auto;
- }
- .tifl-tab{
- background:#F5F5F5; border:1px solid var(--line);
- border-radius:6px;padding:6px12px;font-size:13px;
- cursor:pointer;transition:background .2s;
- }
- .tifl-tab.active{
- background:var(--primary);color:#FFF;
- }
+/* ----- Category Tabs ----- */
+.tifl-tabs{
+  display:flex;gap:6px;margin-bottom:24px;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+}
+.tifl-tab{
+  background:#F5F5F5; border:1px solid var(--line);
+  border-radius:6px;padding:6px 12px;font-size:13px;
+  cursor:pointer;transition:background .2s;
+  white-space:nowrap;
+}
+.tifl-tab.active{
+  background:var(--primary);color:#FFF;
+}
 
- /* ====2‑Column Layout ==== */
- .tifl-layout{
- display:grid;grid-template-columns:1fr300px;gap:24px;
- margin-bottom:48px;
- }
- @media(max-width:979px){.tifl-layout{grid-template-columns:1fr;} }
+/* ----- 2-Column Layout ----- */
+.tifl-layout{
+  display:grid;grid-template-columns:1fr 300px;gap:24px;
+  margin:24px 0 48px 0;
+}
+@media(max-width:979px){.tifl-layout{grid-template-columns:1fr;}}
 
- /* ==== Card style ==== */
- .craft-card{
- background:#FFF8F0;
- border:1px solid var(--line);
- border-radius:12px;
- overflow:hidden;
- transition:transform .2s;
- }
-    .craft-card:hover{transform:translateY(-3px);}
- .craft-thumb{
- background:var(--bg-alt);
- display:flex;align-items:center;justify-content:center;
- border-right:1px solid var(--line);
- }
- .craft-card-title{font-size:1.15rem;color:var(--ink);margin:8px0;}
- .craft-card-excerpt{font-size:0.95rem;color:var(--ink-soft);margin-top:8px;}
- .craft-card-footer{
- border-top:1px dashed var(--line);
- padding-top:12px; text-align:center;
- }
- .craft-action-btn{
- font-family:'IBM Plex Mono',monospace;font-size:12px;
- background:var(--primary-light);color:#000;padding:4px10px;
- border:1px solid var(--line);border-radius:6px;
- text-align:center;
- }
+/* ----- Card style ----- */
+.craft-card{
+  background:#FFF8F0;
+  border:1px solid var(--line);
+  border-radius:12px;
+  overflow:hidden;
+  transition:transform .2s;
+  display:block;
+  text-decoration:none;
+  color:inherit;
+  margin-bottom:20px;
+}
+.craft-card:hover{transform:translateY(-3px);}
+.craft-thumb{
+  background:var(--bg-alt);
+  display:flex;align-items:center;justify-content:center;
+  border-right:1px solid var(--line);
+  min-height:140px;
+  padding:12px;
+}
+.craft-thumb-tag{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;
+  background:var(--primary-light);
+  color:var(--primary);
+  padding:2px 10px;
+  border-radius:4px;
+  border:1px solid var(--line);
+}
+.craft-card-body{padding:16px 18px 8px 18px;}
+.craft-card-meta{
+  display:flex;align-items:center;gap:8px;font-size:11px;
+  font-family:'IBM Plex Mono',monospace;
+  color:var(--ink-soft);
+  margin-bottom:4px;
+}
+.craft-card-meta-label{text-transform:uppercase;letter-spacing:0.5px;opacity:0.7;}
+.craft-card-meta-tag{background:var(--primary-light);padding:0 8px;border-radius:4px;color:var(--primary);}
+.craft-card-title{font-size:1.15rem;color:var(--ink);margin:8px 0 4px 0;font-weight:600;}
+.craft-card-excerpt{font-size:0.95rem;color:var(--ink-soft);margin-top:6px;line-height:1.4;}
+.craft-card-foot{
+  border-top:1px dashed var(--line);
+  padding:12px 18px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.craft-read-link{
+  font-weight:500;
+  color:var(--primary);
+  text-decoration:none;
+}
+.craft-read-link:hover{text-decoration:underline;}
+.craft-action-btn{
+  font-family:'IBM Plex Mono',monospace;font-size:12px;
+  background:var(--primary-light);color:#000;padding:4px 10px;
+  border:1px solid var(--line);border-radius:6px;
+  text-align:center;
+  display:inline-block;
+}
 
- /* ==== Newsletter Widget ==== */
- .widget-newsletter{
- background:#FFF8F0;border:1px solid var(--line);
- border-top:3px solid var(--primary);
- padding:16px; border-radius:12px;
- }
- .widget-title{font-weight:600;color:#1F2B3F;margin-bottom:8px;}
- .newsletter-input{
- width:100%;padding:8px;border:1px solid var(--line);
- border-radius:6px;font-family:'Inter',sans-serif;
- }
- .newsletter-btn{
- width:100%;padding:10px;background:var(--primary);
- color:#FFF;border:none;border-radius:6px;
- font-family:'Inter',sans-serif;font-weight:600;
- }
+/* ----- Newsletter Widget ----- */
+.widget-newsletter{
+  background:#FFF8F0;border:1px solid var(--line);
+  border-top:3px solid var(--primary);
+  padding:16px; border-radius:12px;
+}
+.widget-title{font-weight:600;color:#1F2B3F;margin-bottom:8px;}
+.newsletter-input{
+  width:100%;padding:8px;border:1px solid var(--line);
+  border-radius:6px;font-family:'Inter',sans-serif;}
+.newsletter-btn{
+  width:100%;padding:10px;background:var(--primary);
+  color:#FFF;border:none;border-radius:6px;
+  font-family:'Inter',sans-serif;font-weight:600;}
 
- /* ==== Booking Widget ==== */
- .widget-booking{
- background:var(--bg-dark);color:#FFF;
- border:1px solid var(--line-dark);
- border-radius:12px;padding:18px;
- }
- .widget-booking .widget-title{color:#FFF;font-weight:600;margin-bottom:8px;}
+/* ----- Booking Widget ----- */
+.widget-booking{
+  background:var(--bg-dark);color:#FFF;
+  border:1px solid var(--line-dark);
+  border-radius:12px;padding:18px;
+}
+.widget-booking .widget-title{color:#FFF;font-weight:600;margin-bottom:8px;}
 
- /* ==== Bottom CTA Banner ==== */
- .tifl-cta-section{
- background:var(--bg-dark);color:#FFF;
- padding:32px;text-align:center;
- }
- .tifl-cta-section a.btn{
- background:var(--primary);color:#FFF;padding:10px20px;border-radius:6px;
- text-decoration:none;
- }
+/* ----- Sidebar ----- */
+.sidebar-widget{
+  background:#FFF8F0;border:1px solid var(--line);
+  border-radius:12px;padding:16px;margin-bottom:16px;
+}
+.widget-title{font-weight:600;color:#1F2B3F;margin-bottom:8px;}
+.sidebar-widget p{color:#5C6B85;font-size:0.9rem;margin-bottom:12px;}
+.newsletter-form{
+  display:flex;margin-top:8px;gap:8px;
+  flex-wrap:wrap;
+}
+.newsletter-form input{
+  flex:1;padding:8px;border:1px solid var(--line);
+  border-radius:6px;font-family:'Inter',sans-serif;
+  min-width:120px;
+}
+.newsletter-form button{
+  padding:8px 16px;background:var(--primary);color:#FFF;border:none;border-radius:6px;
+  font-family:'Inter',sans-serif;font-weight:600;
+  cursor:pointer;
+}
+.newsletter-form button:hover{background:#3a7ec9;}
+
+/* ----- Tailor's Tip Box ----- */
+.widget-tip{
+  background:#F5F5F5;border-left:4px solid var(--primary);
+  padding:12px 16px;margin:8px 0;
+  border-radius:4px;
+}
+.tip-badge{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--primary);margin-right:8px;font-weight:600;}
+.tip-text{color:#5C6B85;font-size:0.9rem;margin:0;}
+
+/* ----- CTA Section ----- */
+.cta-section{background:var(--bg-dark);color:#FFF;padding:48px 0;}
+.cta-content{max-width:1200px;margin:0 auto;padding:0 16px;text-align:center;}
+.cta-section h2{font-size:clamp(24px,4vw,32px);margin-bottom:16px;}
+.cta-section p{font-size:1.1rem;margin-bottom:24px;}
+.cta-buttons{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;}
+.cta-buttons .btn-primary,
+.cta-buttons .btn-primary-secondary{
+  padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:600;
+}
+.cta-buttons .btn-primary{background:var(--primary);color:#FFF;}
+.cta-buttons .btn-primary:hover{background:#3a7ec9;}
+.cta-buttons .btn-primary-secondary{background:var(--primary-light);color:var(--primary);}
+.cta-buttons .btn-primary-secondary:hover{background:#d4e6ff;}
+
+/* Quick action buttons in sidebar */
+.widget-booking .btn-primary{
+  display:inline-block;
+  background:var(--primary);
+  color:#FFF;
+  padding:8px 14px;
+  border-radius:6px;
+  text-decoration:none;
+  font-weight:600;
+  margin-right:6px;
+  margin-bottom:6px;
+}
+.widget-booking .btn-primary:hover{background:#3a7ec9;}
+.widget-booking .btn-ghost{
+  display:inline-block;
+  color:#FFF;
+  padding:8px 14px;
+  border-radius:6px;
+  text-decoration:none;
+  border:1px solid rgba(255,255,255,0.3);
+  margin-right:6px;
+  margin-bottom:6px;
+}
+.widget-booking .btn-ghost:hover{background:rgba(255,255,255,0.1);}
+
+/* Seam divider */
+.seam{border:none;border-top:2px dashed var(--line);margin:12px 0;opacity:0.6;}
+
+/* Mobile menu toggle */
+.menu-toggle{background:none;border:none;font-size:24px;cursor:pointer;color:var(--ink);display:none;}
+@media(max-width:767px){.menu-toggle{display:block;}}
 </style>
 </head>
 
 <body>
 
-<!-- ===== NAVIGATION (unchanged) ===== -->
+<!-- ===== NAVIGATION ===== -->
 <header class="site">
 <div class="nav-inner">
 <a href="index.html" class="brand"><img src="https://images.weserv.nl/?url=www.tifllittlewear.com/assets/logo.png&w=300&q=82&output=webp"
- alt="Tifl Little Wear" style="height:44px;width:auto;"></a>
+  alt="Tifl Little Wear" style="height:44px;width:auto;"></a>
 <nav id="navTabs">
 <a href="index.html">Home</a> |
-<a href="shop.html">Shop</a> |<a href="design-studio.html">Design Studio</a> |
+<a href="shop.html">Shop</a> |
+<a href="design-studio.html">Design Studio</a> |
 <a href="blog.html" style="color:#4A93E8;font-weight:600;">Blog</a> |
 <a href="contact.html">Contact</a>
 </nav>
@@ -173,143 +307,157 @@
 </div>
 </header>
 
-<!-- ==================== HERO ==================== -->
+<!-- ===== HERO (fixed) ===== -->
 <div class="hero-hero">
-<div class="hero-overlay"></div>
-<div class="hero-text">
-<h1 class="hero-title">Crafted for Growth</h1>
-<p class="hero-sub">Explore our latest collection & discover the art of made‑to‑measure tailoring.</p>
-<a href="booking.html" class="hero-cta hero-primary">Book a Fitting</a>
-<a href="shop.html" class="hero-cta-secondary">🛍️ Shop Collection</a>
+  <div class="hero-overlay"></div>
+  <div class="hero-text">
+    <h1 class="hero-title">Crafted for Growth</h1>
+    <p class="hero-sub">Explore our latest collection &amp; discover the art of made‑to‑measure tailoring.</p>
+    <div class="hero-cta-group">
+      <a href="booking.html" class="hero-cta hero-primary">Book a Fitting</a>
+      <a href="shop.html" class="hero-cta hero-cta-secondary">🛍️ Shop Collection</a>
+    </div>
+  </div>
 </div>
 
-<hr class="seam" style="margin:24px0;">
-<!-- ====================2‑COLUMN GRID ==================== -->
+<hr class="seam">
+
+<!-- ===== 2-COLUMN GRID ===== -->
 <div class="tifl-layout">
 
- <!-- ==== LEFT – ARTICLE FEED ==== -->
-<div class="articles-feed">
+  <!-- === LEFT – ARTICLE FEED === -->
+  <div class="articles-feed">
 
- <!-- ==== CARD1 – Grow‑With‑Me ==== -->
-<a href="blog-grow-with-me.html" class="craft-card" data-category="growth">
-<div class="craft-thumb">
-<span class="craft-thumb-tag">Grow‑With‑Me</span>
-<svg viewBox="00100100" width="70" height="70"><path d="M5010 L3522 L2018 L1034 L2242 L2290 L7890 L7842 L9034 L8018 L6522 Z" fill="#4A93E8" opacity="0.85"/></svg>
-</div>
-<div class="craft-card-body">
-<div class="craft-card-meta">
-<span class="craft-card-meta-label">TOPIC</span><span class="craft-card-meta-tag">Grow‑With‑Me</span>
-</div>
-<h3 class="craft-card-title">Expandable Seams – Future‑Proof Your Child’s Wardrobe</h3>
-<p class="craft-card-excerpt">How hidden expandable seams let a single garment grow up to three years.</p>
-</div>
-<div class="craft-card-foot">
-<a href="blog-grow-with-me.html" class="craft-read-link">Read Story</a>
-<span class="craft-action-btn">📐 Try Size Tool</span>
-</div>
+    <!-- CARD 1 – Grow‑With‑Me -->
+    <a href="blog-grow-with-me.html" class="craft-card" data-category="growth">
+      <div class="craft-thumb">
+        <span class="craft-thumb-tag">Grow‑With‑Me</span>
+        <svg viewBox="0 0 100 100" width="70" height="70"><path d="M50 10 L35 22 L20 18 L10 34 L22 42 L290 42 L290 78 L20 78 L10 90 L22 90 L35 90 L50 90 Z" fill="#4A93E8" opacity="0.85"/></svg>
+      </div>
+      <div class="craft-card-body">
+        <div class="craft-card-meta">
+          <span class="craft-card-meta-label">TOPIC</span>
+          <span class="craft-card-meta-tag">Grow‑With‑Me</span>
+        </div>
+        <h3 class="craft-card-title">Expandable Seams – Future‑Proof Your Child's Wardrobe</h3>
+        <p class="craft-card-excerpt">How hidden expandable seams let a single garment grow up to three years.</p>
+      </div>
+      <div class="craft-card-foot">
+        <a href="blog-grow-with-me.html" class="craft-read-link">Read Story</a>
+        <span class="craft-action-btn">📐 Try Size Tool</span>
+      </div>
+    </a>
+
+    <!-- CARD 2 – Behind‑the‑Scenes -->
+    <a href="blog-behind-the-seams.html" class="craft-card" data-category="process">
+      <div class="craft-thumb">
+        <span class="craft-thumb-tag">Master Tailor</span>
+        <svg viewBox="0 0 100 100" width="70" height="70"><path d="M50 10 L35 22 L20 18 L10 34 L22 42 L290 42 L290 78 L20 78 L10 90 L22 90 L35 90 Z" fill="#4A93E8" opacity="0.85"/></svg>
+      </div>
+      <div class="craft-card-body">
+        <div class="craft-card-meta">
+          <span class="craft-card-meta-label">ROLE</span>
+          <span class="craft-card-meta-tag">Master Tailor</span>
+        </div>
+        <h3 class="craft-card-title">Ustad Abdul Sattar – The Master at Work</h3>
+        <p class="craft-card-excerpt">A glimpse into the daily routine of our master tailor, from morning measurements to the final stitch.</p>
+      </div>
+      <div class="craft-card-foot">
+        <a href="master-tailor-bio.html" class="craft-read-link">Read Bio</a>
+        <span class="craft-action-btn">🧵 Ask a Question</span>
+      </div>
+    </a>
+
+    <!-- CARD 3 – Eid Collection -->
+    <a href="blog-eid-collection-story.html" class="craft-card" data-category="design">
+      <div class="craft-thumb">
+        <span class="craft-thumb-tag">Hand‑Block</span>
+        <svg viewBox="0 0 100 100" width="70" height="70"><path d="M50 10 L35 22 L20 18 L10 34 L22 42 L290 42 L290 78 L20 78 L10 90 L22 90 L35 90 Z" fill="#3576C9" opacity="0.85"/></svg>
+      </div>
+      <div class="craft-card-body">
+        <div class="craft-card-meta">
+          <span class="craft-card-meta-label">CATEGORY</span>
+          <span class="craft-card-meta-tag">Block Print</span>
+        </div>
+        <h3 class="craft-card-title">Hand‑Block Printed Fabrics for Eid</h3>
+        <p class="craft-card-excerpt">A look at the process behind our hand‑printed textiles and why they're perfect for little ones.</p>
+      </div>
+      <div class="craft-card-foot">
+        <a href="blog-eid-collection-story.html" class="craft-read-link">Read More</a>
+        <span class="craft-action-btn">🎨 Explore Design Studio</span>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- === SIDEBAR === -->
+  <aside class="tifl-sidebar">
+
+    <!-- Newsletter Widget -->
+    <div class="sidebar-widget widget-newsletter">
+      <h4 class="widget-title">📬 The Tifl Gazette</h4>
+      <p>Seasonal drops &amp; fitting tips.</p>
+      <form class="newsletter-form">
+        <input type="email" placeholder="you@example.com" required>
+        <button type="submit">Subscribe</button>
+      </form>
+      <p style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#888;margin-top:8px;">
+        📭 No spam – one‑click unsubscribe.
+      </p>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="widget-booking">
+      <h4 style="color:#FFF;margin-bottom:12px;">✂️ Quick Actions</h4>
+      <a href="booking.html" class="btn-primary">Book a Fitting</a>
+      <a href="sizing-tool.html" class="btn-ghost">📐 Try Size Tool</a>
+      <a href="https://wa.me/923054110254" target="_blank" rel="noopener"
+         style="display:inline-block;color:#8FDC7E;border:1px solid var(--line-dark);padding:6px 12px;border-radius:6px;text-decoration:none;margin-top:4px;">
+         💬 Chat with Master Tailor
+      </a>
+    </div>
+
+    <!-- Tailor's Tip -->
+    <div class="widget-tip">
+      <div class="tip-badge">📏 TAILOR'S TIP</div>
+      <p class="tip-text">Always leave a 2mm comfort room when measuring a child's waist.</p>
+    </div>
+
+  </aside>
+
 </div>
 
- <!-- ==== CARD2 – Behind‑the‑Scenes ==== -->
-<a href="blog-behind-the-seams.html" class="craft-card" data-category="process">
-<div class="craft-thumb">
-<span class="craft-thumb-tag">Master Tailor</span>
-<svg viewBox="00100100" width="70" height="70"><path d="M5010 L3522 L2018 L1034 L2242 L2290 L7890 L7842 L9034 L8018 L6522 Z" fill="#4A93E8" opacity="0.85"/></svg>
- </div>
-     <div class="craft-card-body">
-<div class="craft-card-meta">
-<span class="craft-card-meta-label">ROLE</span><span class="craft-card-meta-tag">Master Tailor</span>
-</div>
-<h3 class="craft-card-title">Ustad Abdul Sattar – The Master at Work</h3>
-<p class="craft-card-excerpt">A glimpse into the daily routine of our master tailor, from morning measurements to the final stitch.</p>
-</div>
-<div class="craft-card-foot">
-<a href="master-tailor-bio.html" class="craft-read-link">Read Bio</a>
-<span class="craft-action-btn">🧵 Ask a Question</a>
-</div>
-</div>
-
- <!-- ==== CARD4 ==== -->
-<a href="blog-eid-collection-story.html" class="craft-card" data-category="design">
-<div class="craft-thumb">
-<span class="craft-thumb-tag">Hand‑Block</span>
-<svg viewBox="00100100" width="70" height="70"><path d="M5010 L3522 L2018 L1034 L2242 L2290 L7890 L7842 L9034 L8018 L6522 Z" fill="#3576C9" opacity="0.85"/></svg>
-</div>
-<div class="craft-card-body">
-<div class="craft-card-meta">
-<span class="craft-card-meta-label">CATEGORY</span><span class="craft-card-meta-tag">Block Print</span>
-</div>
-<h3 class="craft-card-title">Hand‑Block Printed Fabrics for Eid</h3>
-<p class="craft-card-excerpt">A look at the process behind our hand‑printed textiles and why they’re perfect for little ones.</p>
-</div>
-<div class="craft-card-foot">
-<a href="blog-eid-collection-story.html" class="craft-read-link">Read More</a>
-<span class="craft-action-btn">🎨 Explore Design Studio</a>
-</div>
-</div>
-</div>
-
- <!-- ==================== SIDEBAR (Sticky) ==== -->
-<aside class="tifl-sidebar">
- <!-- Newsletter Widget -->
-<div class="sidebar-widget widget-newsletter">
-<div class="widget-icon"><svg width="24" height="24" fill="currentColor" viewBox="002424"><path d="M122L12222212l8-10z"/></svg></div>
-<h4 class="widget-title">The Tifl Gazette</h4>
-<p style="color:#CCCCCC;">Seasonal drops & fitting tips.</p>
-<form class="newsletter-form">
-<input type="email" placeholder="you@example.com" required>
-<button type="submit">Subscribe</button>
-</form>
-<p style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#CCC;margin-top:8px;">
- 📭 No spam – one‑click unsubscribe.
-</p>
-</div>
-
- <!-- Quick‑Action Buttons -->
-<div class="widget-booking">
-<h4 style="color:#FFF;margin-bottom:8px;">Quick Actions</h4>
-<a href="booking.html" class="btn-primary">✂️ Book a Fitting</a>
-<a href="sizing-tool.html" class="btn-ghost" style="color:#FFF;">📐 Try Size Tool</a>
-<a href="https://wa.me/923054110254" target="_blank" rel="noopener"
- style="color:#8FDC7E;border:1px solid var(--line-dark);padding:4px8px;border-radius:6px;">
-        💬 Chat with Master Tailor</a>
-</div>
-
- <!-- Tailor’s Tip Box -->
-<div class="widget-tip">
-<div class="tip-badge">📏 TAILOR’S TIP</div>
-<p class="tip-text">Always leave a2mm comfort room when measuring a child’s waist.</p>
-</div>
-</aside>
-
- <!-- ==== BIG CTA SECTION ==== -->
+<!-- ===== BOTTOM CTA ===== -->
 <section class="cta-section">
-<div class="cta-content">
-<h2>Experience Tailor‑Made Comfort</h2>
-<p>Schedule a private fitting or explore our ready‑made collection.</p>
-<div class="cta-buttons">
-<a href="booking.html" class="btn-primary">BOOK A FITTING</a>
-<a href="shop.html" class="btn-primary">SHOP COLLECTION</a>
-</div>
-</div>
+  <div class="cta-content">
+    <h2>Experience Tailor‑Made Comfort</h2>
+    <p>Schedule a private fitting or explore our ready‑made collection.</p>
+    <div class="cta-buttons">
+      <a href="booking.html" class="btn-primary">BOOK A FITTING</a>
+      <a href="shop.html" class="btn-primary-secondary">SHOP COLLECTION</a>
+    </div>
+  </div>
 </section>
 
 <script>
-// ---- SIMPLE FILTER LOGIC -------------------------------------------------document.querySelectorAll('.tifl-tab').forEach(tab=>{
- tab.addEventListener('click',function(){
- tabs.forEach(t=>t.classList.remove('active'));
- this.classList.add('active');
- const filter = this.dataset.filter;
- document.querySelectorAll('.craft-card').forEach(c=>{
- c.style.display = filter==='all' ? 'grid' : (card.dataset.category===filter?'grid':'none');
- });
- });
-});
-/* Simple toast helper (optional) */
-function showToast(msg){
- const toast=document.createElement('div');
- toast.style.cssText='position:fixed;bottom:20px;left:50%;background:#333;color:#FFF;padding:12px20px;border-radius:6px;z-index:9999';
- toast.innerText=msg;document.body.appendChild(toast);
- setTimeout(()=>toast.remove(),4000);
+document.addEventListener('DOMContentLoaded',function(){
+  var tabs=document.querySelectorAll('.tifl-tab');
+  var cards=document.querySelectorAll('.craft-card');
+
+  tabs.forEach(function(tab){
+    tab.addEventListener('click',function(){
+      tabs.forEach(function(t){t.classList.remove('active');});
+      this.classList.add('active');
+      var filter=this.dataset.filter;
+      cards.forEach(function(c){
+        if(filter==='all'||c.dataset.category===filter){
+          c.style.display='block';
+        }else{
+          c.style.display='none';
+        }
+      });
+    });
+  });
 });
 </script>
 </body>
