@@ -58,10 +58,11 @@
 <link rel="stylesheet" href="styles.css">
 
 <style>
-/* ---- Hero (same as blog/homepage) ---- */
+/* ---- Hero: clean, centre-aligned, no blue background ---- */
 .process-hero {
   padding: 56px 0 32px;
-  background: linear-gradient(160deg, var(--bg-alt) 0%, var(--bg) 80%);
+  text-align: center;
+  background: var(--bg);
   border-radius: var(--radius);
   position: relative;
   overflow: hidden;
@@ -70,8 +71,8 @@
   content: "";
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(circle at 20% 30%, rgba(74,147,232,0.04) 0%, transparent 50%),
-                    radial-gradient(circle at 80% 70%, rgba(74,147,232,0.06) 0%, transparent 40%);
+  background-image: radial-gradient(circle at 30% 20%, rgba(74,147,232,0.04) 0%, transparent 40%),
+                    radial-gradient(circle at 70% 80%, rgba(74,147,232,0.04) 0%, transparent 40%);
   pointer-events: none;
 }
 .process-hero .content {
@@ -79,7 +80,8 @@
   z-index: 1;
 }
 .process-hero .hero-text {
-  max-width: 680px;
+  max-width: 720px;
+  margin: 0 auto;
 }
 .process-hero h1 {
   font-size: clamp(32px, 4.5vw, 46px);
@@ -89,12 +91,15 @@
 .process-hero .lede {
   font-size: 17px;
   color: var(--ink-soft);
-  max-width: 560px;
+  max-width: 620px;
+  margin-left: auto;
+  margin-right: auto;
   line-height: 1.55;
 }
 .process-badge-row {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
   margin-bottom: 14px;
   flex-wrap: wrap;
@@ -113,60 +118,61 @@
   border: 1px solid rgba(74, 147, 232, 0.25);
 }
 
-/* ---- Timeline ---- */
+/* ---- Curved timeline ---- */
 .timeline-section {
   padding: 60px 0 40px;
 }
-.timeline {
+.curved-timeline {
   position: relative;
-  max-width: 900px;
+  max-width: 1000px;
   margin: 0 auto;
-  padding-left: 40px;
+  padding: 20px 0;
 }
-/* The thread (vertical dashed line) */
-.timeline::before {
-  content: "";
+/* SVG curve */
+.curve-svg {
   position: absolute;
-  left: 14px;
   top: 0;
-  bottom: 0;
-  width: 2px;
-  background: repeating-linear-gradient(to bottom, var(--line) 0, var(--line) 8px, transparent 8px, transparent 16px);
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
 }
-.timeline-item {
-  position: relative;
-  display: flex;
-  gap: 28px;
-  margin-bottom: 48px;
-  align-items: flex-start;
+.curve-svg path {
+  stroke: var(--line);
+  stroke-width: 2.5;
+  fill: none;
+  stroke-dasharray: 8 8;
 }
-.timeline-item:last-child {
-  margin-bottom: 0;
-}
-/* Dot */
-.timeline-item .dot {
+/* Steps container */
+.steps-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px 24px;
   position: relative;
   z-index: 1;
-  flex: 0 0 28px;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: var(--bg);
-  border: 2px solid var(--primary);
+}
+.step-item {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 2px;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 20px 24px;
+  background: var(--bg);
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
 }
-.timeline-item .dot .icon {
-  font-size: 14px;
-  line-height: 1;
+.step-item:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
 }
-.timeline-item .content {
-  flex: 1;
-  padding-top: 2px;
+.step-item .dot-icon {
+  font-size: 28px;
+  margin-bottom: 10px;
 }
-.timeline-item .step-label {
+.step-item .step-label {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 11.5px;
   font-weight: 600;
@@ -175,98 +181,118 @@
   letter-spacing: 0.06em;
   margin-bottom: 4px;
 }
-.timeline-item h3 {
+.step-item h3 {
   font-size: 18px;
   font-weight: 700;
   color: var(--ink);
   margin-bottom: 6px;
 }
-.timeline-item p {
-  font-size: 15px;
+.step-item p {
+  font-size: 14.5px;
   color: var(--ink-soft);
   line-height: 1.6;
-  max-width: 540px;
+  margin: 0;
 }
-/* Alternate dot colour for variety (optional) */
-.timeline-item:nth-child(odd) .dot {
-  border-color: var(--primary-dark);
-  background: var(--primary-light);
+/* Alternate alignment: left column items align left, right column align right */
+.steps-grid .step-item:nth-child(odd) {
+  align-items: flex-start;
+  text-align: left;
 }
-.timeline-item:nth-child(even) .dot {
-  border-color: var(--accent-pink);
-  background: #FFF0ED;
+.steps-grid .step-item:nth-child(even) {
+  align-items: flex-end;
+  text-align: right;
 }
-.timeline-item:nth-child(even) .dot .icon {
-  color: var(--accent-pink);
-}
-/* Responsive */
-@media (max-width: 640px) {
-  .timeline {
-    padding-left: 24px;
+/* For mobile, stack all left-aligned */
+@media (max-width: 768px) {
+  .steps-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
   }
-  .timeline::before {
-    left: 8px;
+  .steps-grid .step-item:nth-child(even) {
+    align-items: flex-start;
+    text-align: left;
   }
-  .timeline-item .dot {
-    width: 20px;
-    height: 20px;
-    flex: 0 0 20px;
-  }
-  .timeline-item .dot .icon {
-    font-size: 10px;
-  }
-  .timeline-item .content h3 {
-    font-size: 16px;
-  }
-  .timeline-item .content p {
-    font-size: 14px;
+  .curve-svg {
+    display: none;
   }
 }
 
-/* ---- Measurement points (existing style, but we keep it) ---- */
-.measure-body {
+/* ---- Suit diagram ---- */
+.suit-section {
+  padding: 60px 0 40px;
+}
+.suit-layout {
   display: grid;
-  grid-template-columns: 1fr 1.2fr;
-  gap: 56px;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
   align-items: start;
-  margin: 64px 0;
 }
-.measure-points {
+.suit-visual {
+  position: relative;
+  background: var(--bg-alt);
+  border-radius: var(--radius);
+  padding: 20px;
+  aspect-ratio: 3/4;
+  max-width: 320px;
+  margin: 0 auto;
+  border: 1px solid var(--line);
+}
+.suit-visual svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.suit-points {
   list-style: none;
-  margin: 0;
   padding: 0;
+  margin: 0;
 }
-.measure-points li {
+.suit-points li {
   display: flex;
-  gap: 16px;
-  padding: 15px 0;
-  border-bottom: 1px dashed var(--line);
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
   align-items: baseline;
 }
-.measure-points li:first-child {
-  padding-top: 0;
+.suit-points li:last-child {
+  border-bottom: none;
 }
-.measure-points .mk {
+.suit-points .mk {
   font-family: 'IBM Plex Mono', monospace;
   color: var(--primary-dark);
   font-size: 12px;
-  width: 22px;
-  flex: none;
-}
-.measure-points .mname {
   font-weight: 600;
-  font-size: 14.5px;
+  min-width: 28px;
+}
+.suit-points .mname {
+  font-weight: 600;
+  font-size: 14px;
   flex: 1;
 }
-.measure-points .mdesc {
+.suit-points .mdesc {
   color: var(--ink-soft);
-  font-size: 12.8px;
+  font-size: 12.5px;
   flex: 1.4;
+}
+@media (max-width: 980px) {
+  .suit-layout {
+    grid-template-columns: 1fr;
+  }
+  .suit-visual {
+    max-width: 260px;
+  }
+}
+
+/* ---- Measurement form (unchanged) ---- */
+.measure-form-section {
+  padding: 40px 0 60px;
 }
 .calc-card {
   background: var(--bg-alt);
   border-radius: var(--radius);
   padding: 32px;
+  max-width: 700px;
+  margin: 0 auto;
 }
 .calc-card h2 {
   font-size: 20px;
@@ -315,6 +341,7 @@
   display: flex;
   gap: 10px;
   margin-top: 20px;
+  flex-wrap: wrap;
 }
 .saved-note {
   margin-top: 14px;
@@ -325,18 +352,13 @@
 .saved-note.show {
   display: block;
 }
-@media (max-width: 980px) {
-  .measure-body {
-    grid-template-columns: 1fr;
-  }
-}
 @media (max-width: 560px) {
   .form-grid {
     grid-template-columns: 1fr;
   }
 }
 
-/* ---- FAQ (existing) ---- */
+/* ---- FAQ ---- */
 .faq-list {
   max-width: 760px;
   margin: 40px auto 60px;
@@ -402,66 +424,61 @@
 
   <hr class="seam" style="margin: 40px 0 20px;">
 
-  <!-- ===== TIMELINE ===== -->
+  <!-- ===== CURVED TIMELINE ===== -->
   <div class="timeline-section">
-    <div class="timeline">
-      <!-- Step 1 -->
-      <div class="timeline-item">
-        <div class="dot"><span class="icon">📞</span></div>
-        <div class="content">
+    <div class="curved-timeline">
+      <!-- SVG curve – hidden on mobile -->
+      <svg class="curve-svg" viewBox="0 0 1000 400" preserveAspectRatio="xMidYMid meet">
+        <path d="M 80 40 C 200 20, 400 120, 500 200 C 600 280, 800 380, 920 360" />
+      </svg>
+
+      <div class="steps-grid">
+        <!-- Step 1 -->
+        <div class="step-item">
+          <div class="dot-icon">📞</div>
           <div class="step-label">Step 01</div>
           <h3>Consultation call</h3>
-          <p>We ask about the occasion, fabric preference and budget, and schedule a fitting — either at our Gulberg studio, at your home in Lahore, or via video.</p>
+          <p>We ask about the occasion, fabric preference and budget, and schedule a fitting — at our studio, at your home, or via video.</p>
         </div>
-      </div>
 
-      <!-- Step 2 -->
-      <div class="timeline-item">
-        <div class="dot"><span class="icon">✂️</span></div>
-        <div class="content">
+        <!-- Step 2 -->
+        <div class="step-item">
+          <div class="dot-icon">✂️</div>
           <div class="step-label">Step 02</div>
           <h3>The measurement</h3>
-          <p>A master tailor takes 11 points — chest, waist, shoulder, sleeve, inseam, and more — recorded by hand on a fitted card. No guesswork, no size charts.</p>
+          <p>A master tailor takes 11 points — chest, waist, shoulder, sleeve, inseam, and more — recorded by hand on a fitted card.</p>
         </div>
-      </div>
 
-      <!-- Step 3 -->
-      <div class="timeline-item">
-        <div class="dot"><span class="icon">📐</span></div>
-        <div class="content">
+        <!-- Step 3 -->
+        <div class="step-item">
+          <div class="dot-icon">📐</div>
           <div class="step-label">Step 03</div>
           <h3>Pattern draft</h3>
-          <p>A paper pattern is cut to those exact numbers, with <strong>grow‑with‑me ease</strong> built into the seams — so the garment can be let out as your child grows.</p>
+          <p>A paper pattern is cut to those exact numbers, with <strong>grow‑with‑me ease</strong> built into the seams.</p>
         </div>
-      </div>
 
-      <!-- Step 4 -->
-      <div class="timeline-item">
-        <div class="dot"><span class="icon">🧵</span></div>
-        <div class="content">
+        <!-- Step 4 -->
+        <div class="step-item">
+          <div class="dot-icon">🧵</div>
           <div class="step-label">Step 04</div>
           <h3>First fitting</h3>
-          <p>A basted trial garment is checked on your child. Our tailor marks adjustments directly on the fabric — movement, length, and comfort are all tested.</p>
+          <p>A basted trial garment is checked on your child. Our tailor marks adjustments directly on the fabric.</p>
         </div>
-      </div>
 
-      <!-- Step 5 -->
-      <div class="timeline-item">
-        <div class="dot"><span class="icon">🔗</span></div>
-        <div class="content">
+        <!-- Step 5 -->
+        <div class="step-item">
+          <div class="dot-icon">🔗</div>
           <div class="step-label">Step 05</div>
           <h3>Final stitching</h3>
-          <p>French seams on everyday wear, hand‑set embroidery on occasion pieces. Every stitch is finished by tailors we've worked with for years, not a factory line.</p>
+          <p>French seams on everyday wear, hand‑set embroidery on occasion pieces. Finished by tailors we've worked with for years.</p>
         </div>
-      </div>
 
-      <!-- Step 6 -->
-      <div class="timeline-item">
-        <div class="dot"><span class="icon">📦</span></div>
-        <div class="content">
+        <!-- Step 6 -->
+        <div class="step-item">
+          <div class="dot-icon">📦</div>
           <div class="step-label">Step 06</div>
           <h3>Delivery</h3>
-          <p>Pressed, folded, and delivered to your door — usually 3 to 5 days after the first fitting. Ready to wear, and ready to grow.</p>
+          <p>Pressed, folded, and delivered to your door — usually 3 to 5 days after the first fitting.</p>
         </div>
       </div>
     </div>
@@ -469,27 +486,84 @@
 
   <hr class="seam">
 
-  <!-- ===== DETAILED MEASUREMENT POINTS + SAVE FORM ===== -->
-  <div class="measure-body">
-    <div>
-      <div class="eyebrow">The 11 points</div>
-      <h2 style="font-size:22px;margin-bottom:6px;">Every number, taken by hand.</h2>
-      <p style="color:var(--ink-soft);font-size:13.8px;margin-bottom:18px;">We take the same eleven points for every child, every garment — so patterns stay consistent as they grow.</p>
-      <ul class="measure-points">
-        <li><span class="mk">01</span><span class="mname">Chest</span><span class="mdesc">Around the fullest part, under the arms</span></li>
-        <li><span class="mk">02</span><span class="mname">Waist</span><span class="mdesc">Natural waistline, tape sitting flat</span></li>
-        <li><span class="mk">03</span><span class="mname">Hip</span><span class="mdesc">Fullest part of the seat</span></li>
-        <li><span class="mk">04</span><span class="mname">Shoulder width</span><span class="mdesc">Seam point to seam point, across the back</span></li>
-        <li><span class="mk">05</span><span class="mname">Sleeve length</span><span class="mdesc">Shoulder seam to wrist bone, arm slightly bent</span></li>
-        <li><span class="mk">06</span><span class="mname">Neck</span><span class="mdesc">Base of the neck, finger's width of ease</span></li>
-        <li><span class="mk">07</span><span class="mname">Back length</span><span class="mdesc">Nape of neck to natural waist</span></li>
-        <li><span class="mk">08</span><span class="mname">Front length</span><span class="mdesc">Shoulder to hem, garment‑dependent</span></li>
-        <li><span class="mk">09</span><span class="mname">Inseam</span><span class="mdesc">Crotch to ankle bone, inner leg</span></li>
-        <li><span class="mk">10</span><span class="mname">Outseam</span><span class="mdesc">Waist to ankle bone, outer leg</span></li>
-        <li><span class="mk">11</span><span class="mname">Height</span><span class="mdesc">Full standing height, no shoes</span></li>
-      </ul>
-    </div>
+  <!-- ===== SUIT DIAGRAM + MEASUREMENT POINTS ===== -->
+  <div class="suit-section">
+    <div class="suit-layout">
+      <!-- Visual suit -->
+      <div class="suit-visual">
+        <svg viewBox="0 0 200 260" fill="none" stroke="currentColor" stroke-width="1.2">
+          <!-- Simple garment outline (kurta style) -->
+          <path d="M 40 20 L 160 20 L 170 50 L 180 120 L 180 200 L 170 240 L 130 250 L 70 250 L 30 240 L 20 200 L 20 120 L 30 50 Z" fill="#F2F8FE" stroke="#4A93E8" stroke-width="1.5"/>
+          <!-- Neckline -->
+          <path d="M 70 20 Q 100 10 130 20" stroke="#4A93E8" stroke-width="1.8"/>
+          <!-- Sleeves (short) -->
+          <line x1="30" y1="50" x2="12" y2="80" stroke="#4A93E8" stroke-width="1.5"/>
+          <line x1="170" y1="50" x2="188" y2="80" stroke="#4A93E8" stroke-width="1.5"/>
+          <!-- Measurement markers with numbers -->
+          <!-- Chest -->
+          <circle cx="100" cy="70" r="4" fill="#E34A4A"/>
+          <text x="108" y="75" font-size="8" font-family="monospace" fill="#E34A4A">01</text>
+          <!-- Waist -->
+          <circle cx="100" cy="120" r="4" fill="#E3A008"/>
+          <text x="108" y="125" font-size="8" font-family="monospace" fill="#E3A008">02</text>
+          <!-- Hip -->
+          <circle cx="100" cy="160" r="4" fill="#3576C9"/>
+          <text x="108" y="165" font-size="8" font-family="monospace" fill="#3576C9">03</text>
+          <!-- Shoulder width -->
+          <circle cx="40" cy="40" r="3" fill="#8FB7E8"/>
+          <text x="18" y="38" font-size="8" font-family="monospace" fill="#8FB7E8">04</text>
+          <circle cx="160" cy="40" r="3" fill="#8FB7E8"/>
+          <text x="148" y="38" font-size="8" font-family="monospace" fill="#8FB7E8">04</text>
+          <!-- Sleeve length -->
+          <circle cx="12" cy="80" r="3" fill="#B8860B"/>
+          <text x="4" y="90" font-size="8" font-family="monospace" fill="#B8860B">05</text>
+          <!-- Neck -->
+          <circle cx="100" cy="16" r="3" fill="#C24B7C"/>
+          <text x="106" y="18" font-size="8" font-family="monospace" fill="#C24B7C">06</text>
+          <!-- Back length -->
+          <circle cx="30" cy="130" r="3" fill="#2A2438"/>
+          <text x="14" y="138" font-size="8" font-family="monospace" fill="#2A2438">07</text>
+          <!-- Front length -->
+          <circle cx="170" cy="130" r="3" fill="#2A2438"/>
+          <text x="158" y="138" font-size="8" font-family="monospace" fill="#2A2438">08</text>
+          <!-- Inseam -->
+          <circle cx="50" cy="230" r="3" fill="#16233B"/>
+          <text x="36" y="242" font-size="8" font-family="monospace" fill="#16233B">09</text>
+          <!-- Outseam -->
+          <circle cx="150" cy="230" r="3" fill="#16233B"/>
+          <text x="136" y="242" font-size="8" font-family="monospace" fill="#16233B">10</text>
+          <!-- Height -->
+          <circle cx="100" cy="250" r="3" fill="#4A93E8"/>
+          <text x="106" y="255" font-size="8" font-family="monospace" fill="#4A93E8">11</text>
+        </svg>
+      </div>
 
+      <!-- Detailed list -->
+      <div>
+        <div class="eyebrow">The 11 points</div>
+        <h2 style="font-size:22px;margin-bottom:6px;">Every number, taken by hand.</h2>
+        <p style="color:var(--ink-soft);font-size:13.8px;margin-bottom:18px;">We take the same eleven points for every child, every garment — so patterns stay consistent as they grow.</p>
+        <ul class="suit-points">
+          <li><span class="mk">01</span><span class="mname">Chest</span><span class="mdesc">Around the fullest part, under the arms</span></li>
+          <li><span class="mk">02</span><span class="mname">Waist</span><span class="mdesc">Natural waistline, tape sitting flat</span></li>
+          <li><span class="mk">03</span><span class="mname">Hip</span><span class="mdesc">Fullest part of the seat</span></li>
+          <li><span class="mk">04</span><span class="mname">Shoulder width</span><span class="mdesc">Seam to seam across the back</span></li>
+          <li><span class="mk">05</span><span class="mname">Sleeve length</span><span class="mdesc">Shoulder to wrist, arm slightly bent</span></li>
+          <li><span class="mk">06</span><span class="mname">Neck</span><span class="mdesc">Base of the neck, finger's width of ease</span></li>
+          <li><span class="mk">07</span><span class="mname">Back length</span><span class="mdesc">Nape of neck to natural waist</span></li>
+          <li><span class="mk">08</span><span class="mname">Front length</span><span class="mdesc">Shoulder to hem, garment‑dependent</span></li>
+          <li><span class="mk">09</span><span class="mname">Inseam</span><span class="mdesc">Crotch to ankle bone, inner leg</span></li>
+          <li><span class="mk">10</span><span class="mname">Outseam</span><span class="mdesc">Waist to ankle bone, outer leg</span></li>
+          <li><span class="mk">11</span><span class="mname">Height</span><span class="mdesc">Full standing height, no shoes</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <hr class="seam">
+
+  <!-- ===== MEASUREMENT FORM ===== -->
+  <div class="measure-form-section">
     <div class="calc-card">
       <h2>Save your child's measurements</h2>
       <p class="lede">Fill this in after your fitting and we'll carry it straight into your booking — no re‑typing.</p>
@@ -509,7 +583,7 @@
     </div>
   </div>
 
-  <hr class="seam" style="margin: 40px 0;">
+  <hr class="seam">
 
   <!-- ===== FAQ ===== -->
   <div>
@@ -582,7 +656,7 @@
 <script src="consent.js"></script>
 <script src="script.js"></script>
 
-<!-- Inline JS from original measurements.html (unchanged) -->
+<!-- Measurement form script (unchanged) -->
 <script>
 document.addEventListener('DOMContentLoaded', function(){
   const saveBtn = document.getElementById('saveMeasureBtn');
