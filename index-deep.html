@@ -1,52 +1,218 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tifl Little Wear — Made-to-Measure Kidswear in Lahore</title>
-    <meta name="description" content="Tifl Little Wear is a made-to-measure children's clothing studio in Lahore. Hand-taken measurements, hand-finished stitching, and a shop of partner kidswear brands.">
-    <link rel="canonical" href="https://www.tifllittlewear.com/">
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="Tifl Little Wear — Made-to-Measure Kidswear in Lahore">
-    <meta property="og:description" content="A made-to-measure children's clothing studio in Lahore. Hand-taken measurements, hand-finished stitching.">
-    <meta property="og:url" content="https://www.tifllittlewear.com/">
-    <meta name="twitter:card" content="summary_large_image">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tifl Little Wear — Made-to-Measure Kidswear in Lahore</title>
+<meta name="description" content="Tifl Little Wear is a made-to-measure children's clothing studio in Lahore. Hand-taken measurements, hand-finished stitching, and a shop of partner kidswear brands.">
+<link rel="canonical" href="https://www.tifllittlewear.com/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Tifl Little Wear — Made-to-Measure Kidswear in Lahore">
+<meta property="og:description" content="A made-to-measure children's clothing studio in Lahore. Hand-taken measurements, hand-finished stitching.">
+<meta property="og:url" content="https://www.tifllittlewear.com/">
+<meta name="twitter:card" content="summary_large_image">
 
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "ClothingStore",
-      "name": "Tifl Little Wear",
-      "description": "Made-to-measure children's clothing studio in Lahore, Pakistan.",
-      "url": "https://www.tifllittlewear.com/",
-      "telephone": "+92-304-5519335",
-      "priceRange": "PKR 850 - PKR 8400",
-      "address": {
-        "@type": "PostalAddress",
-        "streetAddress": "MM Alam Road area, Gulberg III",
-        "addressLocality": "Lahore",
-        "addressCountry": "PK"
-      },
-      "openingHoursSpecification": {
-        "@type": "OpeningHoursSpecification",
-        "dayOfWeek": ["Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
-        "opens": "11:00",
-        "closes": "20:00"
-      },
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "4.9",
-        "reviewCount": "186"
-      }
-    }
-    </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ClothingStore",
+  "name": "Tifl Little Wear",
+  "description": "Made-to-measure children's clothing studio in Lahore, Pakistan.",
+  "url": "https://www.tifllittlewear.com/",
+  "telephone": "+92-304-5519335",
+  "priceRange": "PKR 850 - PKR 8400",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "MM Alam Road area, Gulberg III",
+    "addressLocality": "Lahore",
+    "addressCountry": "PK"
+  },
+  "openingHoursSpecification": {
+    "@type": "OpeningHoursSpecification",
+    "dayOfWeek": ["Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
+    "opens": "11:00",
+    "closes": "20:00"
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.9",
+    "reviewCount": "186"
+  }
+}
+</script>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null;">
-    <noscript><link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"></noscript>
-    <link rel="stylesheet" href="styles.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null;">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"></noscript>
+<link rel="stylesheet" href="styles.css">
+
+<style>
+/* ---- Homepage hero with gradient + pattern (same as blog) ---- */
+.home-hero {
+  padding: 56px 0 32px;
+  background: linear-gradient(160deg, var(--bg-alt) 0%, var(--bg) 80%);
+  border-radius: var(--radius);
+  position: relative;
+  overflow: hidden;
+}
+.home-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle at 20% 30%, rgba(74,147,232,0.04) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 70%, rgba(74,147,232,0.06) 0%, transparent 40%);
+  pointer-events: none;
+}
+.home-hero .content {
+  position: relative;
+  z-index: 1;
+}
+.home-hero .hero-grid {
+  display: grid;
+  grid-template-columns: 1.1fr .9fr;
+  gap: 56px;
+  align-items: center;
+}
+.home-hero .hero-grid > div:first-child {
+  /* text side */
+}
+.home-hero h1 {
+  font-size: clamp(36px, 5vw, 58px);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+.home-hero h1 span.accent {
+  color: var(--primary);
+}
+.home-hero p.lede {
+  margin-top: 22px;
+  font-size: 18px;
+  color: var(--ink-soft);
+  max-width: 480px;
+}
+.home-hero .hero-ctas {
+  display: flex;
+  gap: 12px;
+  margin-top: 32px;
+  flex-wrap: wrap;
+}
+.home-hero .stat-row {
+  display: flex;
+  gap: 38px;
+  margin-top: 52px;
+  flex-wrap: wrap;
+}
+.home-hero .stat b {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 30px;
+  display: block;
+  color: var(--ink);
+}
+.home-hero .stat span {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11.5px;
+  letter-spacing: .06em;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+}
+/* ---- Badge row (same as blog) ---- */
+.home-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.home-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(74, 147, 232, 0.25);
+}
+/* ---- Hero gallery (unchanged) ---- */
+.hero-gallery {
+  position: relative;
+  aspect-ratio: 1/1.05;
+  border-radius: 19px;
+  overflow: hidden;
+  background: #F2F8FE;
+  border: 1px solid #E1E8F2;
+}
+.hero-gallery-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity .8s ease;
+  cursor: pointer;
+}
+.hero-gallery-slide.active {
+  opacity: 1;
+}
+.hero-gallery-slide img,
+.hero-gallery-slide > div {
+  width: 100%;
+  height: 100%;
+}
+.hero-gallery-cap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 16px 18px;
+  background: linear-gradient(0deg, rgba(15,25,45,.62), transparent);
+  color: #fff;
+}
+.hero-gallery-cap .hgc-name {
+  font-size: 14.5px;
+  font-weight: 600;
+}
+.hero-gallery-cap .hgc-price {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  opacity: .9;
+  margin-top: 2px;
+}
+.hero-gallery-dots {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: flex;
+  gap: 6px;
+}
+.hero-gallery-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.55);
+  transition: background .2s,transform .2s;
+}
+.hero-gallery-dots span.active {
+  background: #fff;
+  transform: scale(1.3);
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-gallery-slide { transition: none; }
+}
+@media (max-width: 980px) {
+  .home-hero .hero-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 560px) {
+  .home-hero .stat-row {
+    gap: 24px;
+  }
+}
+</style>
 </head>
 <body>
 
@@ -78,26 +244,35 @@
 
 <main class="wrap">
 
-  <!-- ===== NEW HERO ===== -->
-  <div class="hero">
-    <div class="hero-grid">
-      <div>
-        <div class="eyebrow">Studio · Lahore</div>
-        <h1>Ek silaai, <span class="accent">teen saal</span>.</h1>
-        <p class="lede">One stitch, three years. Tifl Little Wear is a made-to-measure kidswear studio. We take 11 real measurements, draft a real pattern, and build in hidden growing room — so one outfit can move up with your child, not be outgrown in a season.</p>
-        <div class="hero-ctas">
-          <a class="btn btn-primary" href="booking.html">Book a fitting</a>
-          <a class="btn btn-ghost" href="shop.html">Browse the shop</a>
-        </div>
-        <div class="stat-row">
-          <div class="stat"><b>11</b><span>Measurement points taken</span></div>
-          <div class="stat"><b>3–5</b><span>Days, first fitting to stitch</span></div>
-          <div class="stat"><b>3</b><span>Years of fit, built in</span></div>
-        </div>
+  <!-- ===== HERO with gradient + pattern (same as blog) ===== -->
+  <div class="home-hero">
+    <div class="content">
+      <!-- Badge row -->
+      <div class="home-badge-row">
+        <span class="home-tag">🧵 Studio Dispatch</span>
+        <span class="home-tag">📍 Gulberg III, Lahore</span>
+        <span class="home-tag" style="background:#FFF3D6;color:#8A6D1B;border-color:#E5D5A2;">✨ Tifl Little Journal</span>
       </div>
 
-      <!-- Gallery slideshow (reuses the existing hero-gallery component) -->
-      <div class="hero-gallery" id="heroGallery"></div>
+      <div class="hero-grid">
+        <!-- Left: text -->
+        <div>
+          <h1>Ek silaai, <span class="accent">teen saal</span>.</h1>
+          <p class="lede">One stitch, three years. Tifl Little Wear is a made-to-measure kidswear studio. We take 11 real measurements, draft a real pattern, and build in hidden growing room — so one outfit can move up with your child, not be outgrown in a season.</p>
+          <div class="hero-ctas">
+            <a class="btn btn-primary" href="booking.html">Book a fitting</a>
+            <a class="btn btn-ghost" href="shop.html">Browse the shop</a>
+          </div>
+          <div class="stat-row">
+            <div class="stat"><b>11</b><span>Measurement points taken</span></div>
+            <div class="stat"><b>3–5</b><span>Days, first fitting to stitch</span></div>
+            <div class="stat"><b>3</b><span>Years of fit, built in</span></div>
+          </div>
+        </div>
+
+        <!-- Right: gallery slideshow -->
+        <div class="hero-gallery" id="heroGallery"></div>
+      </div>
     </div>
   </div>
 
