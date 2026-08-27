@@ -118,169 +118,162 @@
   border: 1px solid rgba(74, 147, 232, 0.25);
 }
 
-/* ---- Curved timeline ---- */
-.timeline-section {
-  padding: 60px 0 40px;
+/* ---- Journey Map ---- */
+.journey-section {
+  padding: 40px 0 60px;
 }
-.curved-timeline {
-  position: relative;
+.journey-container {
   max-width: 1000px;
   margin: 0 auto;
-  padding: 20px 0;
-}
-/* SVG curve */
-.curve-svg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 0;
-}
-.curve-svg path {
-  stroke: var(--line);
-  stroke-width: 2.5;
-  fill: none;
-  stroke-dasharray: 8 8;
-}
-/* Steps container */
-.steps-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 48px 24px;
   position: relative;
-  z-index: 1;
 }
-.step-item {
+.journey-map {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: var(--radius);
+  background: var(--bg-alt);
+  border: 1px solid var(--line);
+  padding: 16px 8px;
+  box-shadow: var(--shadow);
+}
+
+/* Nodes */
+.node-group {
+  cursor: pointer;
+}
+.node-circle {
+  fill: var(--bg);
+  stroke: var(--primary-dark);
+  stroke-width: 3;
+  transition: all 0.3s ease;
+}
+.node-group:hover .node-circle {
+  fill: var(--primary-light);
+  stroke: var(--primary);
+  stroke-width: 4;
+  filter: drop-shadow(0 0 8px rgba(74,147,232,0.3));
+}
+.node-icon {
+  font-size: 22px;
+  dominant-baseline: central;
+  text-anchor: middle;
+  pointer-events: none;
+}
+.node-label {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  fill: var(--ink);
+  text-anchor: middle;
+  pointer-events: none;
+}
+.node-desc {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  fill: var(--ink-soft);
+  text-anchor: middle;
+  pointer-events: none;
+  line-height: 1.4;
+}
+
+/* Path animations */
+.journey-path {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 1200;
+  stroke-dashoffset: 1200;
+  transition: stroke-dashoffset 2s ease;
+}
+.journey-path-bg {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+.journey-path.animated {
+  stroke-dashoffset: 0;
+}
+
+/* Glowing marker */
+.marker {
+  fill: var(--primary);
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+.marker.show {
+  opacity: 1;
+  animation: pulse-marker 1.5s ease-in-out infinite;
+}
+@keyframes pulse-marker {
+  0%, 100% { r: 6; opacity: 1; }
+  50% { r: 10; opacity: 0.6; }
+}
+
+/* Decorative elements */
+.map-tree {
+  opacity: 0.15;
+}
+.map-cloud {
+  opacity: 0.1;
+}
+
+/* Tooltip / Active step detail */
+.step-detail-box {
+  margin-top: 32px;
+  padding: 24px 32px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  text-align: center;
+  min-height: 100px;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  padding: 20px 24px;
-  background: var(--bg);
-  border-radius: var(--radius);
-  border: 1px solid var(--line);
+  justify-content: center;
+  align-items: center;
+  transition: all 0.3s ease;
   box-shadow: var(--shadow);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  position: relative;
 }
-.step-item:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-lg);
-}
-.step-item .dot-icon {
-  font-size: 28px;
-  margin-bottom: 10px;
-}
-.step-item .step-label {
+.step-detail-box .step-number {
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 11.5px;
-  font-weight: 600;
+  font-size: 11px;
   color: var(--primary-dark);
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  margin-bottom: 4px;
 }
-.step-item h3 {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--ink);
+.step-detail-box h3 {
+  font-size: 20px;
+  margin: 6px 0 8px;
+}
+.step-detail-box p {
+  color: var(--ink-soft);
+  font-size: 15px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+.step-detail-box .step-icon {
+  font-size: 32px;
   margin-bottom: 6px;
 }
-.step-item p {
-  font-size: 14.5px;
-  color: var(--ink-soft);
-  line-height: 1.6;
-  margin: 0;
-}
-/* Alternate alignment: left column items align left, right column align right */
-.steps-grid .step-item:nth-child(odd) {
-  align-items: flex-start;
-  text-align: left;
-}
-.steps-grid .step-item:nth-child(even) {
-  align-items: flex-end;
-  text-align: right;
-}
-/* For mobile, stack all left-aligned */
-@media (max-width: 768px) {
-  .steps-grid {
-    grid-template-columns: 1fr;
-    gap: 24px;
-  }
-  .steps-grid .step-item:nth-child(even) {
-    align-items: flex-start;
-    text-align: left;
-  }
-  .curve-svg {
-    display: none;
-  }
-}
 
-/* ---- Suit diagram ---- */
-.suit-section {
-  padding: 60px 0 40px;
+/* Responsive: adjust font sizes and layout */
+@media (max-width: 768px) {
+  .node-label { font-size: 11px; }
+  .node-desc { font-size: 9.5px; }
+  .node-icon { font-size: 18px; }
+  .step-detail-box { padding: 18px 16px; min-height: 80px; }
+  .step-detail-box h3 { font-size: 17px; }
+  .step-detail-box p { font-size: 13.5px; }
 }
-.suit-layout {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 48px;
-  align-items: start;
-}
-.suit-visual {
-  position: relative;
-  background: var(--bg-alt);
-  border-radius: var(--radius);
-  padding: 20px;
-  aspect-ratio: 3/4;
-  max-width: 320px;
-  margin: 0 auto;
-  border: 1px solid var(--line);
-}
-.suit-visual svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-.suit-points {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-.suit-points li {
-  display: flex;
-  gap: 12px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--line);
-  align-items: baseline;
-}
-.suit-points li:last-child {
-  border-bottom: none;
-}
-.suit-points .mk {
-  font-family: 'IBM Plex Mono', monospace;
-  color: var(--primary-dark);
-  font-size: 12px;
-  font-weight: 600;
-  min-width: 28px;
-}
-.suit-points .mname {
-  font-weight: 600;
-  font-size: 14px;
-  flex: 1;
-}
-.suit-points .mdesc {
-  color: var(--ink-soft);
-  font-size: 12.5px;
-  flex: 1.4;
-}
-@media (max-width: 980px) {
-  .suit-layout {
-    grid-template-columns: 1fr;
-  }
-  .suit-visual {
-    max-width: 260px;
-  }
+@media (max-width: 480px) {
+  .journey-map { padding: 8px 4px; }
+  .node-label { font-size: 9px; }
+  .node-desc { display: none; } /* Hide descriptions on very small screens to avoid clutter */
+  .node-icon { font-size: 16px; }
+  .step-detail-box h3 { font-size: 15px; }
+  .step-detail-box p { font-size: 12.5px; }
 }
 
 /* ---- Measurement form (unchanged) ---- */
@@ -417,146 +410,126 @@
       </div>
       <div class="hero-text">
         <h1>How a single thread becomes a garment.</h1>
-        <p class="lede">From the first call to the finished piece on your doorstep — six steps, each one handled by hand. No machines, no shortcuts, just the craft we've built our studio on.</p>
+        <p class="lede">From the first call to the finished piece on your doorstep — six steps, each one handled by hand. Tap any stage to explore.</p>
       </div>
     </div>
   </div>
 
   <hr class="seam" style="margin: 40px 0 20px;">
 
-  <!-- ===== CURVED TIMELINE ===== -->
-  <div class="timeline-section">
-    <div class="curved-timeline">
-      <!-- SVG curve – hidden on mobile -->
-      <svg class="curve-svg" viewBox="0 0 1000 400" preserveAspectRatio="xMidYMid meet">
-        <path d="M 80 40 C 200 20, 400 120, 500 200 C 600 280, 800 380, 920 360" />
+  <!-- ===== JOURNEY MAP ===== -->
+  <div class="journey-section">
+    <div class="journey-container">
+
+      <!-- SVG Map -->
+      <svg class="journey-map" viewBox="0 0 900 480" preserveAspectRatio="xMidYMid meet">
+        <!-- Background decorations -->
+        <circle cx="80" cy="60" r="4" fill="var(--primary)" opacity="0.15" />
+        <circle cx="820" cy="420" r="6" fill="var(--primary)" opacity="0.12" />
+        <circle cx="450" cy="240" r="8" fill="var(--primary)" opacity="0.08" />
+        <circle cx="200" cy="350" r="5" fill="var(--primary)" opacity="0.15" />
+        <circle cx="700" cy="80" r="7" fill="var(--primary)" opacity="0.10" />
+
+        <!-- Start / Finish flags -->
+        <g transform="translate(70, 70)">
+          <rect x="0" y="0" width="6" height="30" fill="var(--ink-soft)" rx="2" />
+          <polygon points="6,0 24,8 6,16" fill="var(--accent-pink)" />
+          <text x="6" y="38" font-family="'IBM Plex Mono', monospace" font-size="8" fill="var(--ink-soft)" font-weight="600">START</text>
+        </g>
+        <g transform="translate(70, 400)">
+          <rect x="0" y="0" width="6" height="30" fill="var(--ink-soft)" rx="2" />
+          <polygon points="6,0 24,8 6,16" fill="var(--primary)" />
+          <text x="6" y="38" font-family="'IBM Plex Mono', monospace" font-size="8" fill="var(--ink-soft)" font-weight="600">FINISH</text>
+        </g>
+
+        <!-- The winding path (background + foreground for animation) -->
+        <path class="journey-path-bg" d="M 100,120 
+          C 140,120 140,120 180,120
+          C 240,120 280,180 380,180
+          C 480,180 520,120 580,120
+          C 640,120 680,200 780,200
+          C 820,200 820,320 580,320
+          C 380,320 320,380 180,380
+          C 140,380 140,380 100,380" />
+
+        <path class="journey-path" id="journeyPath" d="M 100,120 
+          C 140,120 140,120 180,120
+          C 240,120 280,180 380,180
+          C 480,180 520,120 580,120
+          C 640,120 680,200 780,200
+          C 820,200 820,320 580,320
+          C 380,320 320,380 180,380
+          C 140,380 140,380 100,380" />
+
+        <!-- Glowing marker (travels along the path) -->
+        <circle class="marker" id="pathMarker" r="6" fill="var(--primary)">
+          <animateMotion dur="4s" repeatCount="indefinite" path="M 100,120 
+            C 140,120 140,120 180,120
+            C 240,120 280,180 380,180
+            C 480,180 520,120 580,120
+            C 640,120 680,200 780,200
+            C 820,200 820,320 580,320
+            C 380,320 320,380 180,380
+            C 140,380 140,380 100,380" />
+        </circle>
+
+        <!-- ===== NODE 1 ===== -->
+        <g class="node-group" data-step="1">
+          <circle class="node-circle" cx="180" cy="120" r="22" />
+          <text class="node-icon" x="180" y="120">📞</text>
+          <text class="node-label" x="180" y="70">Consultation</text>
+          <text class="node-desc" x="180" y="86">We learn about your needs</text>
+        </g>
+
+        <!-- ===== NODE 2 ===== -->
+        <g class="node-group" data-step="2">
+          <circle class="node-circle" cx="380" cy="180" r="22" />
+          <text class="node-icon" x="380" y="180">✂️</text>
+          <text class="node-label" x="380" y="220">Measurement</text>
+          <text class="node-desc" x="380" y="236">11 points taken by hand</text>
+        </g>
+
+        <!-- ===== NODE 3 ===== -->
+        <g class="node-group" data-step="3">
+          <circle class="node-circle" cx="580" cy="120" r="22" />
+          <text class="node-icon" x="580" y="120">📐</text>
+          <text class="node-label" x="580" y="70">Pattern Draft</text>
+          <text class="node-desc" x="580" y="86">Cut with grow‑with‑me ease</text>
+        </g>
+
+        <!-- ===== NODE 4 ===== -->
+        <g class="node-group" data-step="4">
+          <circle class="node-circle" cx="780" cy="200" r="22" />
+          <text class="node-icon" x="780" y="200">🧵</text>
+          <text class="node-label" x="780" y="240">First Fitting</text>
+          <text class="node-desc" x="780" y="256">Checked & adjusted on child</text>
+        </g>
+
+        <!-- ===== NODE 5 ===== -->
+        <g class="node-group" data-step="5">
+          <circle class="node-circle" cx="580" cy="320" r="22" />
+          <text class="node-icon" x="580" y="320">🔗</text>
+          <text class="node-label" x="580" y="370">Final Stitching</text>
+          <text class="node-desc" x="580" y="386">French seams, hand embroidery</text>
+        </g>
+
+        <!-- ===== NODE 6 ===== -->
+        <g class="node-group" data-step="6">
+          <circle class="node-circle" cx="180" cy="380" r="22" />
+          <text class="node-icon" x="180" y="380">📦</text>
+          <text class="node-label" x="180" y="420">Delivery</text>
+          <text class="node-desc" x="180" y="436">3‑5 days to your door</text>
+        </g>
       </svg>
 
-      <div class="steps-grid">
-        <!-- Step 1 -->
-        <div class="step-item">
-          <div class="dot-icon">📞</div>
-          <div class="step-label">Step 01</div>
-          <h3>Consultation call</h3>
-          <p>We ask about the occasion, fabric preference and budget, and schedule a fitting — at our studio, at your home, or via video.</p>
-        </div>
-
-        <!-- Step 2 -->
-        <div class="step-item">
-          <div class="dot-icon">✂️</div>
-          <div class="step-label">Step 02</div>
-          <h3>The measurement</h3>
-          <p>A master tailor takes 11 points — chest, waist, shoulder, sleeve, inseam, and more — recorded by hand on a fitted card.</p>
-        </div>
-
-        <!-- Step 3 -->
-        <div class="step-item">
-          <div class="dot-icon">📐</div>
-          <div class="step-label">Step 03</div>
-          <h3>Pattern draft</h3>
-          <p>A paper pattern is cut to those exact numbers, with <strong>grow‑with‑me ease</strong> built into the seams.</p>
-        </div>
-
-        <!-- Step 4 -->
-        <div class="step-item">
-          <div class="dot-icon">🧵</div>
-          <div class="step-label">Step 04</div>
-          <h3>First fitting</h3>
-          <p>A basted trial garment is checked on your child. Our tailor marks adjustments directly on the fabric.</p>
-        </div>
-
-        <!-- Step 5 -->
-        <div class="step-item">
-          <div class="dot-icon">🔗</div>
-          <div class="step-label">Step 05</div>
-          <h3>Final stitching</h3>
-          <p>French seams on everyday wear, hand‑set embroidery on occasion pieces. Finished by tailors we've worked with for years.</p>
-        </div>
-
-        <!-- Step 6 -->
-        <div class="step-item">
-          <div class="dot-icon">📦</div>
-          <div class="step-label">Step 06</div>
-          <h3>Delivery</h3>
-          <p>Pressed, folded, and delivered to your door — usually 3 to 5 days after the first fitting.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <hr class="seam">
-
-  <!-- ===== SUIT DIAGRAM + MEASUREMENT POINTS ===== -->
-  <div class="suit-section">
-    <div class="suit-layout">
-      <!-- Visual suit -->
-      <div class="suit-visual">
-        <svg viewBox="0 0 200 260" fill="none" stroke="currentColor" stroke-width="1.2">
-          <!-- Simple garment outline (kurta style) -->
-          <path d="M 40 20 L 160 20 L 170 50 L 180 120 L 180 200 L 170 240 L 130 250 L 70 250 L 30 240 L 20 200 L 20 120 L 30 50 Z" fill="#F2F8FE" stroke="#4A93E8" stroke-width="1.5"/>
-          <!-- Neckline -->
-          <path d="M 70 20 Q 100 10 130 20" stroke="#4A93E8" stroke-width="1.8"/>
-          <!-- Sleeves (short) -->
-          <line x1="30" y1="50" x2="12" y2="80" stroke="#4A93E8" stroke-width="1.5"/>
-          <line x1="170" y1="50" x2="188" y2="80" stroke="#4A93E8" stroke-width="1.5"/>
-          <!-- Measurement markers with numbers -->
-          <!-- Chest -->
-          <circle cx="100" cy="70" r="4" fill="#E34A4A"/>
-          <text x="108" y="75" font-size="8" font-family="monospace" fill="#E34A4A">01</text>
-          <!-- Waist -->
-          <circle cx="100" cy="120" r="4" fill="#E3A008"/>
-          <text x="108" y="125" font-size="8" font-family="monospace" fill="#E3A008">02</text>
-          <!-- Hip -->
-          <circle cx="100" cy="160" r="4" fill="#3576C9"/>
-          <text x="108" y="165" font-size="8" font-family="monospace" fill="#3576C9">03</text>
-          <!-- Shoulder width -->
-          <circle cx="40" cy="40" r="3" fill="#8FB7E8"/>
-          <text x="18" y="38" font-size="8" font-family="monospace" fill="#8FB7E8">04</text>
-          <circle cx="160" cy="40" r="3" fill="#8FB7E8"/>
-          <text x="148" y="38" font-size="8" font-family="monospace" fill="#8FB7E8">04</text>
-          <!-- Sleeve length -->
-          <circle cx="12" cy="80" r="3" fill="#B8860B"/>
-          <text x="4" y="90" font-size="8" font-family="monospace" fill="#B8860B">05</text>
-          <!-- Neck -->
-          <circle cx="100" cy="16" r="3" fill="#C24B7C"/>
-          <text x="106" y="18" font-size="8" font-family="monospace" fill="#C24B7C">06</text>
-          <!-- Back length -->
-          <circle cx="30" cy="130" r="3" fill="#2A2438"/>
-          <text x="14" y="138" font-size="8" font-family="monospace" fill="#2A2438">07</text>
-          <!-- Front length -->
-          <circle cx="170" cy="130" r="3" fill="#2A2438"/>
-          <text x="158" y="138" font-size="8" font-family="monospace" fill="#2A2438">08</text>
-          <!-- Inseam -->
-          <circle cx="50" cy="230" r="3" fill="#16233B"/>
-          <text x="36" y="242" font-size="8" font-family="monospace" fill="#16233B">09</text>
-          <!-- Outseam -->
-          <circle cx="150" cy="230" r="3" fill="#16233B"/>
-          <text x="136" y="242" font-size="8" font-family="monospace" fill="#16233B">10</text>
-          <!-- Height -->
-          <circle cx="100" cy="250" r="3" fill="#4A93E8"/>
-          <text x="106" y="255" font-size="8" font-family="monospace" fill="#4A93E8">11</text>
-        </svg>
+      <!-- Step Detail Box (updated on click/hover) -->
+      <div class="step-detail-box" id="stepDetailBox">
+        <div class="step-icon">📍</div>
+        <div class="step-number">Tap a stage above</div>
+        <h3>Start your journey</h3>
+        <p>Click any of the six nodes on the map to see the full story behind each step.</p>
       </div>
 
-      <!-- Detailed list -->
-      <div>
-        <div class="eyebrow">The 11 points</div>
-        <h2 style="font-size:22px;margin-bottom:6px;">Every number, taken by hand.</h2>
-        <p style="color:var(--ink-soft);font-size:13.8px;margin-bottom:18px;">We take the same eleven points for every child, every garment — so patterns stay consistent as they grow.</p>
-        <ul class="suit-points">
-          <li><span class="mk">01</span><span class="mname">Chest</span><span class="mdesc">Around the fullest part, under the arms</span></li>
-          <li><span class="mk">02</span><span class="mname">Waist</span><span class="mdesc">Natural waistline, tape sitting flat</span></li>
-          <li><span class="mk">03</span><span class="mname">Hip</span><span class="mdesc">Fullest part of the seat</span></li>
-          <li><span class="mk">04</span><span class="mname">Shoulder width</span><span class="mdesc">Seam to seam across the back</span></li>
-          <li><span class="mk">05</span><span class="mname">Sleeve length</span><span class="mdesc">Shoulder to wrist, arm slightly bent</span></li>
-          <li><span class="mk">06</span><span class="mname">Neck</span><span class="mdesc">Base of the neck, finger's width of ease</span></li>
-          <li><span class="mk">07</span><span class="mname">Back length</span><span class="mdesc">Nape of neck to natural waist</span></li>
-          <li><span class="mk">08</span><span class="mname">Front length</span><span class="mdesc">Shoulder to hem, garment‑dependent</span></li>
-          <li><span class="mk">09</span><span class="mname">Inseam</span><span class="mdesc">Crotch to ankle bone, inner leg</span></li>
-          <li><span class="mk">10</span><span class="mname">Outseam</span><span class="mdesc">Waist to ankle bone, outer leg</span></li>
-          <li><span class="mk">11</span><span class="mname">Height</span><span class="mdesc">Full standing height, no shoes</span></li>
-        </ul>
-      </div>
     </div>
   </div>
 
@@ -656,60 +629,152 @@
 <script src="consent.js"></script>
 <script src="script.js"></script>
 
-<!-- Measurement form script (unchanged) -->
 <script>
-document.addEventListener('DOMContentLoaded', function(){
-  const saveBtn = document.getElementById('saveMeasureBtn');
-  if(!saveBtn) return;
-  function collect(){
-    return {
-      child: document.getElementById('mChild').value.trim() || 'Unnamed',
-      age: document.getElementById('mAge').value,
-      chest: document.getElementById('mChest').value,
-      waist: document.getElementById('mWaist').value,
-      height: document.getElementById('mHeight').value,
-      inseam: document.getElementById('mInseam').value
-    };
+document.addEventListener('DOMContentLoaded', function() {
+
+  // ---- Journey Map Interactivity ----
+  const nodes = document.querySelectorAll('.node-group');
+  const detailBox = document.getElementById('stepDetailBox');
+  const path = document.getElementById('journeyPath');
+
+  // Step data
+  const steps = {
+    1: { icon: '📞', label: 'Consultation Call', desc: 'We ask about the occasion, fabric preference and budget, and schedule a fitting — at our studio, at your home, or via video.' },
+    2: { icon: '✂️', label: 'The Measurement', desc: 'A master tailor takes 11 points — chest, waist, shoulder, sleeve, inseam, and more — recorded by hand on a fitted card.' },
+    3: { icon: '📐', label: 'Pattern Draft', desc: 'A paper pattern is cut to those exact numbers, with grow‑with‑me ease built into the seams for future growth.' },
+    4: { icon: '🧵', label: 'First Fitting', desc: 'A basted trial garment is checked on your child. Our tailor marks adjustments directly on the fabric.' },
+    5: { icon: '🔗', label: 'Final Stitching', desc: 'French seams on everyday wear, hand‑set embroidery on occasion pieces. Finished by tailors we\'ve worked with for years.' },
+    6: { icon: '📦', label: 'Delivery', desc: 'Pressed, folded, and delivered to your door — usually 3 to 5 days after the first fitting.' }
+  };
+
+  // Update detail box
+  function showStep(stepId) {
+    const step = steps[stepId];
+    if (!step) return;
+    detailBox.innerHTML = `
+      <div class="step-icon">${step.icon}</div>
+      <div class="step-number">Step 0${stepId}</div>
+      <h3>${step.label}</h3>
+      <p>${step.desc}</p>
+    `;
+    // Highlight the active node (optional)
+    nodes.forEach(n => n.querySelector('.node-circle').style.fill = 'var(--bg)');
+    nodes[stepId - 1].querySelector('.node-circle').style.fill = 'var(--primary-light)';
   }
-  function validate(m){
-    const missing = [];
-    if(!m.child || m.child === 'Unnamed') missing.push('child\u2019s name');
-    if(!m.chest) missing.push('chest');
-    if(!m.waist) missing.push('waist');
-    if(!m.height) missing.push('height');
-    if(!m.inseam) missing.push('inseam');
-    return missing;
+
+  // Attach click events
+  nodes.forEach((node, index) => {
+    node.addEventListener('click', () => {
+      const stepId = parseInt(node.dataset.step, 10);
+      showStep(stepId);
+    });
+    // Touch-friendly: also works on mobile
+    node.addEventListener('touchend', (e) => {
+      // Prevent immediate double-firing on mobile
+      e.preventDefault();
+      const stepId = parseInt(node.dataset.step, 10);
+      showStep(stepId);
+    });
+  });
+
+  // ---- Animate path on scroll (Intersection Observer) ----
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        path.classList.add('animated');
+        document.querySelector('.marker').classList.add('show');
+        // Optionally, show first step by default
+        if (!detailBox.querySelector('.step-number') || detailBox.querySelector('.step-number').innerText === 'Tap a stage above') {
+          showStep(1);
+        }
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.3 });
+
+  // Observe the journey container
+  const container = document.querySelector('.journey-container');
+  if (container) {
+    observer.observe(container);
   }
-  async function persist(m){
-    window.Store.set('tifl_measurements', m);
-    try{
-      await fetch('/api/measurements', {
-        method: 'POST',
-        headers: Object.assign({'Content-Type':'application/json'}, window.Auth?.authHeader() || {}),
-        body: JSON.stringify({
-          child_name: m.child, age: m.age || null, chest: m.chest || null,
-          waist: m.waist || null, height: m.height || null, inseam: m.inseam || null,
-          anonymous_id: window.rsGetAnonymousId ? window.rsGetAnonymousId() : null
-        })
-      });
-    }catch(e){
-      window.showToast('Saved on this device, but couldn\u2019t reach the server — try again when you\u2019re back online.');
+
+  // Fallback: if the observer doesn't fire (e.g., already visible), trigger manually
+  // Check if the container is already in view
+  if (container) {
+    const rect = container.getBoundingClientRect();
+    if (rect.top < window.innerHeight && rect.bottom > 0) {
+      path.classList.add('animated');
+      document.querySelector('.marker').classList.add('show');
+      if (!detailBox.querySelector('.step-number') || detailBox.querySelector('.step-number').innerText === 'Tap a stage above') {
+        showStep(1);
+      }
     }
   }
-  saveBtn.addEventListener('click', async ()=>{
-    const m = collect();
-    const missing = validate(m);
-    if(missing.length){ window.showToast('Please fill in: '+missing.join(', ')); return; }
-    await persist(m);
-    document.getElementById('savedNote').classList.add('show');
-  });
-  document.getElementById('carryToBookingBtn')?.addEventListener('click', async ()=>{
-    const m = collect();
-    const missing = validate(m);
-    if(missing.length){ window.showToast('Please fill in: '+missing.join(', ')); return; }
-    await persist(m);
-    window.location.href = 'booking.html';
-  });
+
+  // ---- Measurement Form (unchanged from original) ----
+  const saveBtn = document.getElementById('saveMeasureBtn');
+  if (saveBtn) {
+    function collect() {
+      return {
+        child: document.getElementById('mChild').value.trim() || 'Unnamed',
+        age: document.getElementById('mAge').value,
+        chest: document.getElementById('mChest').value,
+        waist: document.getElementById('mWaist').value,
+        height: document.getElementById('mHeight').value,
+        inseam: document.getElementById('mInseam').value
+      };
+    }
+    function validate(m) {
+      const missing = [];
+      if (!m.child || m.child === 'Unnamed') missing.push('child\'s name');
+      if (!m.chest) missing.push('chest');
+      if (!m.waist) missing.push('waist');
+      if (!m.height) missing.push('height');
+      if (!m.inseam) missing.push('inseam');
+      return missing;
+    }
+    async function persist(m) {
+      if (window.Store) window.Store.set('tifl_measurements', m);
+      try {
+        await fetch('/api/measurements', {
+          method: 'POST',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, window.Auth?.authHeader() || {}),
+          body: JSON.stringify({
+            child_name: m.child,
+            age: m.age || null,
+            chest: m.chest || null,
+            waist: m.waist || null,
+            height: m.height || null,
+            inseam: m.inseam || null,
+            anonymous_id: window.rsGetAnonymousId ? window.rsGetAnonymousId() : null
+          })
+        });
+      } catch (e) {
+        if (window.showToast) window.showToast('Saved on this device, but couldn\'t reach the server — try again when you\'re back online.');
+      }
+    }
+    saveBtn.addEventListener('click', async () => {
+      const m = collect();
+      const missing = validate(m);
+      if (missing.length) {
+        if (window.showToast) window.showToast('Please fill in: ' + missing.join(', '));
+        return;
+      }
+      await persist(m);
+      document.getElementById('savedNote').classList.add('show');
+    });
+    document.getElementById('carryToBookingBtn')?.addEventListener('click', async () => {
+      const m = collect();
+      const missing = validate(m);
+      if (missing.length) {
+        if (window.showToast) window.showToast('Please fill in: ' + missing.join(', '));
+        return;
+      }
+      await persist(m);
+      window.location.href = 'booking.html';
+    });
+  }
+
 });
 </script>
 </body>
