@@ -58,7 +58,7 @@
 <link rel="stylesheet" href="styles.css">
 
 <style>
-/* ---- Hero: clean, centre-aligned, no blue background ---- */
+/* ---- Hero: clean, centre-aligned ---- */
 .process-hero {
   padding: 56px 0 32px;
   text-align: center;
@@ -118,7 +118,13 @@
   border: 1px solid rgba(74, 147, 232, 0.25);
 }
 
-/* ---- Journey Map ---- */
+/* ---- Journey Map - Desktop (SVG) ---- */
+.journey-desktop {
+  display: block;
+}
+.journey-mobile {
+  display: none;
+}
 .journey-section {
   padding: 40px 0 60px;
 }
@@ -138,7 +144,7 @@
   box-shadow: var(--shadow);
 }
 
-/* Nodes */
+/* SVG Nodes */
 .node-group {
   cursor: pointer;
 }
@@ -176,8 +182,6 @@
   pointer-events: none;
   line-height: 1.4;
 }
-
-/* Path animations */
 .journey-path {
   fill: none;
   stroke: var(--primary);
@@ -196,8 +200,6 @@
 .journey-path.animated {
   stroke-dashoffset: 0;
 }
-
-/* Glowing marker */
 .marker {
   fill: var(--primary);
   opacity: 0;
@@ -212,15 +214,92 @@
   50% { r: 10; opacity: 0.6; }
 }
 
-/* Decorative elements */
-.map-tree {
-  opacity: 0.15;
+/* ---- Mobile: Horizontal scrollable timeline ---- */
+.journey-mobile .mobile-scroll {
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding: 20px 12px 40px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
 }
-.map-cloud {
-  opacity: 0.1;
+.journey-mobile .mobile-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+.journey-mobile .mobile-scroll::-webkit-scrollbar-track {
+  background: var(--line);
+  border-radius: 999px;
+}
+.journey-mobile .mobile-scroll::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 999px;
+}
+.mobile-step {
+  flex: 0 0 260px;
+  scroll-snap-align: start;
+  padding: 0 12px 0 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+/* The thread line between cards */
+.mobile-step::after {
+  content: "";
+  position: absolute;
+  top: 28px;
+  right: -8px;
+  width: 20px;
+  height: 3px;
+  background: repeating-linear-gradient(90deg, var(--primary) 0, var(--primary) 6px, transparent 6px, transparent 10px);
+  border-radius: 999px;
+}
+.mobile-step:last-child::after {
+  display: none;
+}
+.mobile-step .dot-icon {
+  font-size: 32px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--primary-light);
+  border: 2px solid var(--primary-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+  flex: none;
+}
+.mobile-step .step-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--primary-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.mobile-step h3 {
+  font-size: 16px;
+  margin: 4px 0 6px;
+  font-weight: 700;
+}
+.mobile-step p {
+  font-size: 13px;
+  color: var(--ink-soft);
+  line-height: 1.5;
+  margin: 0;
+  max-width: 220px;
+}
+.mobile-step.active .dot-icon {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
 }
 
-/* Tooltip / Active step detail */
+/* ---- Step Detail Box (shared) ---- */
 .step-detail-box {
   margin-top: 32px;
   padding: 24px 32px;
@@ -258,22 +337,48 @@
   margin-bottom: 6px;
 }
 
-/* Responsive: adjust font sizes and layout */
-@media (max-width: 768px) {
-  .node-label { font-size: 11px; }
-  .node-desc { font-size: 9.5px; }
-  .node-icon { font-size: 18px; }
-  .step-detail-box { padding: 18px 16px; min-height: 80px; }
-  .step-detail-box h3 { font-size: 17px; }
-  .step-detail-box p { font-size: 13.5px; }
+/* ---- Responsive: switch to mobile layout ---- */
+@media (max-width: 820px) {
+  .journey-desktop {
+    display: none;
+  }
+  .journey-mobile {
+    display: block;
+  }
+  .step-detail-box {
+    padding: 18px 16px;
+    min-height: 80px;
+  }
+  .step-detail-box h3 {
+    font-size: 17px;
+  }
+  .step-detail-box p {
+    font-size: 13.5px;
+  }
 }
 @media (max-width: 480px) {
-  .journey-map { padding: 8px 4px; }
-  .node-label { font-size: 9px; }
-  .node-desc { display: none; } /* Hide descriptions on very small screens to avoid clutter */
-  .node-icon { font-size: 16px; }
-  .step-detail-box h3 { font-size: 15px; }
-  .step-detail-box p { font-size: 12.5px; }
+  .mobile-step {
+    flex: 0 0 210px;
+    padding-right: 8px;
+  }
+  .mobile-step .dot-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 26px;
+  }
+  .mobile-step h3 {
+    font-size: 14px;
+  }
+  .mobile-step p {
+    font-size: 12px;
+    max-width: 180px;
+  }
+  .step-detail-box h3 {
+    font-size: 15px;
+  }
+  .step-detail-box p {
+    font-size: 12.5px;
+  }
 }
 
 /* ---- Measurement form (unchanged) ---- */
@@ -421,49 +526,30 @@
   <div class="journey-section">
     <div class="journey-container">
 
-      <!-- SVG Map -->
-      <svg class="journey-map" viewBox="0 0 900 480" preserveAspectRatio="xMidYMid meet">
-        <!-- Background decorations -->
-        <circle cx="80" cy="60" r="4" fill="var(--primary)" opacity="0.15" />
-        <circle cx="820" cy="420" r="6" fill="var(--primary)" opacity="0.12" />
-        <circle cx="450" cy="240" r="8" fill="var(--primary)" opacity="0.08" />
-        <circle cx="200" cy="350" r="5" fill="var(--primary)" opacity="0.15" />
-        <circle cx="700" cy="80" r="7" fill="var(--primary)" opacity="0.10" />
+      <!-- --- DESKTOP: SVG MAP --- -->
+      <div class="journey-desktop">
+        <svg class="journey-map" viewBox="0 0 900 480" preserveAspectRatio="xMidYMid meet">
+          <!-- Background decorations -->
+          <circle cx="80" cy="60" r="4" fill="var(--primary)" opacity="0.15" />
+          <circle cx="820" cy="420" r="6" fill="var(--primary)" opacity="0.12" />
+          <circle cx="450" cy="240" r="8" fill="var(--primary)" opacity="0.08" />
+          <circle cx="200" cy="350" r="5" fill="var(--primary)" opacity="0.15" />
+          <circle cx="700" cy="80" r="7" fill="var(--primary)" opacity="0.10" />
 
-        <!-- Start / Finish flags -->
-        <g transform="translate(70, 70)">
-          <rect x="0" y="0" width="6" height="30" fill="var(--ink-soft)" rx="2" />
-          <polygon points="6,0 24,8 6,16" fill="var(--accent-pink)" />
-          <text x="6" y="38" font-family="'IBM Plex Mono', monospace" font-size="8" fill="var(--ink-soft)" font-weight="600">START</text>
-        </g>
-        <g transform="translate(70, 400)">
-          <rect x="0" y="0" width="6" height="30" fill="var(--ink-soft)" rx="2" />
-          <polygon points="6,0 24,8 6,16" fill="var(--primary)" />
-          <text x="6" y="38" font-family="'IBM Plex Mono', monospace" font-size="8" fill="var(--ink-soft)" font-weight="600">FINISH</text>
-        </g>
+          <!-- Start / Finish flags -->
+          <g transform="translate(70, 70)">
+            <rect x="0" y="0" width="6" height="30" fill="var(--ink-soft)" rx="2" />
+            <polygon points="6,0 24,8 6,16" fill="var(--accent-pink)" />
+            <text x="6" y="38" font-family="'IBM Plex Mono', monospace" font-size="8" fill="var(--ink-soft)" font-weight="600">START</text>
+          </g>
+          <g transform="translate(70, 400)">
+            <rect x="0" y="0" width="6" height="30" fill="var(--ink-soft)" rx="2" />
+            <polygon points="6,0 24,8 6,16" fill="var(--primary)" />
+            <text x="6" y="38" font-family="'IBM Plex Mono', monospace" font-size="8" fill="var(--ink-soft)" font-weight="600">FINISH</text>
+          </g>
 
-        <!-- The winding path (background + foreground for animation) -->
-        <path class="journey-path-bg" d="M 100,120 
-          C 140,120 140,120 180,120
-          C 240,120 280,180 380,180
-          C 480,180 520,120 580,120
-          C 640,120 680,200 780,200
-          C 820,200 820,320 580,320
-          C 380,320 320,380 180,380
-          C 140,380 140,380 100,380" />
-
-        <path class="journey-path" id="journeyPath" d="M 100,120 
-          C 140,120 140,120 180,120
-          C 240,120 280,180 380,180
-          C 480,180 520,120 580,120
-          C 640,120 680,200 780,200
-          C 820,200 820,320 580,320
-          C 380,320 320,380 180,380
-          C 140,380 140,380 100,380" />
-
-        <!-- Glowing marker (travels along the path) -->
-        <circle class="marker" id="pathMarker" r="6" fill="var(--primary)">
-          <animateMotion dur="4s" repeatCount="indefinite" path="M 100,120 
+          <!-- Paths -->
+          <path class="journey-path-bg" d="M 100,120 
             C 140,120 140,120 180,120
             C 240,120 280,180 380,180
             C 480,180 520,120 580,120
@@ -471,63 +557,127 @@
             C 820,200 820,320 580,320
             C 380,320 320,380 180,380
             C 140,380 140,380 100,380" />
-        </circle>
 
-        <!-- ===== NODE 1 ===== -->
-        <g class="node-group" data-step="1">
-          <circle class="node-circle" cx="180" cy="120" r="22" />
-          <text class="node-icon" x="180" y="120">📞</text>
-          <text class="node-label" x="180" y="70">Consultation</text>
-          <text class="node-desc" x="180" y="86">We learn about your needs</text>
-        </g>
+          <path class="journey-path" id="journeyPath" d="M 100,120 
+            C 140,120 140,120 180,120
+            C 240,120 280,180 380,180
+            C 480,180 520,120 580,120
+            C 640,120 680,200 780,200
+            C 820,200 820,320 580,320
+            C 380,320 320,380 180,380
+            C 140,380 140,380 100,380" />
 
-        <!-- ===== NODE 2 ===== -->
-        <g class="node-group" data-step="2">
-          <circle class="node-circle" cx="380" cy="180" r="22" />
-          <text class="node-icon" x="380" y="180">✂️</text>
-          <text class="node-label" x="380" y="220">Measurement</text>
-          <text class="node-desc" x="380" y="236">11 points taken by hand</text>
-        </g>
+          <!-- Glowing marker -->
+          <circle class="marker" id="pathMarker" r="6" fill="var(--primary)">
+            <animateMotion dur="4s" repeatCount="indefinite" path="M 100,120 
+              C 140,120 140,120 180,120
+              C 240,120 280,180 380,180
+              C 480,180 520,120 580,120
+              C 640,120 680,200 780,200
+              C 820,200 820,320 580,320
+              C 380,320 320,380 180,380
+              C 140,380 140,380 100,380" />
+          </circle>
 
-        <!-- ===== NODE 3 ===== -->
-        <g class="node-group" data-step="3">
-          <circle class="node-circle" cx="580" cy="120" r="22" />
-          <text class="node-icon" x="580" y="120">📐</text>
-          <text class="node-label" x="580" y="70">Pattern Draft</text>
-          <text class="node-desc" x="580" y="86">Cut with grow‑with‑me ease</text>
-        </g>
+          <!-- ===== NODES ===== -->
+          <g class="node-group" data-step="1">
+            <circle class="node-circle" cx="180" cy="120" r="22" />
+            <text class="node-icon" x="180" y="120">📞</text>
+            <text class="node-label" x="180" y="70">Consultation</text>
+            <text class="node-desc" x="180" y="86">We learn about your needs</text>
+          </g>
 
-        <!-- ===== NODE 4 ===== -->
-        <g class="node-group" data-step="4">
-          <circle class="node-circle" cx="780" cy="200" r="22" />
-          <text class="node-icon" x="780" y="200">🧵</text>
-          <text class="node-label" x="780" y="240">First Fitting</text>
-          <text class="node-desc" x="780" y="256">Checked & adjusted on child</text>
-        </g>
+          <g class="node-group" data-step="2">
+            <circle class="node-circle" cx="380" cy="180" r="22" />
+            <text class="node-icon" x="380" y="180">✂️</text>
+            <text class="node-label" x="380" y="220">Measurement</text>
+            <text class="node-desc" x="380" y="236">11 points taken by hand</text>
+          </g>
 
-        <!-- ===== NODE 5 ===== -->
-        <g class="node-group" data-step="5">
-          <circle class="node-circle" cx="580" cy="320" r="22" />
-          <text class="node-icon" x="580" y="320">🔗</text>
-          <text class="node-label" x="580" y="370">Final Stitching</text>
-          <text class="node-desc" x="580" y="386">French seams, hand embroidery</text>
-        </g>
+          <g class="node-group" data-step="3">
+            <circle class="node-circle" cx="580" cy="120" r="22" />
+            <text class="node-icon" x="580" y="120">📐</text>
+            <text class="node-label" x="580" y="70">Pattern Draft</text>
+            <text class="node-desc" x="580" y="86">Cut with grow‑with‑me ease</text>
+          </g>
 
-        <!-- ===== NODE 6 ===== -->
-        <g class="node-group" data-step="6">
-          <circle class="node-circle" cx="180" cy="380" r="22" />
-          <text class="node-icon" x="180" y="380">📦</text>
-          <text class="node-label" x="180" y="420">Delivery</text>
-          <text class="node-desc" x="180" y="436">3‑5 days to your door</text>
-        </g>
-      </svg>
+          <g class="node-group" data-step="4">
+            <circle class="node-circle" cx="780" cy="200" r="22" />
+            <text class="node-icon" x="780" y="200">🧵</text>
+            <text class="node-label" x="780" y="240">First Fitting</text>
+            <text class="node-desc" x="780" y="256">Checked & adjusted on child</text>
+          </g>
 
-      <!-- Step Detail Box (updated on click/hover) -->
+          <g class="node-group" data-step="5">
+            <circle class="node-circle" cx="580" cy="320" r="22" />
+            <text class="node-icon" x="580" y="320">🔗</text>
+            <text class="node-label" x="580" y="370">Final Stitching</text>
+            <text class="node-desc" x="580" y="386">French seams, hand embroidery</text>
+          </g>
+
+          <g class="node-group" data-step="6">
+            <circle class="node-circle" cx="180" cy="380" r="22" />
+            <text class="node-icon" x="180" y="380">📦</text>
+            <text class="node-label" x="180" y="420">Delivery</text>
+            <text class="node-desc" x="180" y="436">3‑5 days to your door</text>
+          </g>
+        </svg>
+      </div>
+
+      <!-- --- MOBILE: Horizontal scrollable timeline --- -->
+      <div class="journey-mobile">
+        <div class="mobile-scroll" id="mobileScroll">
+          <!-- Step 1 -->
+          <div class="mobile-step" data-step="1">
+            <div class="dot-icon">📞</div>
+            <div class="step-label">Step 01</div>
+            <h3>Consultation</h3>
+            <p>We learn about your needs</p>
+          </div>
+          <!-- Step 2 -->
+          <div class="mobile-step" data-step="2">
+            <div class="dot-icon">✂️</div>
+            <div class="step-label">Step 02</div>
+            <h3>Measurement</h3>
+            <p>11 points taken by hand</p>
+          </div>
+          <!-- Step 3 -->
+          <div class="mobile-step" data-step="3">
+            <div class="dot-icon">📐</div>
+            <div class="step-label">Step 03</div>
+            <h3>Pattern Draft</h3>
+            <p>Cut with grow‑with‑me ease</p>
+          </div>
+          <!-- Step 4 -->
+          <div class="mobile-step" data-step="4">
+            <div class="dot-icon">🧵</div>
+            <div class="step-label">Step 04</div>
+            <h3>First Fitting</h3>
+            <p>Checked on child</p>
+          </div>
+          <!-- Step 5 -->
+          <div class="mobile-step" data-step="5">
+            <div class="dot-icon">🔗</div>
+            <div class="step-label">Step 05</div>
+            <h3>Final Stitching</h3>
+            <p>French seams, hand embroidery</p>
+          </div>
+          <!-- Step 6 -->
+          <div class="mobile-step" data-step="6">
+            <div class="dot-icon">📦</div>
+            <div class="step-label">Step 06</div>
+            <h3>Delivery</h3>
+            <p>3‑5 days to your door</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step Detail Box (shared) -->
       <div class="step-detail-box" id="stepDetailBox">
         <div class="step-icon">📍</div>
         <div class="step-number">Tap a stage above</div>
         <h3>Start your journey</h3>
-        <p>Click any of the six nodes on the map to see the full story behind each step.</p>
+        <p>Click any of the six stages on the map to see the full story behind each step.</p>
       </div>
 
     </div>
@@ -632,12 +782,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
 
-  // ---- Journey Map Interactivity ----
-  const nodes = document.querySelectorAll('.node-group');
-  const detailBox = document.getElementById('stepDetailBox');
-  const path = document.getElementById('journeyPath');
-
-  // Step data
+  // ---- Step data ----
   const steps = {
     1: { icon: '📞', label: 'Consultation Call', desc: 'We ask about the occasion, fabric preference and budget, and schedule a fitting — at our studio, at your home, or via video.' },
     2: { icon: '✂️', label: 'The Measurement', desc: 'A master tailor takes 11 points — chest, waist, shoulder, sleeve, inseam, and more — recorded by hand on a fitted card.' },
@@ -647,9 +792,10 @@ document.addEventListener('DOMContentLoaded', function() {
     6: { icon: '📦', label: 'Delivery', desc: 'Pressed, folded, and delivered to your door — usually 3 to 5 days after the first fitting.' }
   };
 
-  // Update detail box
+  var detailBox = document.getElementById('stepDetailBox');
+
   function showStep(stepId) {
-    const step = steps[stepId];
+    var step = steps[stepId];
     if (!step) return;
     detailBox.innerHTML = `
       <div class="step-icon">${step.icon}</div>
@@ -657,62 +803,75 @@ document.addEventListener('DOMContentLoaded', function() {
       <h3>${step.label}</h3>
       <p>${step.desc}</p>
     `;
-    // Highlight the active node (optional)
-    nodes.forEach(n => n.querySelector('.node-circle').style.fill = 'var(--bg)');
-    nodes[stepId - 1].querySelector('.node-circle').style.fill = 'var(--primary-light)';
+    // Highlight active on mobile
+    document.querySelectorAll('.mobile-step').forEach(el => el.classList.remove('active'));
+    var mobileTarget = document.querySelector('.mobile-step[data-step="' + stepId + '"]');
+    if (mobileTarget) mobileTarget.classList.add('active');
+    // Highlight on desktop SVG
+    document.querySelectorAll('.node-group .node-circle').forEach(c => c.style.fill = 'var(--bg)');
+    var nodeTarget = document.querySelector('.node-group[data-step="' + stepId + '"] .node-circle');
+    if (nodeTarget) nodeTarget.style.fill = 'var(--primary-light)';
   }
 
-  // Attach click events
-  nodes.forEach((node, index) => {
-    node.addEventListener('click', () => {
-      const stepId = parseInt(node.dataset.step, 10);
+  // ---- Desktop: SVG node clicks ----
+  document.querySelectorAll('.node-group').forEach(function(node) {
+    node.addEventListener('click', function() {
+      var stepId = parseInt(this.dataset.step, 10);
       showStep(stepId);
     });
-    // Touch-friendly: also works on mobile
-    node.addEventListener('touchend', (e) => {
-      // Prevent immediate double-firing on mobile
+    node.addEventListener('touchend', function(e) {
       e.preventDefault();
-      const stepId = parseInt(node.dataset.step, 10);
+      var stepId = parseInt(this.dataset.step, 10);
       showStep(stepId);
     });
   });
 
-  // ---- Animate path on scroll (Intersection Observer) ----
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        path.classList.add('animated');
-        document.querySelector('.marker').classList.add('show');
-        // Optionally, show first step by default
-        if (!detailBox.querySelector('.step-number') || detailBox.querySelector('.step-number').innerText === 'Tap a stage above') {
-          showStep(1);
-        }
-        observer.unobserve(entry.target);
-      }
+  // ---- Mobile: card clicks ----
+  document.querySelectorAll('.mobile-step').forEach(function(card) {
+    card.addEventListener('click', function() {
+      var stepId = parseInt(this.dataset.step, 10);
+      showStep(stepId);
+      // Scroll the card into view on mobile
+      this.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
     });
-  }, { threshold: 0.3 });
+  });
 
-  // Observe the journey container
-  const container = document.querySelector('.journey-container');
+  // ---- Animate SVG path on scroll ----
+  var path = document.getElementById('journeyPath');
+  var container = document.querySelector('.journey-container');
+
   if (container) {
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          if (path) path.classList.add('animated');
+          var marker = document.querySelector('.marker');
+          if (marker) marker.classList.add('show');
+          // Show first step by default if no step is active
+          if (detailBox.querySelector('.step-number') && detailBox.querySelector('.step-number').innerText === 'Tap a stage above') {
+            showStep(1);
+          }
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.3 });
+
     observer.observe(container);
-  }
 
-  // Fallback: if the observer doesn't fire (e.g., already visible), trigger manually
-  // Check if the container is already in view
-  if (container) {
-    const rect = container.getBoundingClientRect();
+    // Fallback: if already visible
+    var rect = container.getBoundingClientRect();
     if (rect.top < window.innerHeight && rect.bottom > 0) {
-      path.classList.add('animated');
-      document.querySelector('.marker').classList.add('show');
-      if (!detailBox.querySelector('.step-number') || detailBox.querySelector('.step-number').innerText === 'Tap a stage above') {
+      if (path) path.classList.add('animated');
+      var marker = document.querySelector('.marker');
+      if (marker) marker.classList.add('show');
+      if (detailBox.querySelector('.step-number') && detailBox.querySelector('.step-number').innerText === 'Tap a stage above') {
         showStep(1);
       }
     }
   }
 
-  // ---- Measurement Form (unchanged from original) ----
-  const saveBtn = document.getElementById('saveMeasureBtn');
+  // ---- Measurement Form (unchanged) ----
+  var saveBtn = document.getElementById('saveMeasureBtn');
   if (saveBtn) {
     function collect() {
       return {
@@ -725,7 +884,7 @@ document.addEventListener('DOMContentLoaded', function() {
       };
     }
     function validate(m) {
-      const missing = [];
+      var missing = [];
       if (!m.child || m.child === 'Unnamed') missing.push('child\'s name');
       if (!m.chest) missing.push('chest');
       if (!m.waist) missing.push('waist');
@@ -753,9 +912,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (window.showToast) window.showToast('Saved on this device, but couldn\'t reach the server — try again when you\'re back online.');
       }
     }
-    saveBtn.addEventListener('click', async () => {
-      const m = collect();
-      const missing = validate(m);
+    saveBtn.addEventListener('click', async function() {
+      var m = collect();
+      var missing = validate(m);
       if (missing.length) {
         if (window.showToast) window.showToast('Please fill in: ' + missing.join(', '));
         return;
@@ -763,9 +922,9 @@ document.addEventListener('DOMContentLoaded', function() {
       await persist(m);
       document.getElementById('savedNote').classList.add('show');
     });
-    document.getElementById('carryToBookingBtn')?.addEventListener('click', async () => {
-      const m = collect();
-      const missing = validate(m);
+    document.getElementById('carryToBookingBtn')?.addEventListener('click', async function() {
+      var m = collect();
+      var missing = validate(m);
       if (missing.length) {
         if (window.showToast) window.showToast('Please fill in: ' + missing.join(', '));
         return;
