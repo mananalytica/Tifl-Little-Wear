@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Journal — Tifl Little Wear, Lahore</title>
+<meta name="description" content="Notes from the Tifl Little Wear studio in Gulberg, Lahore — master tailoring, 11-point measurements, fabric guides, and grow-with-me stitching craft.">
+<link rel="canonical" href="https://www.tifllittlewear.com/blog-variation.html">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Journal — Tifl Little Wear">
+<meta property="og:description" content="Notes from a made-to-measure kidswear studio in Lahore. Stitched by hand, measured for growth.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null;">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"></noscript>
+<link rel="stylesheet" href="styles.css">
+
+<!-- Inline overrides and additions -->
+<style>
+/* ---- Hero background with brand gradient + subtle pattern ---- */
+.tifl-blog-hero {
+  padding: 56px 0 32px;
+  background: linear-gradient(160deg, var(--bg-alt) 0%, var(--bg) 80%);
+  border-radius: var(--radius);
+  position: relative;
+  overflow: hidden;
+}
+.tifl-blog-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle at 20% 30%, rgba(74,147,232,0.04) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 70%, rgba(74,147,232,0.06) 0%, transparent 40%);
+  pointer-events: none;
+}
+.tifl-blog-hero .content {
+  position: relative;
+  z-index: 1;
+}
+.tifl-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.tifl-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(74, 147, 232, 0.25);
+}
+.tifl-blog-hero h1 {
+  font-size: clamp(32px, 4.5vw, 48px);
+  color: var(--ink);
+  line-height: 1.15;
+  margin-bottom: 12px;
+}
+.tifl-blog-hero p.sub {
+  font-size: 17px;
+  color: var(--ink-soft);
+  max-width: 640px;
+  line-height: 1.55;
+}
+
+/* ---- Category filter tabs (using global .chip) ---- */
+.tifl-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  margin: 32px 0 28px;
+  border-bottom: 1px solid var(--line);
+}
+.tifl-tab {
+  /* uses .chip from styles.css, but we add a specific class for JS */
+}
+
+/* ---- 2-column layout ---- */
+.tifl-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 36px;
+  align-items: start;
+  margin-bottom: 70px;
+}
+@media (max-width: 980px) {
+  .tifl-layout { grid-template-columns: 1fr; }
+  .tifl-sidebar { position: static; }
+}
+
+/* ---- Feed cards (already defined in styles, we keep them) ---- */
+.articles-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.craft-card {
+  background: #FFFFFF;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  color: inherit;
+  position: relative;
+}
+.craft-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--primary);
+  box-shadow: 0 8px 24px -6px rgba(74, 147, 232, 0.15);
+}
+.craft-thumb {
+  background: var(--bg-alt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  border-right: 1px solid var(--line);
+}
+.craft-thumb-tag {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(4px);
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--ink);
+  font-weight: 500;
+  border: 1px solid var(--line);
+}
+.craft-card-body {
+  padding: 22px 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.craft-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--ink-soft);
+  margin-bottom: 8px;
+}
+.craft-card-title {
+  font-size: 19px;
+  color: var(--ink);
+  line-height: 1.35;
+  margin-bottom: 8px;
+}
+.craft-card-excerpt {
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  line-height: 1.55;
+  margin-bottom: 16px;
+}
+.craft-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 14px;
+  border-top: 1px dashed var(--line);
+}
+.craft-read-link {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.craft-action-btn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--ink-soft);
+  background: var(--bg-alt);
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+.craft-action-btn:hover {
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  border-color: var(--primary);
+}
+
+/* ---- Sidebar widgets ---- */
+.tifl-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  position: sticky;
+  top: 84px;
+}
+.sidebar-widget {
+  background: #FFFFFF;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 24px;
+  position: relative;
+}
+
+/* Newsletter widget */
+.widget-newsletter {
+  background: linear-gradient(180deg, var(--bg-alt) 0%, #FFFFFF 100%);
+  border: 1px solid var(--primary-light);
+  border-top: 3px solid var(--primary);
+}
+.widget-newsletter-icon {
+  width: 36px;
+  height: 36px;
+  background: var(--primary-light);
+  color: var(--primary);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+.widget-title {
+  font-size: 17px;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+.widget-desc {
+  font-size: 13px;
+  color: var(--ink-soft);
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+.newsletter-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.newsletter-input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  outline: none;
+  box-sizing: border-box;
+}
+.newsletter-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(74, 147, 232, 0.15);
+}
+.newsletter-btn {
+  width: 100%;
+  padding: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  justify-content: center;
+}
+.newsletter-note {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  color: var(--ink-soft);
+  text-align: center;
+  margin-top: 6px;
+}
+
+/* Booking widget */
+.widget-booking {
+  background: var(--bg-dark);
+  color: var(--ink-on-dark);
+  border: 1px solid var(--line-dark);
+}
+.widget-booking .widget-title { color: #FFFFFF; }
+.widget-booking .widget-desc { color: var(--ink-on-dark-soft); }
+.booking-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+.booking-actions .btn-ghost {
+  color: #FFFFFF;
+  border-color: var(--line-dark);
+}
+.booking-actions .btn-ghost:hover {
+  background: rgba(255,255,255,0.08);
+}
+.booking-phone {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  color: #8FDC7E;
+  text-align: center;
+  margin-top: 6px;
+}
+
+/* Tailor Tip */
+.widget-tip {
+  background: #FFFDF5;
+  border: 1px dashed #E5D5A2;
+}
+.tip-badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  color: #8A6D1B;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tip-text {
+  font-size: 13px;
+  color: #4A3E1B;
+  line-height: 1.55;
+  font-style: italic;
+}
+
+/* Recent posts widget */
+.widget-recent {
+  background: var(--bg-alt);
+  border: 1px solid var(--line);
+}
+.recent-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.recent-list li {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.recent-list li:last-child {
+  border-bottom: none;
+}
+.recent-list a {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--ink);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.recent-list a:hover {
+  color: var(--primary);
+}
+.recent-date {
+  display: block;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  color: var(--ink-soft);
+  margin-top: 2px;
+}
+
+/* Bottom CTA */
+.tifl-cta-section {
+  background: var(--bg-dark);
+  color: var(--ink-on-dark);
+  border-radius: 18px;
+  padding: 40px 32px;
+  margin-bottom: 70px;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+  align-items: center;
+}
+.tifl-cta-content h2 {
+  font-size: clamp(22px, 3vw, 32px);
+  color: #FFFFFF;
+  margin-bottom: 8px;
+}
+.tifl-cta-content p {
+  color: var(--ink-on-dark-soft);
+  font-size: 15px;
+  max-width: 540px;
+}
+.tifl-cta-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.tifl-cta-buttons .btn-ghost {
+  color: #FFFFFF;
+  border-color: var(--line-dark);
+}
+.tifl-cta-buttons .btn-ghost:hover {
+  background: rgba(255,255,255,0.08);
+}
+@media (max-width: 980px) {
+  .tifl-cta-section {
+    grid-template-columns: 1fr;
+    text-align: center;
+    padding: 28px 24px;
+  }
+  .tifl-cta-buttons {
+    justify-content: center;
+  }
+}
+@media (max-width: 560px) {
+  .craft-card {
+    grid-template-columns: 1fr;
+  }
+  .craft-thumb {
+    height: 170px;
+    border-right: none;
+    border-bottom: 1px solid var(--line);
+  }
+  .tifl-sidebar {
+    position: static;
+  }
+}
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="nav-inner">
+    <a class="brand" href="index.html">
+      <img src="https://images.weserv.nl/?url=www.tifllittlewear.com/assets/logo.png&w=300&q=82&output=webp" alt="Tifl Little Wear" class="brand-logo" width="150" height="45" decoding="async" fetchpriority="high">
+    </a>
+    <nav class="tabs" id="navTabs">
+      <a href="index.html">Home</a>
+      <a href="booking.html">Booking</a>
+      <a href="shop.html">Shop</a>
+      <a href="design-studio.html">Design Studio</a>
+      <a href="blog.html" aria-current="page">Blog</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+    <div class="nav-right">
+      <a class="btn btn-ghost btn-sm" href="account.html" style="margin-right:4px;">Account</a>
+      <a class="cart-btn" href="shop.html" aria-label="View cart">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        <span class="cart-badge" id="cartBadge" style="display:none;">0</span>
+      </a>
+      <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ===== HERO with gradient background ===== -->
+  <div class="tifl-blog-hero">
+    <div class="content">
+      <div class="tifl-badge-row">
+        <span class="tifl-tag">🧵 Studio Dispatch</span>
+        <span class="tifl-tag">📍 Gulberg III, Lahore</span>
+        <span class="tifl-tag" style="background:#FFF3D6;color:#8A6D1B;border-color:#E5D5A2;">✨ Tifl Little Journal</span>
+      </div>
+      <h1>Notes from the Tifl Little Wear studio floor.</h1>
+      <p class="sub">How we design, measure, and hand-stitch kidswear in Lahore — written down so you know the craft behind every piece.</p>
+    </div>
+  </div>
+
+  <hr class="seam" style="margin-bottom:32px;">
+
+  <!-- ===== Category Filter Bar (using global .chip) ===== -->
+  <div class="tifl-tabs">
+    <button class="chip active" data-filter="all">All Stories</button>
+    <button class="chip" data-filter="growth">✨ Grow-With-Me Craft</button>
+    <button class="chip" data-filter="stitching">🧵 Stitching &amp; Cutting</button>
+    <button class="chip" data-filter="fabric">🌿 Block Prints &amp; Fabrics</button>
+  </div>
+
+  <!-- ===== 2-Column Main Layout: Feed + Sidebar ===== -->
+  <div class="tifl-layout">
+    
+    <!-- LEFT: Articles Feed -->
+    <div class="articles-feed">
+      
+      <!-- Post 1 (Latest) -->
+      <a class="craft-card" href="blog-grow-with-me.html" data-category="growth">
+        <div class="craft-thumb">
+          <span class="craft-thumb-tag">Expandable Seam</span>
+          <svg viewBox="0 0 100 100" width="70" height="70"><path d="M50 10 L35 22 L20 18 L10 34 L22 42 L22 90 L78 90 L78 42 L90 34 L80 18 L65 22 Z" fill="#4A93E8" opacity="0.85"/></svg>
+        </div>
+        <div class="craft-card-body">
+          <div>
+            <div class="craft-card-meta">
+              <span style="color:var(--primary-dark);font-weight:600;">GROW-WITH-ME</span>
+              <span>•</span>
+              <span>18 August 2026</span>
+              <span>•</span>
+              <span>4 min read</span>
+            </div>
+            <h3 class="craft-card-title">Kids clothes that actually grow with them — how our expandable seams work</h3>
+            <p class="craft-card-excerpt">Ek silaai, teen saal — the hidden hand-stitched technique that lets a piece move up with your child instead of being outgrown in a single season.</p>
+          </div>
+          <div class="craft-card-foot">
+            <span class="craft-read-link">
+              Read Story 
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </span>
+            <span class="craft-action-btn">✂️ Book Sizing</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Post 2 -->
+      <a class="craft-card" href="blog-behind-the-seams.html" data-category="stitching">
+        <div class="craft-thumb">
+          <span class="craft-thumb-tag">11-Point Card</span>
+          <svg viewBox="0 0 100 100" width="70" height="70"><path d="M50 10 L35 22 L20 18 L10 34 L22 42 L22 90 L78 90 L78 42 L90 34 L80 18 L65 22 Z" fill="#4A93E8" opacity="0.85"/></svg>
+        </div>
+        <div class="craft-card-body">
+          <div>
+            <div class="craft-card-meta">
+              <span style="color:var(--primary-dark);font-weight:600;">STITCHING PROCESS</span>
+              <span>•</span>
+              <span>12 July 2026</span>
+              <span>•</span>
+              <span>5 min read</span>
+            </div>
+            <h3 class="craft-card-title">Behind the seams: how a made-to-measure kurta actually gets made</h3>
+            <p class="craft-card-excerpt">From an 11-point measurement card to a pressed, finished garment — a walk through every stage of our stitching process in Gulberg.</p>
+          </div>
+          <div class="craft-card-foot">
+            <span class="craft-read-link">
+              Read Story 
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </span>
+            <span class="craft-action-btn">📐 Sizing Tool</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Post 3 -->
+      <a class="craft-card" href="blog-eid-collection-story-variation.html" data-category="fabric">
+        <div class="craft-thumb">
+          <span class="craft-thumb-tag">Hand Block</span>
+          <svg viewBox="0 0 100 100" width="70" height="70"><path d="M50 10 L35 22 L20 18 L10 34 L22 42 L22 90 L78 90 L78 42 L90 34 L80 18 L65 22 Z" fill="#3576C9" opacity="0.85"/></svg>
+        </div>
+        <div class="craft-card-body">
+          <div>
+            <div class="craft-card-meta">
+              <span style="color:var(--primary-dark);font-weight:600;">DESIGN &amp; FABRICS</span>
+              <span>•</span>
+              <span>3 July 2026</span>
+              <span>•</span>
+              <span>3 min read</span>
+            </div>
+            <h3 class="craft-card-title">Designing this year's Eid collection: block prints and growth room</h3>
+            <p class="craft-card-excerpt">Why we chose hand block-printed cotton this season, and how we build growing-room into every occasion piece for kids.</p>
+          </div>
+          <div class="craft-card-foot">
+            <span class="craft-read-link">
+              Read Story 
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </span>
+            <span class="craft-action-btn">🎨 Design Studio</span>
+          </div>
+        </div>
+      </a>
+
+    </div>
+
+    <!-- RIGHT: Sidebar -->
+    <aside class="tifl-sidebar">
+      
+      <!-- 1. Newsletter Card -->
+      <div class="sidebar-widget widget-newsletter">
+        <div class="widget-newsletter-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        </div>
+        <h3 class="widget-title">The Tifl Gazette</h3>
+        <p class="widget-desc">Join 1,200+ Lahore parents. Get seasonal fabric drops, fitting dates, and tailor's tips directly in your inbox.</p>
+
+        <form class="newsletter-form" id="tiflNewsletterForm">
+          <input type="email" class="newsletter-input" id="tiflNewsletterEmail" placeholder="Enter your email address..." required>
+          <button type="submit" class="btn btn-primary newsletter-btn" id="tiflNewsletterBtn">
+            Subscribe to Gazette
+          </button>
+        </form>
+        <p class="newsletter-note">🔒 No spam ever. Unsubscribe anytime.</p>
+      </div>
+
+      <!-- 2. Book a Fitting Widget -->
+      <div class="sidebar-widget widget-booking">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#8FDC7E;letter-spacing:0.06em;margin-bottom:6px;">LAHORE STUDIO FITTING</div>
+        <h3 class="widget-title">Need Custom Fitting?</h3>
+        <p class="widget-desc">Book an in-person measurement session at our Gulberg studio or request a home fitting visit in Lahore.</p>
+
+        <div class="booking-actions">
+          <a class="btn btn-primary btn-block" href="booking.html">
+            ✂️ Book a Fitting
+          </a>
+          <a class="btn btn-ghost btn-block" href="sizing-tool.html" style="color:#FFFFFF;border-color:var(--line-dark);">
+            📐 Try 11-Point Sizing Tool
+          </a>
+          <a class="btn btn-ghost btn-block" href="https://wa.me/923054110254" target="_blank" rel="noopener" style="color:#8FDC7E;border-color:var(--line-dark);">
+            💬 Chat with Master Tailor
+          </a>
+        </div>
+        <div class="booking-phone">
+          <a href="tel:+923054110254" style="color:#8FDC7E;text-decoration:none;">+92 305 4110254</a>
+        </div>
+      </div>
+
+      <!-- 3. Tailor Tip -->
+      <div class="sidebar-widget widget-tip">
+        <div class="tip-badge">
+          <span>📏</span> TAILOR'S RULE OF THUMB
+        </div>
+        <p class="tip-text">"When measuring a child for a formal kurta, always measure over a thin vest and slip two fingers behind the measuring tape. This gives exact comfort room without looking baggy."</p>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#6B5414;margin-top:10px;text-align:right;">— Master Tailor Ustad Sattar</div>
+      </div>
+
+      <!-- 4. Recent Posts (NEW) -->
+      <div class="sidebar-widget widget-recent">
+        <h3 class="widget-title" style="font-size:15px;">Recent posts</h3>
+        <ul class="recent-list">
+          <li>
+            <a href="blog-grow-with-me.html">Kids clothes that actually grow with them</a>
+            <span class="recent-date">18 August 2026</span>
+          </li>
+          <li>
+            <a href="blog-behind-the-seams.html">Behind the seams: how a made-to-measure kurta gets made</a>
+            <span class="recent-date">12 July 2026</span>
+          </li>
+          <li>
+            <a href="blog-eid-collection-story-variation.html">Designing this year's Eid collection</a>
+            <span class="recent-date">3 July 2026</span>
+          </li>
+        </ul>
+      </div>
+
+    </aside>
+  </div>
+
+  <!-- ===== BOTTOM CTA ===== -->
+  <section class="tifl-cta-section">
+    <div class="tifl-cta-content">
+      <h2>Experience Made-to-Measure Kidswear</h2>
+      <p>Have your child measured by hand at our Gulberg studio, or choose from our ready-to-ship hand-stitched collection.</p>
+    </div>
+    <div class="tifl-cta-buttons">
+      <a class="btn btn-primary" href="booking.html" style="padding:12px 24px;">✂️ Book a Fitting</a>
+      <a class="btn btn-ghost" href="shop.html" style="padding:12px 24px;">🛍️ Explore Shop</a>
+      <a class="btn btn-ghost" href="design-studio.html" style="padding:12px 24px;">🎨 Design Studio</a>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <img src="https://images.weserv.nl/?url=www.tifllittlewear.com/assets/logo.png&w=300&q=82&output=webp" alt="Tifl Little Wear" style="height:44px;width:auto;" width="150" height="44" loading="lazy" decoding="async">
+        <p style="color:var(--ink-soft);font-size:13.5px;margin-top:12px;max-width:260px;">A made-to-measure kidswear studio working out of Gulberg, Lahore. Measured by hand, stitched by hand.</p>
+      </div>
+      <div>
+        <p class="foot-heading">Studio</p>
+        <a href="index.html">Home</a>
+        <a href="measurements.html">Our process</a>
+        <a href="tailors.html">Master tailors</a>
+        <a href="booking.html">Book a fitting</a>
+      </div>
+      <div>
+        <p class="foot-heading">Shop</p>
+        <a href="shop.html">Ready pieces</a>
+        <a href="live-sell.html">Live sale</a>
+        <a href="blog.html">Blog</a>
+        <a href="design-studio.html">Design studio</a>
+      </div>
+      <div>
+        <p class="foot-heading">Contact</p>
+        <a href="tel:+923054110254">+92 305 4110254</a>
+        <a href="mailto:studio@tifllittlewear.com">studio@tifllittlewear.com</a>
+        <a href="contact.html">Contact form</a>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 Tifl Little Wear, Lahore.</span>
+      <span style="display:flex;gap:16px;flex-wrap:wrap;">
+        <a href="privacy-policy.html" style="color:var(--ink-soft);text-decoration:none;">Privacy Policy</a>
+        <a href="cookie-policy.html" style="color:var(--ink-soft);text-decoration:none;">Cookie Policy</a>
+        <a href="#" data-open-consent style="color:var(--ink-soft);text-decoration:none;">Cookie Preferences</a>
+      </span>
+    </div>
+  </div>
+</footer>
+
+<a class="whatsapp-float" href="https://wa.me/923054110254" target="_blank" rel="noopener" aria-label="Chat with us on WhatsApp">
+  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.6 15L2 22l5.2-1.4A10 10 0 1012 2zm5.7 14.2c-.2.6-1.3 1.2-1.8 1.3-.5.1-1 .2-3.3-.7-2.8-1.1-4.6-3.9-4.7-4.1-.1-.2-1.1-1.5-1.1-2.9 0-1.4.7-2 1-2.3.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5.2.5.7 1.8.8 1.9.1.2.1.3 0 .5-.1.2-.2.3-.3.5-.2.2-.3.3-.5.5-.2.2-.3.4-.2.6.3.5.9 1.5 1.9 2.4 1.3 1.2 2.4 1.5 2.7 1.7.3.2.5.1.7-.1.2-.2.8-.9 1-1.2.2-.3.4-.2.7-.1.3.1 1.8.9 2.1 1 .3.1.5.2.6.3.1.2.1.7-.1 1.3z"/></svg>
+</a>
+<span class="whatsapp-tip">Chat with us</span>
+
+<div class="toast" id="toast"></div>
+<script src="rudderstack.js"></script>
+<script src="consent.js"></script>
+<script src="script.js"></script>
+
+<!-- Inline JS for newsletter and filtering (same as original) -->
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  const form = document.getElementById('tiflNewsletterForm');
+  const input = document.getElementById('tiflNewsletterEmail');
+  const btn = document.getElementById('tiflNewsletterBtn');
+  
+  if(form){
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      const email = input.value.trim();
+      if(!email) return;
+
+      btn.disabled = true;
+      btn.innerText = 'Subscribing...';
+
+      if(window.rudderanalytics){
+        try { window.rudderanalytics.track('Newsletter Subscribed', { email: email, location: 'Tifl Blog' }); } catch(err){}
+      }
+
+      setTimeout(function(){
+        btn.disabled = false;
+        btn.innerText = '✓ Subscribed!';
+        btn.style.background = '#28A745';
+        btn.style.borderColor = '#28A745';
+        input.value = '';
+        if(window.showToast) window.showToast('✨ Welcome to The Tifl Gazette!');
+        
+        setTimeout(function(){
+          btn.innerText = 'Subscribe to Gazette';
+          btn.style.background = '';
+          btn.style.borderColor = '';
+        }, 4000);
+      }, 600);
+    });
+  }
+
+  // Category Filtering
+  const tabs = document.querySelectorAll('.tifl-tab');
+  const cards = document.querySelectorAll('.craft-card');
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', function(){
+      tabs.forEach(t => t.classList.remove('active'));
+      this.classList.add('active');
+
+      const filter = this.getAttribute('data-filter');
+      cards.forEach(card => {
+        if(filter === 'all' || card.getAttribute('data-category') === filter){
+          card.style.display = 'grid';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    });
+  });
+});
+</script>
+</body>
+</html>
