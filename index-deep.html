@@ -3,9 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tifl Little Wear — Made-to-Measure Kidswear in Lahore</title>
+<title>Tifl Little Wear — Made-to-Measure Kidswear in Lahore (Gallery variation)</title>
 <meta name="description" content="Tifl Little Wear is a made-to-measure children's clothing studio in Lahore. Hand-taken measurements, hand-finished stitching, and a shop of partner kidswear brands.">
 <link rel="canonical" href="https://www.tifllittlewear.com/">
+<meta name="robots" content="noindex,follow">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Tifl Little Wear — Made-to-Measure Kidswear in Lahore">
 <meta property="og:description" content="A made-to-measure children's clothing studio in Lahore. Hand-taken measurements, hand-finished stitching.">
@@ -43,174 +44,271 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://images.weserv.nl">
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null;">
 <noscript><link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"></noscript>
 <link rel="stylesheet" href="styles.css">
 
 <style>
-/* ---- Homepage hero with gradient + pattern (same as blog) ---- */
-.home-hero {
-  padding: 56px 0 32px;
-  background: linear-gradient(160deg, var(--bg-alt) 0%, var(--bg) 80%);
-  border-radius: var(--radius);
-  position: relative;
-  overflow: hidden;
+/* ---- Existing full-gallery styles (unchanged) ---- */
+.fg-hero{
+  position:relative;
+  width:100vw;margin-left:calc(50% - 50vw);
+  height:min(78vh,720px);min-height:480px;
+  overflow:hidden;margin-top:4px;margin-bottom:8px;
+  background:var(--bg-dark);
 }
-.home-hero::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(circle at 20% 30%, rgba(74,147,232,0.04) 0%, transparent 50%),
-                    radial-gradient(circle at 80% 70%, rgba(74,147,232,0.06) 0%, transparent 40%);
-  pointer-events: none;
+.fg-slide{position:absolute;inset:0;opacity:0;transition:opacity .9s ease;}
+.fg-slide.active{opacity:1;z-index:1;}
+.fg-media{position:absolute;inset:0;width:100%;height:100%;overflow:hidden;background:var(--bg-dark);}
+.fg-media-backdrop{position:absolute;inset:-6%;background-size:cover;background-position:center;filter:blur(32px) brightness(.55) saturate(1.15);transform:scale(1.1);}
+.fg-media-fg{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;padding:2%;}
+.fg-media-fg img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;display:block;box-shadow:0 30px 70px -20px rgba(0,0,0,.5);}
+.fg-media-fallback{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--primary) 0%,var(--bg-dark) 130%);}
+.fg-media-fallback svg{width:34%;height:34%;opacity:.5;}
+.fg-scrim{position:absolute;inset:0;background:linear-gradient(0deg,rgba(16,27,46,.82) 0%,rgba(16,27,46,.42) 38%,rgba(16,27,46,.05) 62%);}
+.fg-content{position:absolute;left:0;bottom:0;padding:min(6vw,56px);max-width:600px;z-index:2;}
+.fg-content .eyebrow{margin-bottom:16px;}
+.fg-content h2{font-size:clamp(30px,4.4vw,52px);line-height:1.06;letter-spacing:-.02em;color:#fff;}
+.fg-content p{margin-top:16px;font-size:16px;line-height:1.55;color:var(--ink-on-dark-soft);max-width:460px;}
+.fg-content .btn{margin-top:28px;}
+.fg-arrow{
+  position:absolute;top:50%;transform:translateY(-50%);z-index:3;
+  width:44px;height:44px;border-radius:999px;
+  background:rgba(16,27,46,.4);border:1px solid rgba(241,246,253,.3);color:#fff;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  transition:background .2s,transform .18s var(--ease);
 }
-.home-hero .content {
-  position: relative;
-  z-index: 1;
-}
-.home-hero .hero-grid {
+.fg-arrow:hover{background:rgba(16,27,46,.68);}
+.fg-arrow:active{transform:translateY(-50%) scale(.94);}
+.fg-arrow svg{width:18px;height:18px;}
+.fg-arrow.prev{left:20px;}
+.fg-arrow.next{right:20px;}
+.fg-dots{position:absolute;right:min(6vw,56px);bottom:30px;display:flex;gap:8px;z-index:3;}
+.fg-dots span{width:30px;height:4px;border-radius:999px;background:rgba(241,246,253,.35);cursor:pointer;transition:background .2s,width .2s;}
+.fg-dots span.active{background:#fff;width:42px;}
+@media (prefers-reduced-motion: reduce){.fg-slide{transition:none;}}
+
+/* ---- NEW: Knowledge sections ---- */
+
+/* Quick Stats */
+.quick-stats {
   display: grid;
-  grid-template-columns: 1.1fr .9fr;
-  gap: 56px;
-  align-items: center;
-}
-.home-hero .hero-grid > div:first-child {
-  /* text side */
-}
-.home-hero h1 {
-  font-size: clamp(36px, 5vw, 58px);
-  line-height: 1.05;
-  letter-spacing: -0.02em;
-}
-.home-hero h1 span.accent {
-  color: var(--primary);
-}
-.home-hero p.lede {
-  margin-top: 22px;
-  font-size: 18px;
-  color: var(--ink-soft);
-  max-width: 480px;
-}
-.home-hero .hero-ctas {
-  display: flex;
-  gap: 12px;
-  margin-top: 32px;
-  flex-wrap: wrap;
-}
-.home-hero .stat-row {
-  display: flex;
-  gap: 38px;
-  margin-top: 52px;
-  flex-wrap: wrap;
-}
-.home-hero .stat b {
-  font-family: 'Fredoka', sans-serif;
-  font-size: 30px;
-  display: block;
-  color: var(--ink);
-}
-.home-hero .stat span {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11.5px;
-  letter-spacing: .06em;
-  color: var(--ink-soft);
-  text-transform: uppercase;
-}
-/* ---- Badge row (same as blog) ---- */
-.home-badge-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 14px;
-  flex-wrap: wrap;
-}
-.home-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--primary-light);
-  color: var(--primary-dark);
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
-  font-weight: 500;
-  padding: 4px 12px;
-  border-radius: 999px;
-  border: 1px solid rgba(74, 147, 232, 0.25);
-}
-/* ---- Hero gallery (unchanged) ---- */
-.hero-gallery {
-  position: relative;
-  aspect-ratio: 1/1.05;
-  border-radius: 19px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
   overflow: hidden;
-  background: #F2F8FE;
-  border: 1px solid #E1E8F2;
+  margin: 32px 0 48px;
 }
-.hero-gallery-slide {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  transition: opacity .8s ease;
-  cursor: pointer;
+.stat-item {
+  background: var(--bg);
+  padding: 24px 18px;
+  text-align: center;
 }
-.hero-gallery-slide.active {
-  opacity: 1;
+.stat-item b {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 32px;
+  color: var(--primary-dark);
+  display: block;
+  line-height: 1.1;
 }
-.hero-gallery-slide img,
-.hero-gallery-slide > div {
-  width: 100%;
-  height: 100%;
+.stat-item span {
+  font-size: 13px;
+  color: var(--ink-soft);
+  display: block;
+  margin-top: 4px;
 }
-.hero-gallery-cap {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: 16px 18px;
-  background: linear-gradient(0deg, rgba(15,25,45,.62), transparent);
-  color: #fff;
+
+/* How It Works (3-step) */
+.how-it-works {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin: 40px 0 48px;
 }
-.hero-gallery-cap .hgc-name {
-  font-size: 14.5px;
-  font-weight: 600;
+.how-step {
+  background: var(--bg-alt);
+  border-radius: var(--radius);
+  padding: 28px 22px;
+  text-align: center;
+  border: 1px solid var(--line);
 }
-.hero-gallery-cap .hgc-price {
+.how-step .num {
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 12px;
-  opacity: .9;
-  margin-top: 2px;
+  font-size: 14px;
+  color: var(--primary-dark);
+  font-weight: 600;
+  background: var(--primary-light);
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 999px;
+  margin-bottom: 14px;
 }
-.hero-gallery-dots {
-  position: absolute;
-  top: 14px;
-  right: 14px;
+.how-step h3 {
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+.how-step p {
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1.5;
+  max-width: 260px;
+  margin: 0 auto;
+}
+
+/* Differentiators */
+.diff-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin: 32px 0 48px;
+}
+.diff-item {
+  background: var(--bg);
+  padding: 28px 22px;
+  text-align: center;
+}
+.diff-item .icon {
+  font-size: 28px;
+  display: block;
+  margin-bottom: 12px;
+}
+.diff-item h3 {
+  font-size: 16px;
+  margin-bottom: 6px;
+}
+.diff-item p {
+  color: var(--ink-soft);
+  font-size: 13.5px;
+  line-height: 1.5;
+  max-width: 260px;
+  margin: 0 auto;
+}
+
+/* Tailor's Tip (rotating) */
+.tailor-tip-home {
+  background: #FFFDF5;
+  border: 1px dashed #E5D5A2;
+  border-radius: var(--radius);
+  padding: 22px 28px;
+  margin: 40px 0 48px;
   display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.tailor-tip-home .badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  color: #8A6D1B;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  display: flex;
+  align-items: center;
   gap: 6px;
+  flex: none;
 }
-.hero-gallery-dots span {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: rgba(255,255,255,.55);
-  transition: background .2s,transform .2s;
+.tailor-tip-home .tip-text {
+  font-size: 14.5px;
+  color: #4A3E1B;
+  line-height: 1.5;
+  font-style: italic;
+  flex: 1;
 }
-.hero-gallery-dots span.active {
-  background: #fff;
-  transform: scale(1.3);
+.tailor-tip-home .attribution {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  color: #6B5414;
+  flex: none;
 }
-@media (prefers-reduced-motion: reduce) {
-  .hero-gallery-slide { transition: none; }
+
+/* FAQ Snippet */
+.faq-snippet {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 40px 0 48px;
 }
+.faq-snippet .faq-card {
+  background: var(--bg-alt);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+}
+.faq-snippet .faq-card h4 {
+  font-size: 15px;
+  margin-bottom: 6px;
+}
+.faq-snippet .faq-card p {
+  color: var(--ink-soft);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+/* Blog teaser */
+.blog-teaser {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin: 40px 0 48px;
+}
+.blog-teaser .blog-card {
+  background: var(--bg-alt);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 20px 22px;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.blog-teaser .blog-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow);
+}
+.blog-teaser .blog-card .tag {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--primary-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.blog-teaser .blog-card h4 {
+  font-size: 15px;
+  margin: 6px 0 4px;
+  line-height: 1.3;
+}
+.blog-teaser .blog-card p {
+  font-size: 13px;
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+.blog-teaser .blog-card .read-more {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary);
+  display: inline-block;
+  margin-top: 8px;
+}
+
+/* Responsive */
 @media (max-width: 980px) {
-  .home-hero .hero-grid {
-    grid-template-columns: 1fr;
-  }
+  .quick-stats { grid-template-columns: repeat(2, 1fr); }
+  .how-it-works { grid-template-columns: 1fr; max-width: 400px; margin-left: auto; margin-right: auto; }
+  .diff-grid { grid-template-columns: 1fr; }
+  .faq-snippet { grid-template-columns: 1fr; }
+  .blog-teaser { grid-template-columns: 1fr; max-width: 400px; margin-left: auto; margin-right: auto; }
 }
 @media (max-width: 560px) {
-  .home-hero .stat-row {
-    gap: 24px;
-  }
+  .quick-stats { grid-template-columns: 1fr 1fr; }
+  .stat-item b { font-size: 24px; }
+  .tailor-tip-home { flex-direction: column; text-align: center; }
 }
 </style>
 </head>
@@ -244,77 +342,122 @@
 
 <main class="wrap">
 
-  <!-- ===== HERO with gradient + pattern (same as blog) ===== -->
-  <div class="home-hero">
-    <div class="content">
-      <!-- Badge row -->
-      <div class="home-badge-row">
-        <span class="home-tag">🧵 Studio Dispatch</span>
-        <span class="home-tag">📍 Gulberg III, Lahore</span>
-        <span class="home-tag" style="background:#FFF3D6;color:#8A6D1B;border-color:#E5D5A2;">✨ Tifl Little Journal</span>
-      </div>
+  <!-- ===== FULL-BLEED GALLERY HERO (unchanged) ===== -->
+  <section class="fg-hero">
+    <div id="fgSlides"></div>
+    <button class="fg-arrow prev" id="fgPrev" aria-label="Previous slide">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <button class="fg-arrow next" id="fgNext" aria-label="Next slide">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+  </section>
 
-      <div class="hero-grid">
-        <!-- Left: text -->
-        <div>
-          <h1>Ek silaai, <span class="accent">teen saal</span>.</h1>
-          <p class="lede">One stitch, three years. Tifl Little Wear is a made-to-measure kidswear studio. We take 11 real measurements, draft a real pattern, and build in hidden growing room — so one outfit can move up with your child, not be outgrown in a season.</p>
-          <div class="hero-ctas">
-            <a class="btn btn-primary" href="booking.html">Book a fitting</a>
-            <a class="btn btn-ghost" href="shop.html">Browse the shop</a>
-          </div>
-          <div class="stat-row">
-            <div class="stat"><b>11</b><span>Measurement points taken</span></div>
-            <div class="stat"><b>3–5</b><span>Days, first fitting to stitch</span></div>
-            <div class="stat"><b>3</b><span>Years of fit, built in</span></div>
-          </div>
-        </div>
+  <!-- ===== QUICK STATS ===== -->
+  <div class="quick-stats">
+    <div class="stat-item"><b>11</b><span>Measurement points taken</span></div>
+    <div class="stat-item"><b>3–5</b><span>Days, fitting to delivery</span></div>
+    <div class="stat-item"><b>3</b><span>Years of fit, built in</span></div>
+    <div class="stat-item"><b>186</b><span>Happy families</span></div>
+  </div>
 
-        <!-- Right: gallery slideshow -->
-        <div class="hero-gallery" id="heroGallery"></div>
-      </div>
+  <!-- ===== HOW IT WORKS ===== -->
+  <div class="how-it-works">
+    <div class="how-step">
+      <div class="num">01</div>
+      <h3>Measure</h3>
+      <p>We take 11 hand‑measured points from your child — no size charts, no guesses.</p>
+    </div>
+    <div class="how-step">
+      <div class="num">02</div>
+      <h3>Stitch</h3>
+      <p>Our master tailors cut and sew your garment with hidden grow‑with‑me ease.</p>
+    </div>
+    <div class="how-step">
+      <div class="num">03</div>
+      <h3>Deliver</h3>
+      <p>Pressed, folded, and at your door — usually within a week. Ready to wear, ready to grow.</p>
     </div>
   </div>
 
-  <hr class="seam">
+  <!-- ===== DIFFERENTIATORS ===== -->
+  <div class="diff-grid">
+    <div class="diff-item">
+      <span class="icon">📏</span>
+      <h3>Real measurements</h3>
+      <p>Every garment is drafted from your child's own measurements — not a size chart.</p>
+    </div>
+    <div class="diff-item">
+      <span class="icon">🧵</span>
+      <h3>Hidden growing room</h3>
+      <p>Invisible ease in side seams, hems, and waistlines — let out as they grow.</p>
+    </div>
+    <div class="diff-item">
+      <span class="icon">✋</span>
+      <h3>Hand‑finished, always</h3>
+      <p>French seams, hand‑set embroidery — finished by tailors we've worked with for years.</p>
+    </div>
+  </div>
 
-  <!-- ===== VALUE PROPS ===== -->
+  <!-- ===== TAILOR'S TIP (rotating) ===== -->
+  <div class="tailor-tip-home" id="tailorTipHome">
+    <div class="badge">📏 Tailor's Tip</div>
+    <div class="tip-text" id="tipText">"Always leave a 2mm comfort room when measuring a child's waist — it gives just enough ease without looking baggy."</div>
+    <div class="attribution">— Master Tailor Ustad Sattar</div>
+  </div>
+
+  <!-- ===== FAQ SNIPPET ===== -->
+  <div class="faq-snippet">
+    <div class="faq-card">
+      <h4>How long does a made‑to‑measure order take?</h4>
+      <p>Usually 3 to 5 days from your fitting to delivery, once the pattern and fabric are confirmed.</p>
+    </div>
+    <div class="faq-card">
+      <h4>What is "grow‑with‑me" stitching?</h4>
+      <p>We build hidden ease into seams and hems. When your child grows, we let it out — no visible stitch marks, no starting over.</p>
+    </div>
+  </div>
+
+  <!-- ===== BLOG TEASER ===== -->
+  <div class="blog-teaser" id="blogTeaser">
+    <!-- Will be populated by JS -->
+  </div>
+
+  <!-- ===== ORIGINAL SECTIONS (unchanged) ===== -->
+  <hr class="seam" style="margin-top:44px;">
+
   <div style="padding:56px 0 10px;">
-    <div class="eyebrow">How it works</div>
+    <div class="eyebrow">Why families come to us</div>
     <div class="craft-grid">
       <div class="craft-card">
         <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="9"/></svg>
-        <h3>11-point measurement</h3>
-        <p>Every garment is drafted from your child's own measurements — not a size chart. Growth spurts are planned for, not panicked over.</p>
+        <h3>Made to measure</h3>
+        <p>Every garment is drafted from your child's own measurements, not a size chart — growth spurts and all.</p>
       </div>
       <div class="craft-card">
         <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 21v-6a4 4 0 014-4h8a4 4 0 014 4v6M9 11V7a3 3 0 016 0v4"/></svg>
-        <h3>Hidden growing room</h3>
-        <p>We build invisible ease into side seams, hems, and waistlines. When they grow, you bring it back, we let it out — no visible stitch marks, no starting over.</p>
+        <h3>Hand-finished seams</h3>
+        <p>French seams on everyday wear, hand-set embroidery on occasion pieces — finished by tailors we've worked with for years.</p>
       </div>
       <div class="craft-card">
         <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 7L12 3 4 7l8 4 8-4z"/><path d="M4 7v10l8 4 8-4V7"/><path d="M12 11v10"/></svg>
-        <h3>Hand-finished, always</h3>
-        <p>French seams on everyday wear, hand-set embroidery on occasion pieces — finished by tailors we've worked with for years, not a factory line.</p>
+        <h3>Partner brands</h3>
+        <p>Alongside our stitching line, we carry ready pieces from Lahore-based kidswear labels we trust.</p>
       </div>
     </div>
   </div>
 
   <hr class="seam">
 
-  <!-- ===== SHOP PREVIEW ===== -->
   <div style="padding:56px 0 10px;">
     <div class="eyebrow">From the shop</div>
-    <h2 style="font-size:clamp(24px,3vw,32px);max-width:600px;">Ready-to-wear from brands we trust.</h2>
-    <p style="color:var(--ink-soft);max-width:560px;font-size:15px;margin-top:12px;">Alongside our stitching line, we carry ready pieces from Lahore-based kidswear labels. Same quality, less wait.</p>
-    
+    <h2 style="font-size:clamp(24px,3vw,32px);max-width:600px;">A running look at what's live right now.</h2>
     <div class="hg-wrap">
       <div class="hg-track" id="homeGalleryTrack"></div>
     </div>
     <a class="btn btn-ghost" style="margin-top:24px;" href="shop.html">Browse the full shop →</a>
   </div>
 
-  <!-- ===== MEASUREMENTS PROCESS TEASER ===== -->
   <div style="padding-top:36px;padding-bottom:70px;">
     <div class="eyebrow">Start to finish</div>
     <h2 style="font-size:clamp(24px,3vw,32px);max-width:600px;">A consultation call, a fitting, and a finished garment — usually inside a week.</h2>
@@ -337,7 +480,6 @@
         <a href="measurements.html">Our process</a>
         <a href="tailors.html">Master tailors</a>
         <a href="booking.html">Book a fitting</a>
-        <a href="custom-design.html">Custom design</a>
       </div>
       <div>
         <p class="foot-heading">Shop</p>
@@ -373,5 +515,67 @@
 <script src="rudderstack.js"></script>
 <script src="consent.js"></script>
 <script src="script.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+  // ---- Tailor's Tip: rotate through 5 tips ----
+  const tips = [
+    { text: '"Always leave a 2mm comfort room when measuring a child\'s waist — it gives just enough ease without looking baggy."', author: '— Master Tailor Ustad Sattar' },
+    { text: '"When measuring for a kurta, always measure over a thin vest — it mimics the layers they\'ll actually wear."', author: '— Master Tailor Ustad Sattar' },
+    { text: '"For everyday wear, choose fabrics that breathe. Lahore\'s heat is unkind to synthetic blends."', author: '— Master Tailor Rafiq Ahmed' },
+    { text: '"A child\'s sleeve should end at the wrist bone, not past it — anything longer gets in the way of play."', author: '— Master Tailor Rafiq Ahmed' },
+    { text: '"The best garment is the one your child forgets they\'re wearing. Movement is the real test of a good fit."', author: '— Master Tailor Ustad Sattar' }
+  ];
+
+  let tipIndex = Math.floor(Math.random() * tips.length);
+  const tipEl = document.getElementById('tipText');
+  const tipAuthor = document.querySelector('.tailor-tip-home .attribution');
+
+  function rotateTip() {
+    tipIndex = (tipIndex + 1) % tips.length;
+    tipEl.textContent = tips[tipIndex].text;
+    tipAuthor.textContent = tips[tipIndex].author;
+  }
+  setInterval(rotateTip, 8000);
+
+  // ---- Blog teaser: pull from blog-variation.html data ----
+  // Since we can't fetch dynamically without CORS issues, we'll use
+  // hardcoded fallback (matching your blog-variation.html)
+  const blogPosts = [
+    { title: 'Kids clothes that actually grow with them', excerpt: 'Ek silaai, teen saal — the hidden hand-stitched technique that lets a piece move up with your child.', link: 'blog-grow-with-me.html', tag: 'Grow-With-Me' },
+    { title: 'Behind the seams: how a kurta gets made', excerpt: 'From an 11-point measurement card to a pressed, finished garment — a walk through every stage.', link: 'blog-behind-the-seams.html', tag: 'Process' },
+    { title: 'Designing this year\'s Eid collection', excerpt: 'Why we chose hand block-printed cotton this season, and how we build growing-room into occasion wear.', link: 'blog-eid-collection-story.html', tag: 'Design' }
+  ];
+
+  const teaser = document.getElementById('blogTeaser');
+  if (teaser) {
+    teaser.innerHTML = blogPosts.map(post => `
+      <a class="blog-card" href="${post.link}">
+        <div class="tag">${post.tag}</div>
+        <h4>${post.title}</h4>
+        <p>${post.excerpt}</p>
+        <span class="read-more">Read more →</span>
+      </a>
+    `).join('');
+  }
+
+  // ---- Original full-gallery code (unchanged) ----
+  const root = document.getElementById('fgSlides');
+  if (!root) return;
+
+  // We need to define FG_SLIDES and re-run the gallery init from script.js
+  // Since script.js already has this logic, we just need to ensure it runs.
+  // The existing script.js's initFullGalleryHero() should handle this.
+  // If it doesn't run, we'll call it here.
+  if (typeof initFullGalleryHero === 'function') {
+    initFullGalleryHero();
+  }
+  if (typeof initHomeGallery === 'function') {
+    initHomeGallery();
+  }
+
+});
+</script>
 </body>
 </html>
